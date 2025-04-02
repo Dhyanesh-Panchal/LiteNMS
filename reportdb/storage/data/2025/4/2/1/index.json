@@ -1,0 +1,171 @@
+{
+  "data_type": "int64",
+  "data_point_size": 8,
+  "partition_index": [
+    {
+      "next_free_block_offset": 480,
+      "object_index": {
+        "10": [
+          {
+            "offset": 120,
+            "remaining_capacity": 0,
+            "min_time_stamp": 1704067200,
+            "max_time_stamp": 1704067245
+          },
+          {
+            "offset": 240,
+            "remaining_capacity": 108,
+            "min_time_stamp": 1704067250,
+            "max_time_stamp": 1704067250
+          }
+        ],
+        "5": [
+          {
+            "offset": 0,
+            "remaining_capacity": 0,
+            "min_time_stamp": 1704067200,
+            "max_time_stamp": 1704067245
+          },
+          {
+            "offset": 360,
+            "remaining_capacity": 108,
+            "min_time_stamp": 1704067250,
+            "max_time_stamp": 1704067250
+          }
+        ]
+      }
+    },
+    {
+      "next_free_block_offset": 480,
+      "object_index": {
+        "1": [
+          {
+            "offset": 120,
+            "remaining_capacity": 0,
+            "min_time_stamp": 1704067200,
+            "max_time_stamp": 1704067245
+          },
+          {
+            "offset": 360,
+            "remaining_capacity": 108,
+            "min_time_stamp": 1704067250,
+            "max_time_stamp": 1704067250
+          }
+        ],
+        "6": [
+          {
+            "offset": 0,
+            "remaining_capacity": 0,
+            "min_time_stamp": 1704067200,
+            "max_time_stamp": 1704067245
+          },
+          {
+            "offset": 240,
+            "remaining_capacity": 108,
+            "min_time_stamp": 1704067250,
+            "max_time_stamp": 1704067250
+          }
+        ]
+      }
+    },
+    {
+      "next_free_block_offset": 480,
+      "object_index": {
+        "2": [
+          {
+            "offset": 0,
+            "remaining_capacity": 0,
+            "min_time_stamp": 1704067200,
+            "max_time_stamp": 1704067245
+          },
+          {
+            "offset": 240,
+            "remaining_capacity": 108,
+            "min_time_stamp": 1704067250,
+            "max_time_stamp": 1704067250
+          }
+        ],
+        "7": [
+          {
+            "offset": 120,
+            "remaining_capacity": 0,
+            "min_time_stamp": 1704067200,
+            "max_time_stamp": 1704067245
+          },
+          {
+            "offset": 360,
+            "remaining_capacity": 108,
+            "min_time_stamp": 1704067250,
+            "max_time_stamp": 1704067250
+          }
+        ]
+      }
+    },
+    {
+      "next_free_block_offset": 480,
+      "object_index": {
+        "3": [
+          {
+            "offset": 0,
+            "remaining_capacity": 0,
+            "min_time_stamp": 1704067200,
+            "max_time_stamp": 1704067245
+          },
+          {
+            "offset": 360,
+            "remaining_capacity": 108,
+            "min_time_stamp": 1704067250,
+            "max_time_stamp": 1704067250
+          }
+        ],
+        "8": [
+          {
+            "offset": 120,
+            "remaining_capacity": 0,
+            "min_time_stamp": 1704067200,
+            "max_time_stamp": 1704067245
+          },
+          {
+            "offset": 240,
+            "remaining_capacity": 108,
+            "min_time_stamp": 1704067250,
+            "max_time_stamp": 1704067250
+          }
+        ]
+      }
+    },
+    {
+      "next_free_block_offset": 480,
+      "object_index": {
+        "4": [
+          {
+            "offset": 120,
+            "remaining_capacity": 0,
+            "min_time_stamp": 1704067200,
+            "max_time_stamp": 1704067245
+          },
+          {
+            "offset": 360,
+            "remaining_capacity": 108,
+            "min_time_stamp": 1704067250,
+            "max_time_stamp": 1704067250
+          }
+        ],
+        "9": [
+          {
+            "offset": 0,
+            "remaining_capacity": 0,
+            "min_time_stamp": 1704067200,
+            "max_time_stamp": 1704067245
+          },
+          {
+            "offset": 240,
+            "remaining_capacity": 108,
+            "min_time_stamp": 1704067250,
+            "max_time_stamp": 1704067250
+          }
+        ]
+      }
+    }
+  ]
+}
