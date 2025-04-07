@@ -4,34 +4,27 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path"
 	. "reportdb/config"
-	. "reportdb/global"
-	. "reportdb/utils"
 	"strconv"
 	"sync"
 	"syscall"
 )
 
-type OpenFileMapping struct {
+type FileMapping struct {
 	mapping []byte
 
 	file *os.File
-
-	fileInfo os.FileInfo
 
 	lock sync.RWMutex
 
 	// Add functionality of access count to periodically unmap less used files.
 }
 
-func NewOpenFileMapping(key FilesPoolKey) (*OpenFileMapping, error) {
-	filePath := path.Join(GetStorageDir(key.Date), strconv.Itoa(int(key.CounterId)), strconv.Itoa(int(key.PartitionIndex))+".bin")
+func loadFileMapping(partitionId uint32, storagePath string) (*FileMapping, error) {
+	filePath := storagePath + "/data_" + strconv.Itoa(int(partitionId)) + ".bin"
 
-	// Ensure that storage directory is present
-	err := os.MkdirAll(path.Join(GetStorageDir(key.Date), strconv.Itoa(int(key.CounterId))), 0755)
+	file, err := os.OpenFile(filePath, os.O_RDWR, 0655)
 
-	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0655)
 	if err != nil {
 
 		return nil, err
@@ -41,22 +34,8 @@ func NewOpenFileMapping(key FilesPoolKey) (*OpenFileMapping, error) {
 	fileStats, err := file.Stat()
 
 	if err != nil {
+
 		return nil, err
-	}
-
-	if fileStats.Size() == 0 {
-
-		// New file created, truncate to initial size
-		err := os.Truncate(file.Name(), 4096)
-		if err != nil {
-			return nil, err
-		}
-
-		fileStats, err = file.Stat()
-
-		if err != nil {
-			return nil, err
-		}
 
 	}
 
@@ -70,22 +49,50 @@ func NewOpenFileMapping(key FilesPoolKey) (*OpenFileMapping, error) {
 
 	}
 
-	return &OpenFileMapping{
+	return &FileMapping{
 
 		mapping: fileMapping,
 
 		file: file,
-
-		fileInfo: fileStats,
 	}, nil
 
 }
 
-func truncateFile(fileMapping *OpenFileMapping) error {
+func (fileMapping *FileMapping) UnmapFile() error {
+	fileMapping.lock.Lock()
 
-	newSize := fileMapping.fileInfo.Size() + int64(FileSizeGrowthDelta)
+	defer fileMapping.lock.Unlock()
+
+	err := syscall.Munmap(fileMapping.mapping)
+
+	if err != nil {
+
+		log.Println("Error unmapping file", err)
+
+		return err
+
+	}
+
+	err = fileMapping.file.Close()
+
+	if err != nil {
+
+		log.Println("Error closing file", err)
+
+		return err
+
+	}
+
+	return nil
+
+}
+
+func truncateFile(fileMapping *FileMapping) error {
+
+	newSize := int64(len(fileMapping.mapping)) + FileSizeGrowthDelta
 
 	if err := os.Truncate(fileMapping.file.Name(), newSize); err != nil {
+
 		log.Println("Error truncating file", fileMapping.file.Name(), err)
 
 		return err
@@ -94,33 +101,36 @@ func truncateFile(fileMapping *OpenFileMapping) error {
 	// remap the mapping.
 
 	if err := syscall.Munmap(fileMapping.mapping); err != nil {
+
 		log.Println("Error unmapping file", fileMapping.file.Name(), err)
+
+		return err
 	}
 
 	newMapping, err := syscall.Mmap(int(fileMapping.file.Fd()), 0, int(newSize), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
 
 	if err != nil {
+
 		log.Println("Error creating mapping file", fileMapping.file.Name(), err)
+
 		return err
+
 	}
 
 	fileMapping.mapping = newMapping
-
-	fileMapping.fileInfo, err = fileMapping.file.Stat()
 
 	return nil
 
 }
 
-func (fileMapping *OpenFileMapping) WriteAt(data []byte, offset int) error {
+func (fileMapping *FileMapping) WriteAt(data []byte, offset uint64) error {
 
 	fileMapping.lock.Lock()
 
 	defer fileMapping.lock.Unlock()
 
 	// Check if the file size is sufficient
-
-	if offset+len(data) > int(fileMapping.fileInfo.Size()) {
+	if int(offset)+len(data) > int(len(fileMapping.mapping)) {
 
 		err := truncateFile(fileMapping)
 
@@ -132,44 +142,55 @@ func (fileMapping *OpenFileMapping) WriteAt(data []byte, offset int) error {
 
 	}
 
-	copy(fileMapping.mapping[offset:offset+len(data)], data)
+	copy(fileMapping.mapping[offset:int(offset)+len(data)], data)
 
 	return nil
 
 }
 
-type FilesPoolKey struct {
-	CounterId uint16
+func (fileMapping *FileMapping) ReadBlocks(objectBlocks []ObjectBlock, blockSize uint32) []byte {
 
-	PartitionIndex uint32
+	fileMapping.lock.RLock()
 
-	Date Date
+	defer fileMapping.lock.RUnlock()
+
+	data := make([]byte, len(objectBlocks)*int(blockSize)) // make the container for the data.
+
+	var currentIndex = 0
+	for _, block := range objectBlocks {
+
+		sizeOfBlockData := blockSize - block.RemainingCapacity
+		fmt.Println(block.Offset, block.RemainingCapacity, sizeOfBlockData)
+
+		copy(data[currentIndex:], fileMapping.mapping[int(block.Offset):int(block.Offset)+int(sizeOfBlockData)])
+
+		currentIndex += int(sizeOfBlockData)
+
+	}
+
+	return data[:currentIndex]
+
 }
+
 type OpenFilesPool struct {
-	pool map[FilesPoolKey]*OpenFileMapping
+	pool map[uint32]*FileMapping
 
 	lock sync.Mutex
 }
 
 func NewOpenFilesPool() *OpenFilesPool {
 
-	return &OpenFilesPool{pool: make(map[FilesPoolKey]*OpenFileMapping)}
+	return &OpenFilesPool{pool: make(map[uint32]*FileMapping)}
 
 }
 
-func (pool *OpenFilesPool) put(key FilesPoolKey, mapping *OpenFileMapping) {
-	pool.lock.Lock()
-	defer pool.lock.Unlock()
-
-}
-
-func (pool *OpenFilesPool) Get(key FilesPoolKey) (*OpenFileMapping, error) {
+func (pool *OpenFilesPool) GetFileMapping(partitionId uint32, storagePath string) (*FileMapping, error) {
 
 	pool.lock.Lock()
 
 	defer pool.lock.Unlock()
 
-	if mapping, ok := pool.pool[key]; ok {
+	if mapping, ok := pool.pool[partitionId]; ok {
 
 		return mapping, nil
 
@@ -178,18 +199,39 @@ func (pool *OpenFilesPool) Get(key FilesPoolKey) (*OpenFileMapping, error) {
 
 		// Create new
 
-		mapping, err := NewOpenFileMapping(key)
+		mapping, err := loadFileMapping(partitionId, storagePath)
 
 		if err != nil {
 
-			log.Println("Error opening new File for: ", key, err)
+			log.Println("Error opening new File for: ", partitionId, err)
 
 			return nil, err
 
 		}
 
-		pool.pool[key] = mapping
+		pool.pool[partitionId] = mapping
 
 		return mapping, nil
 	}
+}
+
+func (pool *OpenFilesPool) DeleteFileMapping(partitionId uint32) error {
+
+	pool.lock.Lock()
+
+	defer pool.lock.Unlock()
+
+	mapping := pool.pool[partitionId]
+
+	err := mapping.UnmapFile()
+
+	if err != nil {
+
+		return err
+
+	}
+
+	delete(pool.pool, partitionId)
+
+	return nil
 }
