@@ -28,12 +28,13 @@ func TestStorage_Put(t *testing.T) {
 		d string
 	}{
 		{1, "Data11"},
-		{1, "Data21"},
-		{1, "Data31"},
-		{1, "Data41"},
-		{1, "Data51"},
-		{1, "Data61"},
 		{1, "Data12"},
+		{1, "Data13"},
+		{1, "Data14"},
+		{1, "Data15"},
+		{1, "Data16"},
+		{1, "Data17"},
+		{1, "this is some big data from object1"},
 		{2, "Data22"},
 		{3, "Data32"},
 		{4, "Data42"},
@@ -54,14 +55,14 @@ func TestStorage_Put(t *testing.T) {
 
 func TestStorage_Get(t *testing.T) {
 
-	storage, err := NewStorage(ProjectRootPath+"/storage/data/2025/04/2/01/", 5, 120)
+	storage, err := NewStorage(ProjectRootPath+"/storage/data/2025/04/2/1/", 5, 120)
 
 	if err != nil {
 
 		t.Error(err)
 	}
 
-	data, err := storage.Get(4)
+	data, err := storage.Get(1)
 
 	if err != nil {
 

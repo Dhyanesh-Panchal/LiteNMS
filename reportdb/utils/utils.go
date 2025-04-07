@@ -3,12 +3,11 @@ package utils
 import (
 	"path"
 	"reportdb/config"
-	"reportdb/global"
 )
 
-func GetStorageDir(date global.Date) string {
+func GetStorageDir(date string) string {
 
-	return path.Join(config.ProjectRootPath, "storage", "data", date.Format())
+	return path.Join(config.ProjectRootPath, "storage", "data", date)
 
 }
 

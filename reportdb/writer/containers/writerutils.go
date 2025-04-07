@@ -1,99 +1,16 @@
-package storage
+package containers
 
 import (
-	. "reportdb/storage/containers"
-	"reportdb/utils"
+	. "reportdb/containers"
 )
 
-func DiskWrite(key uint32, data []byte, file *FileMapping, index *Index) error {
-
-	var remainingBlockCapacity uint32
-
-	// Get Blocks for the object
-	objectBlocks := index.GetIndexObjectBlocks(key)
-
-	if objectBlocks != nil {
-
-		remainingBlockCapacity = objectBlocks[len(objectBlocks)-1].RemainingCapacity
-
-	} else {
-		// New Object, assign new block
-
-		newBlockOffset := index.GetNextAvailableBlockOffset()
-
-		objectBlocks = index.AppendNewObjectBlock(key,
-
-			ObjectBlock{
-
-				Offset: newBlockOffset,
-
-				RemainingCapacity: index.BlockSize,
-			})
-
-		remainingBlockCapacity = index.BlockSize
-
-	}
-
-	for len(data) > 0 {
-
-		writableDataBytes := utils.IntMin(len(data), int(remainingBlockCapacity))
-
-		writeOffset := objectBlocks[len(objectBlocks)-1].Offset + uint64(index.BlockSize-remainingBlockCapacity)
-
-		err := file.WriteAt(data[:writableDataBytes], writeOffset)
-
-		if err != nil {
-			return err
-		}
-
-		// Update the Index Metadata
-		newBlockCapacity := remainingBlockCapacity - uint32(writableDataBytes)
-
-		index.UpdateObjectBlockCapacity(key, newBlockCapacity)
-
-		//Re-slice for remaining datapoints
-		data = data[writableDataBytes:]
-
-		if len(data) > 0 {
-			// Data is remaining hence get new Block
-
-			newBlockOffset := index.GetNextAvailableBlockOffset()
-
-			objectBlocks = index.AppendNewObjectBlock(key,
-
-				ObjectBlock{
-
-					Offset: newBlockOffset,
-
-					RemainingCapacity: index.BlockSize,
-				})
-
-			remainingBlockCapacity = index.BlockSize
-
-		} else {
-
-			if writableDataBytes == int(remainingBlockCapacity) {
-
-				// Data was Just Sufficient, hence new Block needs to be assigned
-
-				newBlockOffset := index.GetNextAvailableBlockOffset()
-
-				objectBlocks = index.AppendNewObjectBlock(key,
-
-					ObjectBlock{
-
-						Offset: newBlockOffset,
-
-						RemainingCapacity: index.BlockSize,
-					})
-
-			}
-		}
-
-	}
-
-	return nil
+type WritableObjectData struct {
+	StorageKey StoragePoolKey
+	ObjectId   uint32
+	Values     []DataPoint
 }
+
+// Temporary
 
 //func writeNumericData(data []DataPoint, key Key, file *FileMapping, index *Index) error {
 //
@@ -138,25 +55,39 @@ func DiskWrite(key uint32, data []byte, file *FileMapping, index *Index) error {
 //
 //	for len(data) > 0 {
 //
+//		newMinTimestamp, newMaxTimestamp := index.GetLastObjectBlockMetadata(key.ObjectId)
+//
 //		//------------------fmt.Println("Old Metadata: ", newMinTimestamp, newMaxTimestamp)
 //
-//		writableData := utils.IntMin(len(data), int(remainingBlockCapacity))
+//		writableDataPointsCount := utils.IntMin(len(data), int(remainingBlockCapacity/totalDataPointSize))
+//
+//		dataBytes := make([]byte, 0, writableDataPointsCount*int(totalDataPointSize))
+//
+//		for i := 0; i < writableDataPointsCount; i++ {
+//
+//			// maintain new minmax
+//			newMinTimestamp = utils.UInt32Min(newMinTimestamp, data[i].Timestamp)
+//			newMaxTimestamp = utils.UInt32Max(newMaxTimestamp, data[i].Timestamp)
+//
+//			dataBytes = append(dataBytes, data[i].Serialize(totalDataPointSize)...)
+//
+//		}
 //
 //		offset := BlockSize - remainingBlockCapacity
 //
-//		err := file.WriteAt(data[:writableData], int(offset))
+//		err := file.WriteAt(dataBytes, int(offset))
 //
 //		if err != nil {
 //			return err
 //		}
 //
 //		// Update the Index Metadata
-//		newBlockCapacity := remainingBlockCapacity - uint32(writableData)
+//		newBlockCapacity := remainingBlockCapacity - uint32(writableDataPointsCount)*totalDataPointSize
 //
-//		index.UpdateObjectBlockCapacity(key.ObjectId, newBlockCapacity, newMinTimestamp, newMaxTimestamp)
+//		index.UpdateObjectBlockMetadata(key.ObjectId, newBlockCapacity, newMinTimestamp, newMaxTimestamp)
 //
 //		//Reslice for remaining datapoints
-//		data = data[writableData:]
+//		data = data[writableDataPointsCount:]
 //
 //		if len(data) > 0 {
 //			// Data is remaining hence get new Block
@@ -182,7 +113,7 @@ func DiskWrite(key uint32, data []byte, file *FileMapping, index *Index) error {
 //
 //		} else {
 //
-//			if writableData == int(remainingBlockCapacity/totalDataPointSize) {
+//			if writableDataPointsCount == int(remainingBlockCapacity/totalDataPointSize) {
 //
 //				// Data was Just Sufficient, hence new Block needs to be assigned
 //
@@ -216,4 +147,11 @@ func DiskWrite(key uint32, data []byte, file *FileMapping, index *Index) error {
 //	}
 //
 //	return nil
+//}
+//
+//// TODO: Complete the string writer.
+//func writeStringData(data []DataPoint, key Key, file *FileMapping, index *Index) error {
+//
+//	return nil
+//
 //}

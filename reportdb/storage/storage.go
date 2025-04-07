@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	. "reportdb/config"
@@ -22,7 +23,7 @@ type Storage struct {
 	indexPool *IndexPool
 }
 
-var ErrObjectDoesNotExist = errors.New("Object does not exist")
+var ErrObjectDoesNotExist = errors.New("object does not exist")
 
 func NewStorage(storagePath string, partitionCount uint32, blockSize uint32) (*Storage, error) {
 
@@ -54,6 +55,8 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 	_, err := os.Stat(storagePath)
 
 	if os.IsNotExist(err) {
+
+		fmt.Printf("Creating storage directory: %s\n", storagePath)
 
 		err = os.MkdirAll(storagePath, 0755)
 
