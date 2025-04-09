@@ -1,0 +1,7 @@
+{
+  "Writers": 5,
+  "Partitions": 5,
+  "BlockSize": 120,
+  "FileSizeGrowthDelta": 10,
+  "InitialFileSize": 5
+}

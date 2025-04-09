@@ -1,8 +1,7 @@
 package containers
 
 import (
-	"fmt"
-	. "reportdb/containers"
+	. "datastore/containers"
 	"sync"
 )
 
@@ -54,8 +53,6 @@ func (buffer *WriteBuffer) GetDataPoints(key StoragePoolKey, objectId uint32) []
 }
 
 func (buffer *WriteBuffer) Flush(dataChannel chan<- WritableObjectData) {
-
-	fmt.Println("Flush Called.")
 
 	buffer.flushLock.Lock()
 

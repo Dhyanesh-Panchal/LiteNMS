@@ -1,14 +1,14 @@
 package storage
 
 import (
+	. "datastore/utils"
 	"fmt"
-	. "reportdb/config"
 	"testing"
 )
 
 func TestNewStorage(t *testing.T) {
 
-	_, err := NewStorage(ProjectRootPath+"/storage/data/2025/04/2/1/", 5, 120)
+	_, err := NewStorage(StorageDirectory+"/2025/4/2/1/", 5, 120, true)
 
 	if err != nil {
 		t.Error(err)
@@ -17,7 +17,7 @@ func TestNewStorage(t *testing.T) {
 
 func TestStorage_Put(t *testing.T) {
 
-	storage, err := NewStorage(ProjectRootPath+"/storage/data/2025/04/2/1/", 5, 120)
+	storage, err := NewStorage(StorageDirectory+"/2025/4/2/1/", 5, 120, true)
 
 	if err != nil {
 		t.Error(err)
@@ -55,7 +55,7 @@ func TestStorage_Put(t *testing.T) {
 
 func TestStorage_Get(t *testing.T) {
 
-	storage, err := NewStorage(ProjectRootPath+"/storage/data/2025/04/2/1/", 5, 120)
+	storage, err := NewStorage(StorageDirectory+"/2025/4/2/1/", 5, 120, false)
 
 	if err != nil {
 

@@ -198,3 +198,22 @@ func (indexPool *IndexPool) Get(partitionId uint32, storagePath string) (*Index,
 	}
 
 }
+
+func (indexPool *IndexPool) Close(storagePath string) {
+
+	indexPool.lock.Lock()
+	defer indexPool.lock.Unlock()
+
+	// Sync changes if any
+	for partitionId, index := range indexPool.pool {
+
+		err := index.WriteIndexToFile(storagePath, partitionId)
+
+		if err != nil {
+
+			log.Println("Error closing index for: ", storagePath, partitionId, err)
+
+		}
+	}
+
+}

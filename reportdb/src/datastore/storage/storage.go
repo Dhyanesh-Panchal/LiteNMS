@@ -1,13 +1,13 @@
 package storage
 
 import (
+	. "datastore/storage/containers"
+	. "datastore/utils"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"os"
-	. "reportdb/config"
-	. "reportdb/storage/containers"
 	"strconv"
 )
 
@@ -24,12 +24,13 @@ type Storage struct {
 }
 
 var ErrObjectDoesNotExist = errors.New("object does not exist")
+var ErrStorageDoesNotExist = errors.New("storage does not exist")
 
-func NewStorage(storagePath string, partitionCount uint32, blockSize uint32) (*Storage, error) {
+func NewStorage(storagePath string, partitionCount uint32, blockSize uint32, createIfNotExist bool) (*Storage, error) {
 
 	// Ensure that storage directory exist, if not create the storage dir and files
 
-	err := ensureStorageDirectory(storagePath, partitionCount, blockSize)
+	err := ensureStorageDirectory(storagePath, partitionCount, blockSize, createIfNotExist)
 
 	if err != nil {
 
@@ -50,11 +51,15 @@ func NewStorage(storagePath string, partitionCount uint32, blockSize uint32) (*S
 	}, nil
 }
 
-func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize uint32) error {
+func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize uint32, createIfNotExist bool) error {
 
 	_, err := os.Stat(storagePath)
 
 	if os.IsNotExist(err) {
+
+		if !createIfNotExist {
+			return ErrStorageDoesNotExist
+		}
 
 		fmt.Printf("Creating storage directory: %s\n", storagePath)
 
@@ -145,9 +150,11 @@ func writeNewIndex(storagePath string, partitionIndex uint32, blockSize uint32) 
 	return nil
 }
 
-func (e *Storage) Put(objectId uint32, value []byte) error {
+// -------------- Storage Engine Interface functions -----------------
 
-	file, err := e.openFilesPool.GetFileMapping(objectId%e.partitionCount, e.storagePath)
+func (storage *Storage) Put(objectId uint32, value []byte) error {
+
+	file, err := storage.openFilesPool.GetFileMapping(objectId%storage.partitionCount, storage.storagePath)
 
 	if err != nil {
 
@@ -155,7 +162,7 @@ func (e *Storage) Put(objectId uint32, value []byte) error {
 
 	}
 
-	index, err := e.indexPool.Get(objectId%e.partitionCount, e.storagePath)
+	index, err := storage.indexPool.Get(objectId%storage.partitionCount, storage.storagePath)
 
 	if err != nil {
 
@@ -171,7 +178,7 @@ func (e *Storage) Put(objectId uint32, value []byte) error {
 
 	}
 
-	err = index.WriteIndexToFile(e.storagePath, objectId%e.partitionCount)
+	err = index.WriteIndexToFile(storage.storagePath, objectId%storage.partitionCount)
 
 	if err != nil {
 
@@ -183,9 +190,9 @@ func (e *Storage) Put(objectId uint32, value []byte) error {
 
 }
 
-func (e *Storage) Get(objectId uint32) ([]byte, error) {
+func (storage *Storage) Get(objectId uint32) ([]byte, error) {
 
-	file, err := e.openFilesPool.GetFileMapping(objectId%e.partitionCount, e.storagePath)
+	file, err := storage.openFilesPool.GetFileMapping(objectId%storage.partitionCount, storage.storagePath)
 
 	if err != nil {
 
@@ -193,7 +200,7 @@ func (e *Storage) Get(objectId uint32) ([]byte, error) {
 
 	}
 
-	index, err := e.indexPool.Get(objectId%e.partitionCount, e.storagePath)
+	index, err := storage.indexPool.Get(objectId%storage.partitionCount, storage.storagePath)
 
 	if err != nil {
 
@@ -209,8 +216,16 @@ func (e *Storage) Get(objectId uint32) ([]byte, error) {
 
 	}
 
-	data := file.ReadBlocks(blocks, e.blockSize)
+	data := file.ReadBlocks(blocks, storage.blockSize)
 
 	return data, nil
+
+}
+
+func (storage *Storage) CloseStorage() {
+
+	storage.openFilesPool.Close()
+
+	storage.indexPool.Close(storage.storagePath)
 
 }

@@ -1,19 +1,23 @@
 package writer
 
 import (
+	. "datastore/containers"
+	. "datastore/utils"
+	. "datastore/writer/containers"
 	"log"
-	. "reportdb/config"
-	. "reportdb/containers"
-	. "reportdb/global"
-	. "reportdb/writer/containers"
 	"time"
 )
 
-func InitWriter(dataChannel <-chan []PolledDataPoint, storagePool *StoragePool) {
+var (
+	FlushDuration = time.Second * 1
+)
 
-	writersChannel := make(chan WritableObjectData, WriterCount)
+func InitWriter(dataWriteChannel <-chan []PolledDataPoint, storagePool *StoragePool) {
 
-	for i := 0; i < WriterCount; i++ {
+	writersChannel := make(chan WritableObjectData, Writers)
+	writersShutdown := make(chan bool, Writers)
+
+	for i := 0; i < Writers; i++ {
 
 		go writeWorker(writersChannel, storagePool)
 
@@ -27,8 +31,9 @@ func InitWriter(dataChannel <-chan []PolledDataPoint, storagePool *StoragePool) 
 	for {
 		select {
 		case <-GlobalShutdown:
+			break
 
-		case polledData := <-dataChannel:
+		case polledData := <-dataWriteChannel:
 
 			for _, dataPoint := range polledData {
 
@@ -57,18 +62,21 @@ func InitWriter(dataChannel <-chan []PolledDataPoint, storagePool *StoragePool) 
 
 	}
 
+	// Global Shutdown sequence
+
 }
 
-func writeWorker(writersChannel <-chan WritableObjectData, storagePool *StoragePool) {
+func writeWorker(writersChannel <-chan WritableObjectData, storagePool *StoragePool, shutdownChannel chan bool) {
 	for {
 		select {
+		case <-shutdownChannel:
+
 		case dataBatch := <-writersChannel:
 
 			// Serialize the Data
+			data, err := SerializeBatch(dataBatch.Values, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string))
 
-			data := SerializeBatch(dataBatch.Values)
-
-			storageEngine, err := storagePool.AcquireStorage(dataBatch.StorageKey)
+			storageEngine, err := storagePool.GetStorage(dataBatch.StorageKey, true)
 
 			if err != nil {
 
@@ -89,10 +97,23 @@ func writeWorker(writersChannel <-chan WritableObjectData, storagePool *StorageP
 
 func WriteBufferFlushRoutine(dataWriteBuffer *WriteBuffer, writersChannel chan<- WritableObjectData) {
 
-	flushTicker := time.NewTicker(WriterFlushDuration)
+	flushTicker := time.NewTicker(FlushDuration)
 
 	for {
 		select {
+		case <-GlobalShutdown:
+
+			// Flush present entries and exit
+
+			if !dataWriteBuffer.EmptyBuffer {
+
+				dataWriteBuffer.Flush(writersChannel)
+
+			}
+
+			flushTicker.Stop()
+
+			break
 
 		case <-flushTicker.C:
 

@@ -1,10 +1,10 @@
 package containers
 
 import (
+	. "datastore/utils"
 	"fmt"
 	"log"
 	"os"
-	. "reportdb/config"
 	"strconv"
 	"sync"
 	"syscall"
@@ -130,7 +130,7 @@ func (fileMapping *FileMapping) WriteAt(data []byte, offset uint64) error {
 	defer fileMapping.lock.Unlock()
 
 	// Check if the file size is sufficient
-	if int(offset)+len(data) > int(len(fileMapping.mapping)) {
+	if int(offset)+len(data) > len(fileMapping.mapping) {
 
 		err := truncateFile(fileMapping)
 
@@ -160,7 +160,6 @@ func (fileMapping *FileMapping) ReadBlocks(objectBlocks []ObjectBlock, blockSize
 	for _, block := range objectBlocks {
 
 		sizeOfBlockData := blockSize - block.RemainingCapacity
-		fmt.Println(block.Offset, block.RemainingCapacity, sizeOfBlockData)
 
 		copy(data[currentIndex:], fileMapping.mapping[int(block.Offset):int(block.Offset)+int(sizeOfBlockData)])
 
@@ -234,4 +233,31 @@ func (pool *OpenFilesPool) DeleteFileMapping(partitionId uint32) error {
 	delete(pool.pool, partitionId)
 
 	return nil
+}
+
+func (pool *OpenFilesPool) Close() {
+
+	pool.lock.Lock()
+	defer pool.lock.Unlock()
+
+	for _, fileMapping := range pool.pool {
+
+		err := syscall.Munmap(fileMapping.mapping)
+
+		if err != nil {
+
+			log.Println("Error unmapping file", fileMapping.file.Name(), err)
+
+		}
+
+		err = fileMapping.file.Close()
+
+		if err != nil {
+
+			log.Println("Error closing file", fileMapping.file.Name(), err)
+
+		}
+
+	}
+
 }

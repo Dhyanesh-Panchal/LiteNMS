@@ -36,7 +36,7 @@ func UnixToDate(unix uint32) Date {
 	}
 }
 
-func GetDate(t time.Time) Date {
+func TimeToDate(t time.Time) Date {
 
 	return Date{
 		Day:   t.Day(),

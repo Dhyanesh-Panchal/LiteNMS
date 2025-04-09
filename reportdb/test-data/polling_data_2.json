@@ -472,7 +472,7 @@
       "counter_id": 1,
       "object_id": 2,
       "timestamp": 1704067200,
-      "value": 150
+      "value": -150
     },
     {
       "counter_id": 2,
@@ -484,7 +484,7 @@
       "counter_id": 1,
       "object_id": 9,
       "timestamp": 1704067200,
-      "value": 500
+      "value": -500
     },
     {
       "counter_id": 3,

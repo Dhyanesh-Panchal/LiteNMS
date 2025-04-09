@@ -1,8 +1,8 @@
 package containers
 
 import (
-	. "reportdb/config"
-	. "reportdb/storage"
+	. "datastore/storage"
+	. "datastore/utils"
 	"strconv"
 	"sync"
 )
@@ -24,7 +24,7 @@ func NewOpenStoragePool() *StoragePool {
 
 }
 
-func (pool *StoragePool) AcquireStorage(key StoragePoolKey) (*Storage, error) {
+func (pool *StoragePool) GetStorage(key StoragePoolKey, createIfNotExist bool) (*Storage, error) {
 
 	pool.lock.Lock()
 
@@ -38,9 +38,9 @@ func (pool *StoragePool) AcquireStorage(key StoragePoolKey) (*Storage, error) {
 
 	// Storage not in pool. Get new storage.
 
-	storagePath := ProjectRootPath + "/storage/data/" + key.Date.Format() + "/" + strconv.Itoa(int(key.CounterId))
+	storagePath := StorageDirectory + "/" + key.Date.Format() + "/" + strconv.Itoa(int(key.CounterId))
 
-	newStorage, err := NewStorage(storagePath, PartitionCount, BlockSize)
+	newStorage, err := NewStorage(storagePath, Partitions, BlockSize, createIfNotExist)
 
 	if err != nil {
 
@@ -51,5 +51,20 @@ func (pool *StoragePool) AcquireStorage(key StoragePoolKey) (*Storage, error) {
 	pool.storagePool[key] = newStorage
 
 	return newStorage, nil
+
+}
+
+func (pool *StoragePool) CloseStorage(key StoragePoolKey) {
+
+	pool.lock.Lock()
+	defer pool.lock.Unlock()
+
+	if storage, ok := pool.storagePool[key]; ok {
+
+		storage.CloseStorage()
+
+		delete(pool.storagePool, key)
+
+	}
 
 }
