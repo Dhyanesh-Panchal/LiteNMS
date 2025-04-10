@@ -3,12 +3,13 @@ package db
 import (
 	. "datastore/containers"
 	. "datastore/reader"
+	. "datastore/storage"
 	. "datastore/utils"
 	. "datastore/writer"
+	"errors"
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 type ReportDB struct {
@@ -17,7 +18,7 @@ type ReportDB struct {
 	dataWriteChannel chan []PolledDataPoint
 }
 
-func InitDB() (*ReportDB, error) {
+func InitDB(dataWriteChannel chan []PolledDataPoint) (*ReportDB, error) {
 
 	// Ensure storage directory is created.
 	err := os.MkdirAll(filepath.Dir(filepath.Dir(CurrentWorkingDirectory))+"/data", 0777)
@@ -32,12 +33,12 @@ func InitDB() (*ReportDB, error) {
 
 	storagePool := NewOpenStoragePool()
 
-	dataWriteChannel := make(chan []PolledDataPoint)
-
-	go InitWriter(dataWriteChannel, storagePool)
+	go InitWriteHandler(dataWriteChannel, storagePool)
 
 	return &ReportDB{
-		storagePool:      storagePool,
+
+		storagePool: storagePool,
+
 		dataWriteChannel: dataWriteChannel,
 	}, nil
 
@@ -53,22 +54,34 @@ func (db ReportDB) QueryHistogram(from uint32, to uint32, counterId uint16, obje
 
 	finalData := map[uint32][]DataPoint{}
 
-	for date := time.Unix(int64(from), 0).UTC(); date.Before(time.Unix(int64(to), 0)) || date.Equal(time.Unix(int64(to), 0)); date = date.Add(time.Hour * 24) {
+	for date := from; date <= to; date += 86400 {
 
-		dateObject := TimeToDate(date)
+		dateObject := UnixToDate(date)
 
-		storageEngine, err := db.storagePool.GetStorage(StoragePoolKey{
-			Date:      dateObject,
+		storageKey := StoragePoolKey{
+
+			Date: dateObject,
+
 			CounterId: counterId,
-		}, false)
+		}
+
+		storageEngine, err := db.storagePool.GetStorage(storageKey, false)
 
 		if err != nil {
+
+			if errors.Is(err, ErrStorageDoesNotExist) {
+
+				continue
+
+			}
 
 			return nil, err
 
 		}
 
 		ReadFullDate(dateObject, storageEngine, counterId, objects, finalData, from, to)
+
+		db.storagePool.CloseStorage(storageKey)
 
 	}
 

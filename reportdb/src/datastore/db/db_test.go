@@ -24,7 +24,9 @@ func TestReportDB_Write(t *testing.T) {
 
 	}
 
-	db, err := InitDB()
+	dataWriteChannel := make(chan []PolledDataPoint, DataWriteChannelSize)
+
+	db, err := InitDB(dataWriteChannel)
 
 	if err != nil {
 		t.Error(err)
@@ -75,17 +77,21 @@ func TestQueryHistogram(t *testing.T) {
 
 	}
 
-	db, err := InitDB()
+	dataWriteChannel := make(chan []PolledDataPoint, DataWriteChannelSize)
+
+	db, err := InitDB(dataWriteChannel)
 
 	if err != nil {
+
 		t.Errorf("Error initializing DB: %v", err)
+
 	}
 
-	from := uint32(1704067200)
+	from := uint32(1744291393)
 
-	to := uint32(1704067230)
+	to := uint32(1744292389)
 
-	data, err := db.QueryHistogram(from, to, 1, []uint32{1, 2, 3})
+	data, err := db.QueryHistogram(from, to, 2, []uint32{169093227})
 
 	if err != nil {
 

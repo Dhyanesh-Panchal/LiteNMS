@@ -1,11 +1,11 @@
-package containers
+package writer
 
 import (
 	. "datastore/containers"
 	"sync"
 )
 
-type WriteBuffer struct {
+type BatchBuffer struct {
 	buffer map[StoragePoolKey]map[uint32][]DataPoint
 
 	flushLock sync.RWMutex
@@ -13,11 +13,11 @@ type WriteBuffer struct {
 	EmptyBuffer bool
 }
 
-func NewWritePool() *WriteBuffer {
+func NewBatchBuffer() *BatchBuffer {
 
 	pool := make(map[StoragePoolKey]map[uint32][]DataPoint)
 
-	return &WriteBuffer{
+	return &BatchBuffer{
 
 		buffer: pool,
 
@@ -26,9 +26,10 @@ func NewWritePool() *WriteBuffer {
 
 }
 
-func (buffer *WriteBuffer) AddDataPoint(key StoragePoolKey, objectId uint32, dataPoint DataPoint) {
+func (buffer *BatchBuffer) AddDataPoint(key StoragePoolKey, objectId uint32, dataPoint DataPoint) {
 
 	buffer.flushLock.Lock()
+
 	defer buffer.flushLock.Unlock()
 
 	buffer.EmptyBuffer = false
@@ -43,7 +44,7 @@ func (buffer *WriteBuffer) AddDataPoint(key StoragePoolKey, objectId uint32, dat
 
 }
 
-func (buffer *WriteBuffer) GetDataPoints(key StoragePoolKey, objectId uint32) []DataPoint {
+func (buffer *BatchBuffer) GetDataPoints(key StoragePoolKey, objectId uint32) []DataPoint {
 
 	buffer.flushLock.RLock()
 
@@ -52,7 +53,7 @@ func (buffer *WriteBuffer) GetDataPoints(key StoragePoolKey, objectId uint32) []
 	return buffer.buffer[key][objectId]
 }
 
-func (buffer *WriteBuffer) Flush(dataChannel chan<- WritableObjectData) {
+func (buffer *BatchBuffer) Flush(dataChannel chan<- WritableObjectBatch) {
 
 	buffer.flushLock.Lock()
 
@@ -62,7 +63,7 @@ func (buffer *WriteBuffer) Flush(dataChannel chan<- WritableObjectData) {
 
 		for objectId, dataPoints := range objects {
 
-			objectData := WritableObjectData{
+			objectData := WritableObjectBatch{
 				storageKey,
 
 				objectId,

@@ -11,11 +11,13 @@ const DataType = "dataType"
 var CounterConfig = map[uint16]map[string]interface{}{}
 
 var (
-	Writers             int
-	BlockSize           uint32
-	Partitions          uint32
-	InitialFileSize     int64
-	FileSizeGrowthDelta int64
+	Writers              int
+	DataWriteChannelSize int
+	BlockSize            uint32
+	Partitions           uint32
+	InitialFileSize      int64
+	FileSizeGrowthDelta  int64
+	SubscriberBindPort   string
 )
 
 var CurrentWorkingDirectory string
@@ -75,6 +77,8 @@ func LoadConfig() error {
 	// Set General Config Variables
 	Writers = int(generalConfig["Writers"].(float64))
 
+	DataWriteChannelSize = int(generalConfig["DataWriteChannelSize"].(float64))
+
 	Partitions = uint32(generalConfig["Partitions"].(float64))
 
 	BlockSize = uint32(generalConfig["BlockSize"].(float64))
@@ -84,6 +88,8 @@ func LoadConfig() error {
 	InitialFileSize = int64(generalConfig["InitialFileSize"].(float64)) * pageSize
 
 	FileSizeGrowthDelta = int64(generalConfig["FileSizeGrowthDelta"].(float64)) * pageSize
+
+	SubscriberBindPort = generalConfig["SubscriberBindPort"].(string)
 
 	return nil
 

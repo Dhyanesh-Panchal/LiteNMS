@@ -2,13 +2,15 @@ package containers
 
 import (
 	. "datastore/utils"
-	"fmt"
+	"errors"
 	"log"
 	"os"
 	"strconv"
 	"sync"
 	"syscall"
 )
+
+var ErrUnmappingFile = errors.New("error unmapping file")
 
 type FileMapping struct {
 	mapping []byte
@@ -21,11 +23,24 @@ type FileMapping struct {
 }
 
 func loadFileMapping(partitionId uint32, storagePath string) (*FileMapping, error) {
+
 	filePath := storagePath + "/data_" + strconv.Itoa(int(partitionId)) + ".bin"
 
 	file, err := os.OpenFile(filePath, os.O_RDWR, 0655)
 
 	if err != nil {
+
+		if os.IsNotExist(err) {
+
+			file, err = os.Create(filePath)
+
+			if err != nil {
+
+				return nil, err
+
+			}
+
+		}
 
 		return nil, err
 
@@ -43,7 +58,7 @@ func loadFileMapping(partitionId uint32, storagePath string) (*FileMapping, erro
 
 	if err != nil {
 
-		fmt.Println(err)
+		log.Println("Error mapping the file for storage:", storagePath, "partitionId:", partitionId)
 
 		return nil, err
 
@@ -67,9 +82,9 @@ func (fileMapping *FileMapping) UnmapFile() error {
 
 	if err != nil {
 
-		log.Println("Error unmapping file", err)
+		log.Println(ErrUnmappingFile)
 
-		return err
+		return ErrUnmappingFile
 
 	}
 
@@ -102,9 +117,9 @@ func truncateFile(fileMapping *FileMapping) error {
 
 	if err := syscall.Munmap(fileMapping.mapping); err != nil {
 
-		log.Println("Error unmapping file", fileMapping.file.Name(), err)
+		log.Println(ErrUnmappingFile)
 
-		return err
+		return ErrUnmappingFile
 	}
 
 	newMapping, err := syscall.Mmap(int(fileMapping.file.Fd()), 0, int(newSize), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)

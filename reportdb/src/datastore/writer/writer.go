@@ -3,78 +3,40 @@ package writer
 import (
 	. "datastore/containers"
 	. "datastore/utils"
-	. "datastore/writer/containers"
+	"fmt"
 	"log"
-	"time"
 )
 
-var (
-	FlushDuration = time.Second * 1
-)
-
-func InitWriter(dataWriteChannel <-chan []PolledDataPoint, storagePool *StoragePool) {
-
-	writersChannel := make(chan WritableObjectData, Writers)
-	writersShutdown := make(chan bool, Writers)
-
-	for i := 0; i < Writers; i++ {
-
-		go writeWorker(writersChannel, storagePool)
-
-	}
-
-	writeBuffer := NewWritePool()
-
-	go WriteBufferFlushRoutine(writeBuffer, writersChannel)
-
-	// Listen
-	for {
-		select {
-		case <-GlobalShutdown:
-			break
-
-		case polledData := <-dataWriteChannel:
-
-			for _, dataPoint := range polledData {
-
-				storageKey := StoragePoolKey{
-					Date:      UnixToDate(dataPoint.Timestamp),
-					CounterId: dataPoint.CounterId,
-				}
-
-				writeBuffer.AddDataPoint(
-
-					storageKey,
-
-					dataPoint.ObjectId,
-
-					DataPoint{
-
-						Timestamp: dataPoint.Timestamp,
-
-						Value: dataPoint.Value,
-					},
-				)
-
-			}
-
-		}
-
-	}
-
-	// Global Shutdown sequence
-
+type WritableObjectBatch struct {
+	StorageKey StoragePoolKey
+	ObjectId   uint32
+	Values     []DataPoint
 }
 
-func writeWorker(writersChannel <-chan WritableObjectData, storagePool *StoragePool, shutdownChannel chan bool) {
+func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool, shutdownChannel chan bool) {
+
 	for {
+
 		select {
+
 		case <-shutdownChannel:
+
+			log.Println("Shutting down writer goroutine")
+
+			return
 
 		case dataBatch := <-writersChannel:
 
+			fmt.Println(dataBatch.Values)
+
 			// Serialize the Data
 			data, err := SerializeBatch(dataBatch.Values, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string))
+
+			if err != nil {
+
+				log.Println("Error serializing the batch", err)
+
+			}
 
 			storageEngine, err := storagePool.GetStorage(dataBatch.StorageKey, true)
 
@@ -89,37 +51,6 @@ func writeWorker(writersChannel <-chan WritableObjectData, storagePool *StorageP
 			if err != nil {
 
 				log.Println("Error writing to storage:", err)
-
-			}
-		}
-	}
-}
-
-func WriteBufferFlushRoutine(dataWriteBuffer *WriteBuffer, writersChannel chan<- WritableObjectData) {
-
-	flushTicker := time.NewTicker(FlushDuration)
-
-	for {
-		select {
-		case <-GlobalShutdown:
-
-			// Flush present entries and exit
-
-			if !dataWriteBuffer.EmptyBuffer {
-
-				dataWriteBuffer.Flush(writersChannel)
-
-			}
-
-			flushTicker.Stop()
-
-			break
-
-		case <-flushTicker.C:
-
-			if !dataWriteBuffer.EmptyBuffer {
-
-				dataWriteBuffer.Flush(writersChannel)
 
 			}
 		}
