@@ -1,0 +1,133 @@
+package server
+
+import (
+	. "datastore/reader"
+	. "datastore/utils"
+	"encoding/json"
+	"fmt"
+	zmq "github.com/pebbe/zmq4"
+	"log"
+)
+
+func InitQueryHandler(queryChannel chan<- Query, queryResultChannel <-chan Result, globalShutdown <-chan bool) {
+
+	context, err := zmq.NewContext()
+
+	if err != nil {
+
+		log.Println("Error initializing query listener context", err)
+
+		return
+
+	}
+
+	shutDown := make(chan bool)
+
+	go queryListener(context, queryChannel, queryResultChannel, shutDown)
+
+	// Listen for global shutdown
+	<-globalShutdown
+
+	// Send shutdown to socket
+	shutDown <- true
+
+	err = context.Term()
+
+	if err != nil {
+
+		log.Println("Error terminating query listener context", err)
+
+	}
+
+	// Wait for socket to close.
+	<-shutDown
+
+}
+
+func queryListener(context *zmq.Context, queryChannel chan<- Query, queryResultChannel <-chan Result, shutDown chan bool) {
+
+	socket, err := context.NewSocket(zmq.REP)
+
+	if err != nil {
+
+		log.Fatal("Error initializing query listener socket", err)
+
+	}
+
+	err = socket.Bind("tcp://*:" + QueryListenerBindPort)
+
+	if err != nil {
+
+		log.Fatal("Error binding the ", err)
+
+	}
+
+	for {
+		select {
+
+		case <-shutDown:
+
+			err := socket.Close()
+
+			if err != nil {
+
+				log.Println("Error closing query listener socket ", err)
+
+			}
+
+			// Acknowledge shutDown
+			shutDown <- true
+
+			return
+
+		default:
+
+			queryBytes, err := socket.RecvBytes(0)
+
+			if err != nil {
+
+				log.Println("Error receiving query ", err)
+
+			}
+
+			fmt.Println("Received query: ", string(queryBytes))
+
+			var query Query
+
+			err = json.Unmarshal(queryBytes, &query)
+
+			if err != nil {
+
+				log.Println("Error unmarshalling query ", err)
+
+			}
+
+			// Send it to reader and wait for the response
+
+			queryChannel <- query
+
+			result := <-queryResultChannel
+
+			fmt.Println(result)
+
+			resultBytes, err := json.Marshal(result)
+
+			if err != nil {
+
+				log.Println("Error marshalling query result ", err)
+
+			}
+
+			_, err = socket.SendBytes(resultBytes, 0)
+
+			if err != nil {
+
+				log.Println("Error sending query result ", err)
+
+			}
+
+		}
+
+	}
+
+}

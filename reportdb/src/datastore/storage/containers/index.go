@@ -126,7 +126,7 @@ func (index *Index) WriteIndexToFile(storagePath string, partitionId uint32) err
 
 	defer index.mu.Unlock()
 
-	// TODO: Change from MarshalIndent to Only Marshal
+	// Change from MarshalIndent to Only Marshal
 
 	indexBytes, err := json.MarshalIndent(index, "", "  ")
 

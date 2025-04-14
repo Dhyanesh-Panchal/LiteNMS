@@ -13,46 +13,37 @@ type WritableObjectBatch struct {
 	Values     []DataPoint
 }
 
-func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool, shutdownChannel chan bool) {
+func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool) {
 
-	for {
+	for dataBatch := range writersChannel {
 
-		select {
+		fmt.Println(dataBatch.Values)
 
-		case <-shutdownChannel:
+		// Serialize the Data
+		data, err := SerializeBatch(dataBatch.Values, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string))
 
-			log.Println("Shutting down writer goroutine")
+		if err != nil {
 
-			return
+			log.Println("Error serializing the batch", err)
 
-		case dataBatch := <-writersChannel:
+		}
 
-			fmt.Println(dataBatch.Values)
+		storageEngine, err := storagePool.GetStorage(dataBatch.StorageKey, true)
 
-			// Serialize the Data
-			data, err := SerializeBatch(dataBatch.Values, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string))
+		if err != nil {
 
-			if err != nil {
+			log.Println("Error acquiring storage engine for writing", err)
 
-				log.Println("Error serializing the batch", err)
+		}
 
-			}
+		err = storageEngine.Put(dataBatch.ObjectId, data)
 
-			storageEngine, err := storagePool.GetStorage(dataBatch.StorageKey, true)
+		if err != nil {
 
-			if err != nil {
+			log.Println("Error writing to storage:", err)
 
-				log.Println("Error acquiring storage engine for writing", err)
-
-			}
-
-			err = storageEngine.Put(dataBatch.ObjectId, data)
-
-			if err != nil {
-
-				log.Println("Error writing to storage:", err)
-
-			}
 		}
 	}
+
+	log.Println("Writer exiting.")
 }

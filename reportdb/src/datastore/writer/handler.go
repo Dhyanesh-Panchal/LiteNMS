@@ -4,6 +4,7 @@ import (
 	. "datastore/containers"
 	. "datastore/utils"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -11,17 +12,17 @@ var (
 	FlushDuration = time.Second * 1
 )
 
-func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *StoragePool) {
+func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *StoragePool, shutdownWaitGroup *sync.WaitGroup) {
+
+	defer shutdownWaitGroup.Done()
 
 	writersChannel := make(chan WritableObjectBatch, Writers)
-
-	writersShutdown := make(chan bool, Writers)
 
 	flushRoutineShutdown := make(chan bool)
 
 	for i := 0; i < Writers; i++ {
 
-		go writer(writersChannel, storagePool, writersShutdown)
+		go writer(writersChannel, storagePool)
 
 	}
 
@@ -30,68 +31,57 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 	go batchBufferFlushRoutine(batchBuffer, writersChannel, flushRoutineShutdown)
 
 	// Listen
-	for {
-		select {
-		case <-GlobalShutdown:
+	for polledData := range dataWriteChannel {
 
-			flushRoutineShutdown <- true
+		for _, dataPoint := range polledData {
 
-			// Wait for final flush
-			<-flushRoutineShutdown
+			if _, ok := CounterConfig[dataPoint.CounterId]; !ok {
 
-			for range Writers {
+				// Invalid counterId, skip
+				log.Println("Bad CounterID, Dropping dataPoint:", dataPoint)
 
-				writersShutdown <- true
+				continue
 
 			}
 
-			return
+			storageKey := StoragePoolKey{
 
-		case polledData := <-dataWriteChannel:
+				Date: UnixToDate(dataPoint.Timestamp),
 
-			for _, dataPoint := range polledData {
-
-				if _, ok := CounterConfig[dataPoint.CounterId]; !ok {
-
-					// Invalid counterId, skip
-					log.Println("Bad CounterID for dataPoint:", dataPoint)
-					
-					continue
-
-				}
-
-				storageKey := StoragePoolKey{
-
-					Date: UnixToDate(dataPoint.Timestamp),
-
-					CounterId: dataPoint.CounterId,
-				}
-
-				batchBuffer.AddDataPoint(
-
-					storageKey,
-
-					dataPoint.ObjectId,
-
-					DataPoint{
-
-						Timestamp: dataPoint.Timestamp,
-
-						Value: dataPoint.Value,
-					},
-				)
-
+				CounterId: dataPoint.CounterId,
 			}
+
+			batchBuffer.AddDataPoint(
+
+				storageKey,
+
+				dataPoint.ObjectId,
+
+				DataPoint{
+
+					Timestamp: dataPoint.Timestamp,
+
+					Value: dataPoint.Value,
+				},
+			)
 
 		}
 
 	}
 
+	// Channel Closed, Shutting down writer
+
+	flushRoutineShutdown <- true
+
+	// Wait for final flush
+	<-flushRoutineShutdown
+
+	// Close writers
+	close(writersChannel)
+
 }
 
 func batchBufferFlushRoutine(batchBuffer *BatchBuffer, writersChannel chan<- WritableObjectBatch, flushRoutineShutdown chan bool) {
-
-	flushTicker := time.NewTicker(FlushDuration)
 
 	for {
 
@@ -107,13 +97,13 @@ func batchBufferFlushRoutine(batchBuffer *BatchBuffer, writersChannel chan<- Wri
 
 			}
 
-			flushTicker.Stop()
+			batchBuffer.flushTicker.Stop()
 
 			flushRoutineShutdown <- true
 
 			return
 
-		case <-flushTicker.C:
+		case <-batchBuffer.flushTicker.C:
 
 			if !batchBuffer.EmptyBuffer {
 

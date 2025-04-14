@@ -73,35 +73,6 @@ func loadFileMapping(partitionId uint32, storagePath string) (*FileMapping, erro
 
 }
 
-func (fileMapping *FileMapping) UnmapFile() error {
-	fileMapping.lock.Lock()
-
-	defer fileMapping.lock.Unlock()
-
-	err := syscall.Munmap(fileMapping.mapping)
-
-	if err != nil {
-
-		log.Println(ErrUnmappingFile)
-
-		return ErrUnmappingFile
-
-	}
-
-	err = fileMapping.file.Close()
-
-	if err != nil {
-
-		log.Println("Error closing file", err)
-
-		return err
-
-	}
-
-	return nil
-
-}
-
 func truncateFile(fileMapping *FileMapping) error {
 
 	newSize := int64(len(fileMapping.mapping)) + FileSizeGrowthDelta
@@ -133,6 +104,35 @@ func truncateFile(fileMapping *FileMapping) error {
 	}
 
 	fileMapping.mapping = newMapping
+
+	return nil
+
+}
+
+func (fileMapping *FileMapping) UnmapFile() error {
+	fileMapping.lock.Lock()
+
+	defer fileMapping.lock.Unlock()
+
+	err := syscall.Munmap(fileMapping.mapping)
+
+	if err != nil {
+
+		log.Println(ErrUnmappingFile)
+
+		return ErrUnmappingFile
+
+	}
+
+	err = fileMapping.file.Close()
+
+	if err != nil {
+
+		log.Println("Error closing file", err)
+
+		return err
+
+	}
 
 	return nil
 

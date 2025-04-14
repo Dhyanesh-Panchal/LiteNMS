@@ -3,23 +3,30 @@ package writer
 import (
 	. "datastore/containers"
 	"sync"
+	"time"
 )
 
 type BatchBuffer struct {
-	buffer map[StoragePoolKey]map[uint32][]DataPoint
+	buffer map[StoragePoolKey]map[uint32][]DataPoint // StoragePoolKey -> {Date,CounterId},
 
-	flushLock sync.RWMutex
+	flushTicker *time.Ticker
 
 	EmptyBuffer bool
+
+	flushLock sync.RWMutex
 }
 
 func NewBatchBuffer() *BatchBuffer {
 
 	pool := make(map[StoragePoolKey]map[uint32][]DataPoint)
 
+	flushTicker := time.NewTicker(FlushDuration)
+
 	return &BatchBuffer{
 
 		buffer: pool,
+
+		flushTicker: flushTicker,
 
 		EmptyBuffer: true,
 	}

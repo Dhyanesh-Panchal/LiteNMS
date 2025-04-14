@@ -3,13 +3,12 @@ package db
 import (
 	. "datastore/containers"
 	. "datastore/reader"
-	. "datastore/storage"
 	. "datastore/utils"
 	. "datastore/writer"
-	"errors"
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 type ReportDB struct {
@@ -18,73 +17,73 @@ type ReportDB struct {
 	dataWriteChannel chan []PolledDataPoint
 }
 
-func InitDB(dataWriteChannel chan []PolledDataPoint) (*ReportDB, error) {
+func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryChannel <-chan Query, queryResultChannel chan<- Result, globalShutdown <-chan bool) {
 
 	// Ensure storage directory is created.
 	err := os.MkdirAll(filepath.Dir(filepath.Dir(CurrentWorkingDirectory))+"/data", 0777)
 
 	if err != nil {
 
-		log.Println(err)
+		log.Println("Error creating data directory:", err)
 
-		return nil, err
+		return
 
 	}
 
 	storagePool := NewOpenStoragePool()
 
-	go InitWriteHandler(dataWriteChannel, storagePool)
+	var shutdownWaitGroup sync.WaitGroup
 
-	return &ReportDB{
+	shutdownWaitGroup.Add(2)
 
-		storagePool: storagePool,
+	go InitWriteHandler(dataWriteChannel, storagePool, &shutdownWaitGroup)
 
-		dataWriteChannel: dataWriteChannel,
-	}, nil
+	go InitReader(queryChannel, queryResultChannel, storagePool, &shutdownWaitGroup)
 
-}
+	<-globalShutdown
 
-func (db ReportDB) Write(records []PolledDataPoint) {
+	close(queryResultChannel)
 
-	db.dataWriteChannel <- records
-
-}
-
-func (db ReportDB) QueryHistogram(from uint32, to uint32, counterId uint16, objects []uint32) (map[uint32][]DataPoint, error) {
-
-	finalData := map[uint32][]DataPoint{}
-
-	for date := from; date <= to; date += 86400 {
-
-		dateObject := UnixToDate(date)
-
-		storageKey := StoragePoolKey{
-
-			Date: dateObject,
-
-			CounterId: counterId,
-		}
-
-		storageEngine, err := db.storagePool.GetStorage(storageKey, false)
-
-		if err != nil {
-
-			if errors.Is(err, ErrStorageDoesNotExist) {
-
-				continue
-
-			}
-
-			return nil, err
-
-		}
-
-		ReadFullDate(dateObject, storageEngine, counterId, objects, finalData, from, to)
-
-		db.storagePool.CloseStorage(storageKey)
-
-	}
-
-	return finalData, nil
+	// Wait for writer Reader to shut down
+	shutdownWaitGroup.Wait()
 
 }
+
+//func (db ReportDB) QueryHistogram(from uint32, to uint32, counterId uint16, objects []uint32) (map[uint32][]DataPoint, error) {
+//
+//	finalData := map[uint32][]DataPoint{}
+//
+//	for date := from - (from % 86400); date <= to; date += 86400 {
+//
+//		dateObject := UnixToDate(date)
+//
+//		storageKey := StoragePoolKey{
+//
+//			Date: dateObject,
+//
+//			CounterId: counterId,
+//		}
+//
+//		storageEngine, err := db.storagePool.GetStorage(storageKey, false)
+//
+//		if err != nil {
+//
+//			if errors.Is(err, ErrStorageDoesNotExist) {
+//
+//				continue
+//
+//			}
+//
+//			return nil, err
+//
+//		}
+//
+//		readSingleDay(dateObject, storageEngine, counterId, objects, finalData, from, to)
+//
+//		db.storagePool.CloseStorage(storageKey)
+//
+//	}
+//
+//	return finalData, nil
+//
+//}

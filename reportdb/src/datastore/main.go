@@ -3,13 +3,10 @@ package main
 import (
 	. "datastore/containers"
 	. "datastore/db"
+	. "datastore/reader"
 	. "datastore/server"
 	. "datastore/utils"
-	//"encoding/json"
-	//"fmt"
 	"log"
-	//"os"
-	"time"
 )
 
 func main() {
@@ -23,66 +20,24 @@ func main() {
 		return
 
 	}
+	globalShutdown := InitShutdownHandler(4)
 
 	dataWriteChannel := make(chan []PolledDataPoint, DataWriteChannelSize)
 
-	go InitPollSubscriber(dataWriteChannel)
+	queryChannel := make(chan Query, QueryChannelSize)
 
-	_, err = InitDB(dataWriteChannel)
+	queryResultChannel := make(chan Result, QueryChannelSize)
 
-	if err != nil {
+	go InitDB(dataWriteChannel, queryChannel, queryResultChannel, globalShutdown)
 
-		log.Println("Error initializing database:", err)
+	go InitPollListener(dataWriteChannel, globalShutdown)
 
-		return
+	go InitQueryHandler(queryChannel, queryResultChannel, globalShutdown)
 
-	}
+	<-globalShutdown
 
-	time.Sleep(time.Minute)
+	close(dataWriteChannel)
 
-	//// Server initialization will come here.
-	//
-	//// Currently Just for testing purpose, reading and writing is performed here.
-	//
-	//// Read and unmarshal JSON data
-	//
-	//data, err := os.ReadFile(CurrentWorkingDirectory + "/test-data/polling_data_2.json")
-	//
-	//if err != nil {
-	//
-	//	log.Fatalf("Error reading JSON file: %v", err)
-	//
-	//}
-	//
-	//var pollingData PollingData
-	//
-	//if err := json.Unmarshal(data, &pollingData); err != nil {
-	//
-	//	log.Fatal("Error unmarshalling JSON: ", err)
-	//
-	//}
-	//
-	//fmt.Println(len(pollingData.PollingData))
-	//
-	//for i := 0; i < len(pollingData.PollingData)/20; i++ {
-	//
-	//	database.Write(pollingData.PollingData[i*20 : (i+1)*20])
-	//
-	//	time.Sleep(400 * time.Millisecond)
-	//
-	//}
-	//
-	//from := uint32(1704067200)
-	//
-	//to := uint32(1704067230)
-	//
-	//response, err := database.QueryHistogram(from, to, 1, []uint32{1, 2, 3})
-	//
-	//log.Println(response)
+	close(queryChannel)
 
-}
-
-// PollingData Just for testing
-type PollingData struct {
-	PollingData []PolledDataPoint `json:"polling_data"`
 }

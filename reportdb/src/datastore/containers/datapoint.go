@@ -8,8 +8,8 @@ import (
 )
 
 type DataPoint struct {
-	Timestamp uint32
-	Value     interface{}
+	Timestamp uint32      `json:"timestamp"`
+	Value     interface{} `json:"value"`
 }
 
 func SerializeBatch(data []DataPoint, dataType string) ([]byte, error) {
