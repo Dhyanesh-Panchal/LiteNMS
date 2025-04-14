@@ -5,7 +5,6 @@ import (
 	. "datastore/utils"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -62,7 +61,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 			return ErrStorageDoesNotExist
 		}
 
-		fmt.Printf("Creating storage directory: %s\n", storagePath)
+		log.Printf("Creating storage directory: %s\n", storagePath)
 
 		err = os.MkdirAll(storagePath, 0755)
 

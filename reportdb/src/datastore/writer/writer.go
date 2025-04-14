@@ -3,8 +3,8 @@ package writer
 import (
 	. "datastore/containers"
 	. "datastore/utils"
-	"fmt"
 	"log"
+	"sync"
 )
 
 type WritableObjectBatch struct {
@@ -13,11 +13,13 @@ type WritableObjectBatch struct {
 	Values     []DataPoint
 }
 
-func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool) {
+func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool, writerWaitGroup *sync.WaitGroup) {
+
+	defer writerWaitGroup.Done()
 
 	for dataBatch := range writersChannel {
 
-		fmt.Println(dataBatch.Values)
+		log.Println(dataBatch.Values)
 
 		// Serialize the Data
 		data, err := SerializeBatch(dataBatch.Values, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string))

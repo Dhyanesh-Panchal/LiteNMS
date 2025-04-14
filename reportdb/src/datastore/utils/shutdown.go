@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -23,9 +22,7 @@ func InitShutdownHandler(signalCount int) <-chan bool {
 
 		// signal received, broadcast shutdown
 		for range signalCount {
-
-			fmt.Println("Shutdown sent")
-
+			
 			GlobalShutdown <- true
 
 		}

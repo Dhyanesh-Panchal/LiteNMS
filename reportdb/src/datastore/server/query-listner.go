@@ -4,12 +4,16 @@ import (
 	. "datastore/reader"
 	. "datastore/utils"
 	"encoding/json"
-	"fmt"
 	zmq "github.com/pebbe/zmq4"
 	"log"
+	"sync"
 )
 
-func InitQueryHandler(queryChannel chan<- Query, queryResultChannel <-chan Result, globalShutdown <-chan bool) {
+func InitQueryListener(queryReceiveChannel chan<- Query, queryResultChannel <-chan Result, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
+
+	defer globalShutdownWaitGroup.Done()
+
+	defer log.Println("Query Listener Exiting")
 
 	context, err := zmq.NewContext()
 
@@ -21,9 +25,9 @@ func InitQueryHandler(queryChannel chan<- Query, queryResultChannel <-chan Resul
 
 	}
 
-	shutDown := make(chan bool)
+	shutDown := make(chan bool, 1)
 
-	go queryListener(context, queryChannel, queryResultChannel, shutDown)
+	go queryListener(context, queryReceiveChannel, queryResultChannel, shutDown)
 
 	// Listen for global shutdown
 	<-globalShutdown
@@ -44,7 +48,7 @@ func InitQueryHandler(queryChannel chan<- Query, queryResultChannel <-chan Resul
 
 }
 
-func queryListener(context *zmq.Context, queryChannel chan<- Query, queryResultChannel <-chan Result, shutDown chan bool) {
+func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, queryResultChannel <-chan Result, shutDown chan bool) {
 
 	socket, err := context.NewSocket(zmq.REP)
 
@@ -90,7 +94,7 @@ func queryListener(context *zmq.Context, queryChannel chan<- Query, queryResultC
 
 			}
 
-			fmt.Println("Received query: ", string(queryBytes))
+			log.Println("Received query: ", string(queryBytes))
 
 			var query Query
 
@@ -104,11 +108,11 @@ func queryListener(context *zmq.Context, queryChannel chan<- Query, queryResultC
 
 			// Send it to reader and wait for the response
 
-			queryChannel <- query
+			queryReceiveChannel <- query
 
 			result := <-queryResultChannel
 
-			fmt.Println(result)
+			log.Println(result)
 
 			resultBytes, err := json.Marshal(result)
 

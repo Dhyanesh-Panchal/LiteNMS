@@ -17,7 +17,11 @@ type ReportDB struct {
 	dataWriteChannel chan []PolledDataPoint
 }
 
-func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryChannel <-chan Query, queryResultChannel chan<- Result, globalShutdown <-chan bool) {
+func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
+
+	defer globalShutdownWaitGroup.Done()
+
+	defer log.Println("Database closed")
 
 	// Ensure storage directory is created.
 	err := os.MkdirAll(filepath.Dir(filepath.Dir(CurrentWorkingDirectory))+"/data", 0777)
@@ -32,20 +36,18 @@ func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryChannel <-chan Query
 
 	storagePool := NewOpenStoragePool()
 
-	var shutdownWaitGroup sync.WaitGroup
+	var dbShutdownWaitGroup sync.WaitGroup
 
-	shutdownWaitGroup.Add(2)
+	dbShutdownWaitGroup.Add(2)
 
-	go InitWriteHandler(dataWriteChannel, storagePool, &shutdownWaitGroup)
+	go InitWriteHandler(dataWriteChannel, storagePool, &dbShutdownWaitGroup)
 
-	go InitReader(queryChannel, queryResultChannel, storagePool, &shutdownWaitGroup)
+	go InitQueryHandler(queryReceiveChannel, queryResultChannel, storagePool, &dbShutdownWaitGroup)
 
 	<-globalShutdown
 
-	close(queryResultChannel)
-
 	// Wait for writer Reader to shut down
-	shutdownWaitGroup.Wait()
+	dbShutdownWaitGroup.Wait()
 
 }
 

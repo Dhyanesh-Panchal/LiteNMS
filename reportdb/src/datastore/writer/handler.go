@@ -16,13 +16,19 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 
 	defer shutdownWaitGroup.Done()
 
+	defer log.Println("Write Handler Exiting")
+
 	writersChannel := make(chan WritableObjectBatch, Writers)
 
 	flushRoutineShutdown := make(chan bool)
 
+	var writersWaitGroup sync.WaitGroup
+
+	writersWaitGroup.Add(Writers)
+
 	for i := 0; i < Writers; i++ {
 
-		go writer(writersChannel, storagePool)
+		go writer(writersChannel, storagePool, &writersWaitGroup)
 
 	}
 
@@ -78,6 +84,8 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 
 	// Close writers
 	close(writersChannel)
+
+	writersWaitGroup.Wait()
 
 }
 

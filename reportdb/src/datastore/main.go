@@ -7,6 +7,7 @@ import (
 	. "datastore/server"
 	. "datastore/utils"
 	"log"
+	"sync"
 )
 
 func main() {
@@ -22,22 +23,32 @@ func main() {
 	}
 	globalShutdown := InitShutdownHandler(4)
 
+	var globalShutdownWaitGroup sync.WaitGroup
+
 	dataWriteChannel := make(chan []PolledDataPoint, DataWriteChannelSize)
 
-	queryChannel := make(chan Query, QueryChannelSize)
+	queryReceiveChannel := make(chan Query, QueryChannelSize)
 
 	queryResultChannel := make(chan Result, QueryChannelSize)
 
-	go InitDB(dataWriteChannel, queryChannel, queryResultChannel, globalShutdown)
+	globalShutdownWaitGroup.Add(3)
 
-	go InitPollListener(dataWriteChannel, globalShutdown)
+	go InitDB(dataWriteChannel, queryReceiveChannel, queryResultChannel, globalShutdown, &globalShutdownWaitGroup)
 
-	go InitQueryHandler(queryChannel, queryResultChannel, globalShutdown)
+	go InitPollListener(dataWriteChannel, globalShutdown, &globalShutdownWaitGroup)
+
+	go InitQueryListener(queryReceiveChannel, queryResultChannel, globalShutdown, &globalShutdownWaitGroup)
 
 	<-globalShutdown
 
+	log.Println("Closing dataWrite and queryReceive channel")
+
 	close(dataWriteChannel)
 
-	close(queryChannel)
+	close(queryReceiveChannel)
+
+	log.Println("waiting for globalShutdownWaitGroup to finish")
+
+	globalShutdownWaitGroup.Wait()
 
 }

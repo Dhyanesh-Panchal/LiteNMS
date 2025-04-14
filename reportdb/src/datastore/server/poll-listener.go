@@ -6,9 +6,14 @@ import (
 	"encoding/json"
 	zmq "github.com/pebbe/zmq4"
 	"log"
+	"sync"
 )
 
-func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-chan bool) {
+func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
+
+	defer globalShutdownWaitGroup.Done()
+
+	defer log.Println("Poll Listener Exiting")
 
 	context, err := zmq.NewContext()
 
@@ -20,7 +25,7 @@ func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-cha
 
 	}
 
-	shutDown := make(chan bool)
+	shutDown := make(chan bool, 1)
 
 	go pollListener(context, dataChannel, shutDown)
 

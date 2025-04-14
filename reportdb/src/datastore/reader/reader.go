@@ -9,11 +9,11 @@ import (
 	"sync"
 )
 
-func InitReader(queryReaderChannel <-chan Query, queryResultChannel chan<- Result, storagePool *StoragePool, shutdownWaitGroup *sync.WaitGroup) {
+func InitQueryHandler(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, storagePool *StoragePool, shutdownWaitGroup *sync.WaitGroup) {
 
 	defer shutdownWaitGroup.Done()
 
-	for query := range queryReaderChannel {
+	for query := range queryReceiveChannel {
 
 		result, err := queryHistogram(query.From, query.To, query.CounterId, query.ObjectIds, storagePool)
 
