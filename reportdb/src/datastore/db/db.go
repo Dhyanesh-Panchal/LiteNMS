@@ -42,12 +42,15 @@ func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-cha
 
 	go InitWriteHandler(dataWriteChannel, storagePool, &dbShutdownWaitGroup)
 
-	go InitQueryHandler(queryReceiveChannel, queryResultChannel, storagePool, &dbShutdownWaitGroup)
+	go InitQueryEngine(queryReceiveChannel, queryResultChannel, storagePool, &dbShutdownWaitGroup)
 
 	<-globalShutdown
 
 	// Wait for writer Reader to shut down
 	dbShutdownWaitGroup.Wait()
+
+	// Close the storagePool
+	storagePool.ClosePool()
 
 }
 

@@ -4,6 +4,7 @@ import (
 	. "datastore/reader"
 	. "datastore/utils"
 	"encoding/json"
+	"errors"
 	zmq "github.com/pebbe/zmq4"
 	"log"
 	"sync"
@@ -90,11 +91,19 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 			if err != nil {
 
-				log.Println("Error receiving query ", err)
+				if errors.Is(zmq.AsErrno(err), zmq.ETERM) {
+
+					log.Println("Query Handler ZMQ-Context terminated, closing the socket")
+
+				} else {
+
+					log.Println("Error receiving query ", err)
+
+				}
+
+				continue
 
 			}
-
-			log.Println("Received query: ", string(queryBytes))
 
 			var query Query
 

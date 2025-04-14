@@ -19,7 +19,7 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 	for dataBatch := range writersChannel {
 
-		log.Println(dataBatch.Values)
+		log.Println(dataBatch)
 
 		// Serialize the Data
 		data, err := SerializeBatch(dataBatch.Values, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string))

@@ -23,7 +23,7 @@ type Result struct {
 	Data map[uint32][]DataPoint `json:"data"`
 }
 
-func InitQueryHandler(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, storagePool *StoragePool, shutdownWaitGroup *sync.WaitGroup) {
+func InitQueryEngine(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, storagePool *StoragePool, shutdownWaitGroup *sync.WaitGroup) {
 
 	defer shutdownWaitGroup.Done()
 
@@ -70,6 +70,8 @@ func queryHistogram(from uint32, to uint32, counterId uint16, objects []uint32, 
 		if err != nil {
 
 			if errors.Is(err, ErrStorageDoesNotExist) {
+
+				log.Println("Storage not present for date:", dateObject)
 
 				continue
 

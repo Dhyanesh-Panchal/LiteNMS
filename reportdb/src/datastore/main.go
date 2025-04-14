@@ -39,6 +39,8 @@ func main() {
 
 	go InitQueryListener(queryReceiveChannel, queryResultChannel, globalShutdown, &globalShutdownWaitGroup)
 
+	go InitProfiling()
+
 	<-globalShutdown
 
 	log.Println("Closing dataWrite and queryReceive channel")

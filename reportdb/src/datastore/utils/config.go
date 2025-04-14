@@ -20,6 +20,7 @@ var (
 	FileSizeGrowthDelta   int64
 	PollListenerBindPort  string
 	QueryListenerBindPort string
+	ProfilingPort         string
 )
 
 var CurrentWorkingDirectory string
@@ -96,6 +97,8 @@ func LoadConfig() error {
 	PollListenerBindPort = generalConfig["PollListenerBindPort"].(string)
 
 	QueryListenerBindPort = generalConfig["QueryListenerBindPort"].(string)
+
+	ProfilingPort = generalConfig["ProfilingPort"].(string)
 
 	return nil
 

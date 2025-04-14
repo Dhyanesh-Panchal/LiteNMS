@@ -4,6 +4,7 @@ import (
 	. "datastore/containers"
 	. "datastore/utils"
 	"encoding/json"
+	"errors"
 	zmq "github.com/pebbe/zmq4"
 	"log"
 	"sync"
@@ -48,7 +49,7 @@ func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-cha
 
 }
 
-func pollListener(context *zmq.Context, dataChannel chan<- []PolledDataPoint, shutDown chan bool) {
+func pollListener(context *zmq.Context, dataWriteChannel chan<- []PolledDataPoint, shutDown chan bool) {
 
 	socket, err := context.NewSocket(zmq.PULL)
 
@@ -91,7 +92,15 @@ func pollListener(context *zmq.Context, dataChannel chan<- []PolledDataPoint, sh
 
 			if err != nil {
 
-				log.Println("Error receiving poll data", err)
+				if errors.Is(zmq.AsErrno(err), zmq.ETERM) {
+
+					log.Println("Poll listener ZMQ-Context terminated, closing the socket")
+
+				} else {
+
+					log.Println("Error receiving poll data", err)
+
+				}
 
 				continue
 
@@ -108,7 +117,7 @@ func pollListener(context *zmq.Context, dataChannel chan<- []PolledDataPoint, sh
 				continue
 			}
 
-			dataChannel <- dataPoints
+			dataWriteChannel <- dataPoints
 
 		}
 
