@@ -69,7 +69,7 @@ func (pool *StoragePool) CloseStorage(key StoragePoolKey) {
 
 }
 
-func (pool *StoragePool) ClosePool(key StoragePoolKey) {
+func (pool *StoragePool) ClosePool() {
 
 	for _, storage := range pool.storagePool {
 

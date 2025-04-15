@@ -2,9 +2,7 @@ package reader
 
 import (
 	. "datastore/containers"
-	. "datastore/storage"
-	"errors"
-	"log"
+	. "datastore/utils"
 	"sync"
 )
 
@@ -27,66 +25,37 @@ func InitQueryEngine(queryReceiveChannel <-chan Query, queryResultChannel chan<-
 
 	defer shutdownWaitGroup.Done()
 
-	for query := range queryReceiveChannel {
+	var readersWaitGroup sync.WaitGroup
 
-		result, err := queryHistogram(query.From, query.To, query.CounterId, query.ObjectIds, storagePool)
+	readersWaitGroup.Add(Readers)
 
-		if err != nil {
+	for range Readers {
 
-			log.Printf("Error querying datastore: %s", err)
-
-		}
-
-		queryResultChannel <- Result{
-
-			QueryId: query.QueryId,
-
-			Data: result,
-		}
+		go reader(queryReceiveChannel, queryResultChannel, storagePool, &readersWaitGroup)
 
 	}
+
+	//for query := range queryReceiveChannel {
+	//
+	//	result, err := queryHistogram(query.From, query.To, query.CounterId, query.ObjectIds, storagePool)
+	//
+	//	if err != nil {
+	//
+	//		log.Printf("Error querying datastore: %s", err)
+	//
+	//	}
+	//
+	//	queryResultChannel <- Result{
+	//
+	//		QueryId: query.QueryId,
+	//
+	//		Data: result,
+	//	}
+	//
+	//}
+
+	readersWaitGroup.Wait()
 
 	close(queryResultChannel)
-
-}
-
-func queryHistogram(from uint32, to uint32, counterId uint16, objects []uint32, storagePool *StoragePool) (map[uint32][]DataPoint, error) {
-
-	finalData := map[uint32][]DataPoint{}
-
-	for date := from - (from % 86400); date <= to; date += 86400 {
-
-		dateObject := UnixToDate(date)
-
-		storageKey := StoragePoolKey{
-
-			Date: dateObject,
-
-			CounterId: counterId,
-		}
-
-		storageEngine, err := storagePool.GetStorage(storageKey, false)
-
-		if err != nil {
-
-			if errors.Is(err, ErrStorageDoesNotExist) {
-
-				log.Println("Storage not present for date:", dateObject)
-
-				continue
-
-			}
-
-			return nil, err
-
-		}
-
-		readSingleDay(dateObject, storageEngine, counterId, objects, finalData, from, to)
-
-		storagePool.CloseStorage(storageKey)
-
-	}
-
-	return finalData, nil
 
 }

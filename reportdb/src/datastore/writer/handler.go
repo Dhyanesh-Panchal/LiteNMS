@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	FlushDuration = time.Second * 1
+	FlushDuration = time.Second * 5
 )
 
 func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *StoragePool, shutdownWaitGroup *sync.WaitGroup) {
@@ -26,7 +26,7 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 
 	writersWaitGroup.Add(Writers)
 
-	for i := 0; i < Writers; i++ {
+	for range Writers {
 
 		go writer(writersChannel, storagePool, &writersWaitGroup)
 
@@ -87,37 +87,4 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 
 	writersWaitGroup.Wait()
 
-}
-
-func batchBufferFlushRoutine(batchBuffer *BatchBuffer, writersChannel chan<- WritableObjectBatch, flushRoutineShutdown chan bool) {
-
-	for {
-
-		select {
-
-		case <-flushRoutineShutdown:
-
-			// Flush present entries and exit
-
-			if !batchBuffer.EmptyBuffer {
-
-				batchBuffer.Flush(writersChannel)
-
-			}
-
-			batchBuffer.flushTicker.Stop()
-
-			flushRoutineShutdown <- true
-
-			return
-
-		case <-batchBuffer.flushTicker.C:
-
-			if !batchBuffer.EmptyBuffer {
-
-				batchBuffer.Flush(writersChannel)
-
-			}
-		}
-	}
 }

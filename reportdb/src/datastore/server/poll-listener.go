@@ -108,9 +108,7 @@ func pollListener(context *zmq.Context, dataWriteChannel chan<- []PolledDataPoin
 
 			var dataPoints []PolledDataPoint
 
-			err = json.Unmarshal(dataBytes, &dataPoints)
-
-			if err != nil {
+			if err := json.Unmarshal(dataBytes, &dataPoints); err != nil {
 
 				log.Println("Error unmarshalling poll data", err)
 

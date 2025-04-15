@@ -13,6 +13,7 @@ var CounterConfig = map[uint16]map[string]interface{}{}
 var (
 	Writers               int
 	DataWriteChannelSize  int
+	Readers               int
 	QueryChannelSize      int
 	BlockSize             uint32
 	Partitions            uint32
@@ -20,6 +21,7 @@ var (
 	FileSizeGrowthDelta   int64
 	PollListenerBindPort  string
 	QueryListenerBindPort string
+	QueryResultBindPort   string
 	ProfilingPort         string
 )
 
@@ -45,9 +47,7 @@ func LoadConfig() error {
 
 	}
 
-	err = json.Unmarshal(countersConfigData, &CounterConfig)
-
-	if err != nil {
+	if err = json.Unmarshal(countersConfigData, &CounterConfig); err != nil {
 
 		log.Println("Unable to unmarshal counter config data: ", err)
 
@@ -67,9 +67,7 @@ func LoadConfig() error {
 
 	var generalConfig map[string]interface{}
 
-	err = json.Unmarshal(generalConfigData, &generalConfig)
-
-	if err != nil {
+	if err = json.Unmarshal(generalConfigData, &generalConfig); err != nil {
 
 		log.Println("Unable to unmarshal general config data: ", err)
 
@@ -81,6 +79,8 @@ func LoadConfig() error {
 	Writers = int(generalConfig["Writers"].(float64))
 
 	DataWriteChannelSize = int(generalConfig["DataWriteChannelSize"].(float64))
+
+	Readers = int(generalConfig["Readers"].(float64))
 
 	QueryChannelSize = int(generalConfig["QueryChannelSize"].(float64))
 
@@ -97,6 +97,8 @@ func LoadConfig() error {
 	PollListenerBindPort = generalConfig["PollListenerBindPort"].(string)
 
 	QueryListenerBindPort = generalConfig["QueryListenerBindPort"].(string)
+
+	QueryResultBindPort = generalConfig["QueryResultBindPort"].(string)
 
 	ProfilingPort = generalConfig["ProfilingPort"].(string)
 

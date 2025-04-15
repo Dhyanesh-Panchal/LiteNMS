@@ -14,6 +14,8 @@ func main() {
 
 	err := LoadConfig()
 
+	go InitProfiling()
+
 	if err != nil {
 
 		log.Println("Error loading config:", err)
@@ -31,23 +33,21 @@ func main() {
 
 	queryResultChannel := make(chan Result, QueryChannelSize)
 
-	globalShutdownWaitGroup.Add(3)
+	globalShutdownWaitGroup.Add(4)
 
 	go InitDB(dataWriteChannel, queryReceiveChannel, queryResultChannel, globalShutdown, &globalShutdownWaitGroup)
 
 	go InitPollListener(dataWriteChannel, globalShutdown, &globalShutdownWaitGroup)
 
-	go InitQueryListener(queryReceiveChannel, queryResultChannel, globalShutdown, &globalShutdownWaitGroup)
+	go InitQueryListener(queryReceiveChannel, globalShutdown, &globalShutdownWaitGroup)
 
-	go InitProfiling()
+	go InitQueryResultPublisher(queryResultChannel, &globalShutdownWaitGroup)
 
 	<-globalShutdown
 
 	log.Println("Closing dataWrite and queryReceive channel")
 
 	close(dataWriteChannel)
-
-	close(queryReceiveChannel)
 
 	log.Println("waiting for globalShutdownWaitGroup to finish")
 

@@ -10,11 +10,9 @@ import (
 	"sync"
 )
 
-func InitQueryListener(queryReceiveChannel chan<- Query, queryResultChannel <-chan Result, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
+func InitQueryListener(queryReceiveChannel chan<- Query, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
 
 	defer globalShutdownWaitGroup.Done()
-
-	defer log.Println("Query Listener Exiting")
 
 	context, err := zmq.NewContext()
 
@@ -26,15 +24,15 @@ func InitQueryListener(queryReceiveChannel chan<- Query, queryResultChannel <-ch
 
 	}
 
-	shutDown := make(chan bool, 1)
+	queryListenerShutdown := make(chan struct{}, 1)
 
-	go queryListener(context, queryReceiveChannel, queryResultChannel, shutDown)
+	go queryListener(context, queryReceiveChannel, queryListenerShutdown)
 
 	// Listen for global shutdown
 	<-globalShutdown
 
 	// Send shutdown to socket
-	shutDown <- true
+	queryListenerShutdown <- struct{}{}
 
 	err = context.Term()
 
@@ -45,13 +43,15 @@ func InitQueryListener(queryReceiveChannel chan<- Query, queryResultChannel <-ch
 	}
 
 	// Wait for socket to close.
-	<-shutDown
+	<-queryListenerShutdown
+
+	close(queryReceiveChannel)
 
 }
 
-func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, queryResultChannel <-chan Result, shutDown chan bool) {
+func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, queryListenerShutdown chan struct{}) {
 
-	socket, err := context.NewSocket(zmq.REP)
+	socket, err := context.NewSocket(zmq.PULL)
 
 	if err != nil {
 
@@ -70,7 +70,7 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 	for {
 		select {
 
-		case <-shutDown:
+		case <-queryListenerShutdown:
 
 			err := socket.Close()
 
@@ -80,8 +80,8 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 			}
 
-			// Acknowledge shutDown
-			shutDown <- true
+			// Acknowledge
+			queryListenerShutdown <- struct{}{}
 
 			return
 
@@ -93,7 +93,7 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 				if errors.Is(zmq.AsErrno(err), zmq.ETERM) {
 
-					log.Println("Query Handler ZMQ-Context terminated, closing the socket")
+					log.Println("Query Handler's ZMQ-Context terminated, closing the socket")
 
 				} else {
 
@@ -107,37 +107,13 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 			var query Query
 
-			err = json.Unmarshal(queryBytes, &query)
-
-			if err != nil {
+			if err = json.Unmarshal(queryBytes, &query); err != nil {
 
 				log.Println("Error unmarshalling query ", err)
 
 			}
 
-			// Send it to reader and wait for the response
-
 			queryReceiveChannel <- query
-
-			result := <-queryResultChannel
-
-			log.Println(result)
-
-			resultBytes, err := json.Marshal(result)
-
-			if err != nil {
-
-				log.Println("Error marshalling query result ", err)
-
-			}
-
-			_, err = socket.SendBytes(resultBytes, 0)
-
-			if err != nil {
-
-				log.Println("Error sending query result ", err)
-
-			}
 
 		}
 

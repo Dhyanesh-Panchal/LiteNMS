@@ -90,3 +90,36 @@ func (buffer *BatchBuffer) Flush(dataChannel chan<- WritableObjectBatch) {
 	buffer.EmptyBuffer = true
 
 }
+
+func batchBufferFlushRoutine(batchBuffer *BatchBuffer, writersChannel chan<- WritableObjectBatch, flushRoutineShutdown chan bool) {
+
+	for {
+
+		select {
+
+		case <-flushRoutineShutdown:
+
+			// Flush present entries and exit
+
+			if !batchBuffer.EmptyBuffer {
+
+				batchBuffer.Flush(writersChannel)
+
+			}
+
+			batchBuffer.flushTicker.Stop()
+
+			flushRoutineShutdown <- true
+
+			return
+
+		case <-batchBuffer.flushTicker.C:
+
+			if !batchBuffer.EmptyBuffer {
+
+				batchBuffer.Flush(writersChannel)
+
+			}
+		}
+	}
+}

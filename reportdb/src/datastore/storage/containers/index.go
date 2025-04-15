@@ -54,9 +54,7 @@ func loadIndex(partitionId uint32, storagePath string) (*Index, error) {
 
 	var index Index
 
-	err = json.Unmarshal(indexBytes, &index)
-
-	if err != nil {
+	if err = json.Unmarshal(indexBytes, &index); err != nil {
 
 		log.Printf("Error unmarshalling index file: %v", err)
 
