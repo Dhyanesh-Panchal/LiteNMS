@@ -1,7 +1,14 @@
 {
   "Writers": 5,
+  "DataWriteChannelSize": 100,
+  "Readers": 10,
+  "QueryChannelSize": 100,
   "Partitions": 5,
-  "BlockSize": 120,
+  "BlockSize": 1024,
   "FileSizeGrowthDelta": 10,
-  "InitialFileSize": 5
+  "InitialFileSize": 5,
+  "PollListenerBindPort": "7000",
+  "QueryListenerBindPort": "7001",
+  "QueryResultBindPort": "7002",
+  "ProfilingPort": "6060"
 }
