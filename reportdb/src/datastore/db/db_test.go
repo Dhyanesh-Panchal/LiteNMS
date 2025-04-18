@@ -34,7 +34,7 @@ package db
 //
 //	if err := json.Unmarshal(data, &pollingData); err != nil {
 //
-//		log.Fatalf("Error unmarshaling JSON: %v", err)
+//		log.Fatalf("Error unmarshalling JSON: %v", err)
 //
 //	}
 //

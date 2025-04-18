@@ -3,7 +3,7 @@ package writer
 import (
 	. "datastore/containers"
 	. "datastore/utils"
-	"log"
+	"go.uber.org/zap"
 	"sync"
 	"time"
 )
@@ -16,7 +16,7 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 
 	defer shutdownWaitGroup.Done()
 
-	defer log.Println("Write Handler Exiting")
+	defer Logger.Info("Write Handler Exiting")
 
 	writersChannel := make(chan WritableObjectBatch, Writers)
 
@@ -44,7 +44,7 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 			if _, ok := CounterConfig[dataPoint.CounterId]; !ok {
 
 				// Invalid counterId, skip
-				log.Println("Bad CounterID, Dropping dataPoint:", dataPoint)
+				Logger.Info("bad counterId, dropping dataPoint.", zap.Any("dataPoint", dataPoint))
 
 				continue
 

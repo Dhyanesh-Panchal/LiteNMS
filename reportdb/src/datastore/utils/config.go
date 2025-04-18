@@ -2,7 +2,7 @@ package utils
 
 import (
 	"encoding/json"
-	"log"
+	"go.uber.org/zap"
 	"os"
 )
 
@@ -41,7 +41,7 @@ func LoadConfig() error {
 
 	if err != nil {
 
-		log.Println("Unable to read counter file: ", err)
+		Logger.Info("Unable to read counter file: ", zap.Error(err))
 
 		return err
 
@@ -49,7 +49,7 @@ func LoadConfig() error {
 
 	if err = json.Unmarshal(countersConfigData, &CounterConfig); err != nil {
 
-		log.Println("Unable to unmarshal counter config data: ", err)
+		Logger.Info("Unable to unmarshal counter config data: ", zap.Error(err))
 
 		return err
 
@@ -59,7 +59,7 @@ func LoadConfig() error {
 
 	if err != nil {
 
-		log.Println("Unable to read general config file: ", err)
+		Logger.Info("Unable to read general config file: ", zap.Error(err))
 
 		return err
 
@@ -69,7 +69,7 @@ func LoadConfig() error {
 
 	if err = json.Unmarshal(generalConfigData, &generalConfig); err != nil {
 
-		log.Println("Unable to unmarshal general config data: ", err)
+		Logger.Info("Unable to unmarshal general config data: ", zap.Error(err))
 
 		return err
 

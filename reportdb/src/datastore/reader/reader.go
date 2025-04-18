@@ -5,6 +5,8 @@ import (
 	. "datastore/storage"
 	. "datastore/utils"
 	"errors"
+	"fmt"
+	"go.uber.org/zap"
 	"log"
 	"sync"
 	"time"
@@ -16,11 +18,13 @@ func reader(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, 
 
 	for query := range queryReceiveChannel {
 
+		startTime := time.Now()
+
 		result, err := queryHistogram(query.From, query.To, query.CounterId, query.ObjectIds, storagePool)
 
 		if err != nil {
 
-			log.Printf("Error querying datastore: %s", err)
+			log.Printf("Error querying datastore: %s" + err.Error())
 
 		}
 
@@ -31,11 +35,19 @@ func reader(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, 
 			Data: result,
 		}
 
+		dataPoints := 0
+
+		for _, resultPoint := range result {
+			dataPoints += len(resultPoint)
+		}
+
+		fmt.Println("Total Data Points: ", dataPoints, "In:", time.Since(startTime))
+
 	}
 
 	// channel closed, shutdown is called
 
-	log.Println("Reader exiting.")
+	Logger.Info("Reader exiting.")
 
 }
 
@@ -60,7 +72,7 @@ func queryHistogram(from uint32, to uint32, counterId uint16, objects []uint32, 
 
 			if errors.Is(err, ErrStorageDoesNotExist) {
 
-				log.Println("Storage not present for date:", dateObject, "counterID:", counterId)
+				Logger.Info("Storage not present for date:"+dateObject.Format(), zap.Uint16("counterID:", counterId))
 
 				continue
 
@@ -95,7 +107,7 @@ func readSingleDay(date Date, storageEngine *Storage, counterId uint16, objects 
 
 		if err != nil {
 
-			log.Println("Error getting dataPoint for objectId: ", objectId, " Day: ", date)
+			Logger.Info("Error getting dataPoint ", zap.Uint32("ObjectId", objectId), zap.String("Date", date.Format()))
 			continue
 
 		}
@@ -104,7 +116,7 @@ func readSingleDay(date Date, storageEngine *Storage, counterId uint16, objects 
 
 		if err != nil {
 
-			log.Println("Error deserializing dataPoint for objectId: ", objectId, "Day: ", date, "Error:", err)
+			Logger.Info("Error deserializing dataPoint for objectId: ", zap.Uint32("ObjectId", objectId), zap.String("Date", date.Format()), zap.Error(err))
 
 			continue
 

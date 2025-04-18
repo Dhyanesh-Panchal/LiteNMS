@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	zmq "github.com/pebbe/zmq4"
+	"go.uber.org/zap"
 	"log"
 	"sync"
 )
@@ -14,13 +15,13 @@ func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-cha
 
 	defer globalShutdownWaitGroup.Done()
 
-	defer log.Println("Poll Listener Exiting")
+	defer Logger.Info("Poll Listener Exiting")
 
 	context, err := zmq.NewContext()
 
 	if err != nil {
 
-		log.Println("Error initializing poll listener context:", err)
+		Logger.Error("error initializing poll listener context:" + err.Error())
 
 		return
 
@@ -40,7 +41,7 @@ func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-cha
 
 	if err != nil {
 
-		log.Println("Error terminating poll listener context:", err)
+		Logger.Error("error terminating poll listener context:", zap.Error(err))
 
 	}
 
@@ -77,7 +78,7 @@ func pollListener(context *zmq.Context, dataWriteChannel chan<- []PolledDataPoin
 
 			if err != nil {
 
-				log.Println("Error closing poll listener socket ", err)
+				Logger.Error("error closing poll listener socket ", zap.Error(err))
 
 			}
 
@@ -94,11 +95,11 @@ func pollListener(context *zmq.Context, dataWriteChannel chan<- []PolledDataPoin
 
 				if errors.Is(zmq.AsErrno(err), zmq.ETERM) {
 
-					log.Println("Poll listener ZMQ-Context terminated, closing the socket")
+					Logger.Info("Poll listener ZMQ-Context terminated, closing the socket")
 
 				} else {
 
-					log.Println("Error receiving poll data", err)
+					Logger.Error("error receiving poll data", zap.Error(err))
 
 				}
 
@@ -110,7 +111,7 @@ func pollListener(context *zmq.Context, dataWriteChannel chan<- []PolledDataPoin
 
 			if err := json.Unmarshal(dataBytes, &dataPoints); err != nil {
 
-				log.Println("Error unmarshalling poll data", err)
+				Logger.Error("error unmarshalling poll data", zap.Error(err))
 
 				continue
 			}

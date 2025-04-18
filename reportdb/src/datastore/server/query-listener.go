@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	zmq "github.com/pebbe/zmq4"
+	"go.uber.org/zap"
 	"log"
 	"sync"
 )
@@ -18,7 +19,7 @@ func InitQueryListener(queryReceiveChannel chan<- Query, globalShutdown <-chan b
 
 	if err != nil {
 
-		log.Println("Error initializing query listener context", err)
+		Logger.Error("error initializing query listener context", zap.Error(err))
 
 		return
 
@@ -38,7 +39,7 @@ func InitQueryListener(queryReceiveChannel chan<- Query, globalShutdown <-chan b
 
 	if err != nil {
 
-		log.Println("Error terminating query listener context", err)
+		Logger.Error("error terminating query listener context", zap.Error(err))
 
 	}
 
@@ -76,7 +77,7 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 			if err != nil {
 
-				log.Println("Error closing query listener socket ", err)
+				Logger.Error("error closing query listener socket ", zap.Error(err))
 
 			}
 
@@ -93,11 +94,11 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 				if errors.Is(zmq.AsErrno(err), zmq.ETERM) {
 
-					log.Println("Query Handler's ZMQ-Context terminated, closing the socket")
+					Logger.Info("Query Handler's ZMQ-Context terminated, closing the socket")
 
 				} else {
 
-					log.Println("Error receiving query ", err)
+					Logger.Error("error receiving query ", zap.Error(err))
 
 				}
 
@@ -109,7 +110,7 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 			if err = json.Unmarshal(queryBytes, &query); err != nil {
 
-				log.Println("Error unmarshalling query ", err)
+				Logger.Error("error unmarshalling query ", zap.Error(err))
 
 			}
 

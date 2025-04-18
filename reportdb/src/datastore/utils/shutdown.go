@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -22,12 +21,12 @@ func InitShutdownHandler(signalCount int) <-chan bool {
 
 		// signal received, broadcast shutdown
 		for range signalCount {
-			
+
 			GlobalShutdown <- true
 
 		}
 
-		log.Println(signalCount, "Shutdown signals sent.")
+		Logger.Info("global shutdown signals sent.")
 
 	}(signalCount)
 

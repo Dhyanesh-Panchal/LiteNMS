@@ -3,7 +3,7 @@ package writer
 import (
 	. "datastore/containers"
 	. "datastore/utils"
-	"log"
+	"go.uber.org/zap"
 	"sync"
 )
 
@@ -19,14 +19,14 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 	for dataBatch := range writersChannel {
 
-		log.Println(dataBatch)
+		Logger.Info("writer received data", zap.Any("dataBatch", dataBatch))
 
 		// Serialize the Data
 		data, err := SerializeBatch(dataBatch.Values, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string))
 
 		if err != nil {
 
-			log.Println("Error serializing the batch", err)
+			Logger.Error("error serializing the batch", zap.Error(err))
 
 		}
 
@@ -34,7 +34,7 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 		if err != nil {
 
-			log.Println("Error acquiring storage engine for writing", err)
+			Logger.Error("error acquiring storage engine for writing", zap.Error(err))
 
 		}
 
@@ -42,10 +42,10 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 		if err != nil {
 
-			log.Println("Error writing to storage:", err)
+			Logger.Error("error writing to storage:", zap.Error(err))
 
 		}
 	}
 
-	log.Println("Writer exiting.")
+	Logger.Info("Writer exiting.")
 }

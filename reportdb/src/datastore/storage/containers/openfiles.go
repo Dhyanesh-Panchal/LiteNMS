@@ -3,7 +3,7 @@ package containers
 import (
 	. "datastore/utils"
 	"errors"
-	"log"
+	"go.uber.org/zap"
 	"os"
 	"strconv"
 	"sync"
@@ -58,7 +58,7 @@ func loadFileMapping(partitionId uint32, storagePath string) (*FileMapping, erro
 
 	if err != nil {
 
-		log.Println("Error mapping the file for storage:", storagePath, "partitionId:", partitionId)
+		Logger.Error("error mapping the file for", zap.String("storagePath", storagePath), zap.Uint32("partitionId:", partitionId))
 
 		return nil, err
 
@@ -79,7 +79,7 @@ func truncateFile(fileMapping *FileMapping) error {
 
 	if err := os.Truncate(fileMapping.file.Name(), newSize); err != nil {
 
-		log.Println("Error truncating file", fileMapping.file.Name(), err)
+		Logger.Error("error truncating file", zap.String("FileName", fileMapping.file.Name()), zap.Error(err))
 
 		return err
 	}
@@ -88,7 +88,7 @@ func truncateFile(fileMapping *FileMapping) error {
 
 	if err := syscall.Munmap(fileMapping.mapping); err != nil {
 
-		log.Println(ErrUnmappingFile)
+		Logger.Error(ErrUnmappingFile.Error())
 
 		return ErrUnmappingFile
 	}
@@ -97,7 +97,7 @@ func truncateFile(fileMapping *FileMapping) error {
 
 	if err != nil {
 
-		log.Println("Error creating mapping file", fileMapping.file.Name(), err)
+		Logger.Error("Error creating mapping", zap.String("fileName", fileMapping.file.Name()), zap.Error(err))
 
 		return err
 
@@ -118,7 +118,7 @@ func (fileMapping *FileMapping) UnmapFile() error {
 
 	if err != nil {
 
-		log.Println(ErrUnmappingFile)
+		Logger.Error(ErrUnmappingFile.Error())
 
 		return ErrUnmappingFile
 
@@ -128,7 +128,7 @@ func (fileMapping *FileMapping) UnmapFile() error {
 
 	if err != nil {
 
-		log.Println("Error closing file", err)
+		Logger.Error("error closing file", zap.Error(err))
 
 		return err
 
@@ -217,7 +217,7 @@ func (pool *OpenFilesPool) GetFileMapping(partitionId uint32, storagePath string
 
 		if err != nil {
 
-			log.Println("Error opening new File for: ", partitionId, err)
+			Logger.Info("error opening new File for: ", zap.Uint32("partitionId:", partitionId), zap.Error(err))
 
 			return nil, err
 
@@ -261,7 +261,7 @@ func (pool *OpenFilesPool) Close() {
 
 		if err != nil {
 
-			log.Println("Error unmapping file", fileMapping.file.Name(), err)
+			Logger.Error("error unmapping file", zap.String("fileName", fileMapping.file.Name()), zap.Error(err))
 
 		}
 
@@ -269,7 +269,7 @@ func (pool *OpenFilesPool) Close() {
 
 		if err != nil {
 
-			log.Println("Error closing file", fileMapping.file.Name(), err)
+			Logger.Error("error closing file", zap.String("fileName", fileMapping.file.Name()), zap.Error(err))
 
 		}
 

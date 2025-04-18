@@ -5,7 +5,6 @@ import (
 	. "datastore/reader"
 	. "datastore/utils"
 	. "datastore/writer"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -21,14 +20,14 @@ func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-cha
 
 	defer globalShutdownWaitGroup.Done()
 
-	defer log.Println("Database closed")
+	defer Logger.Info("database closed")
 
 	// Ensure storage directory is created.
 	err := os.MkdirAll(filepath.Dir(filepath.Dir(CurrentWorkingDirectory))+"/data", 0777)
 
 	if err != nil {
 
-		log.Println("Error creating data directory:", err)
+		Logger.Error("error creating data directory:" + err.Error())
 
 		return
 
@@ -53,42 +52,3 @@ func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-cha
 	storagePool.ClosePool()
 
 }
-
-//func (db ReportDB) QueryHistogram(from uint32, to uint32, counterId uint16, objects []uint32) (map[uint32][]DataPoint, error) {
-//
-//	finalData := map[uint32][]DataPoint{}
-//
-//	for date := from - (from % 86400); date <= to; date += 86400 {
-//
-//		dateObject := UnixToDate(date)
-//
-//		storageKey := StoragePoolKey{
-//
-//			Date: dateObject,
-//
-//			CounterId: counterId,
-//		}
-//
-//		storageEngine, err := db.storagePool.GetStorage(storageKey, false)
-//
-//		if err != nil {
-//
-//			if errors.Is(err, ErrStorageDoesNotExist) {
-//
-//				continue
-//
-//			}
-//
-//			return nil, err
-//
-//		}
-//
-//		readSingleDay(dateObject, storageEngine, counterId, objects, finalData, from, to)
-//
-//		db.storagePool.CloseStorage(storageKey)
-//
-//	}
-//
-//	return finalData, nil
-//
-//}

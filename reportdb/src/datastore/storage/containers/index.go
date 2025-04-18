@@ -1,7 +1,9 @@
 package containers
 
 import (
+	. "datastore/utils"
 	"encoding/json"
+	"go.uber.org/zap"
 	"log"
 	"os"
 	"strconv"
@@ -182,7 +184,7 @@ func (indexPool *IndexPool) Get(partitionId uint32, storagePath string) (*Index,
 
 		if err != nil {
 
-			log.Println("Error opening new index for: ", storagePath, partitionId, err)
+			Logger.Error("error opening new index for: ", zap.String("storagePath", storagePath), zap.Uint32("partitionId", partitionId), zap.Error(err))
 
 			return nil, err
 
@@ -209,7 +211,7 @@ func (indexPool *IndexPool) Close(storagePath string) {
 
 		if err != nil {
 
-			log.Println("Error closing index for: ", storagePath, partitionId, err)
+			Logger.Error("error closing index for: ", zap.String("storagePath", storagePath), zap.Uint32("partitionId", partitionId), zap.Error(err))
 
 		}
 	}

@@ -6,7 +6,6 @@ import (
 	. "datastore/reader"
 	. "datastore/server"
 	. "datastore/utils"
-	"log"
 	"sync"
 )
 
@@ -18,7 +17,7 @@ func main() {
 
 	if err != nil {
 
-		log.Println("Error loading config:", err)
+		Logger.Info("error loading config:" + err.Error())
 
 		return
 
@@ -45,11 +44,11 @@ func main() {
 
 	<-globalShutdown
 
-	log.Println("Closing dataWrite and queryReceive channel")
+	Logger.Info("closing dataWrite and queryReceive channel")
 
 	close(dataWriteChannel)
 
-	log.Println("waiting for globalShutdownWaitGroup to finish")
+	Logger.Info("main waiting for globalShutdownWaitGroup to finish")
 
 	globalShutdownWaitGroup.Wait()
 

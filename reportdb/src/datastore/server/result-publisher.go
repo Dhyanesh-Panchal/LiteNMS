@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	zmq "github.com/pebbe/zmq4"
-	"log"
+	"go.uber.org/zap"
 	"sync"
 )
 
@@ -18,7 +18,7 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 	if err != nil {
 
-		log.Println("Error initializing query result publisher context", err)
+		Logger.Error("error initializing query result publisher context", zap.Error(err))
 
 		return
 
@@ -30,7 +30,7 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 	if err != nil {
 
-		log.Println("Error initializing query result publisher socket", err)
+		Logger.Error("error initializing query result publisher socket", zap.Error(err))
 
 	}
 
@@ -40,7 +40,7 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 	if err != nil {
 
-		log.Println("Error binding query result publisher socket", err)
+		Logger.Error("error binding query result publisher socket", zap.Error(err))
 
 	}
 
@@ -54,7 +54,7 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 		if err != nil {
 
-			log.Println("Error marshalling query result ", err)
+			Logger.Error("error marshalling query result ", zap.Error(err))
 
 			continue
 
@@ -66,11 +66,11 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 		if err != nil {
 
-			log.Println("Error sending query result ", err)
+			Logger.Error("error sending query result ", zap.Error(err))
 
 		}
 	}
 
-	log.Println("Query result publisher shutting down")
+	Logger.Info("Query result publisher shutting down")
 
 }

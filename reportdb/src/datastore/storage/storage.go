@@ -5,7 +5,7 @@ import (
 	. "datastore/utils"
 	"encoding/json"
 	"errors"
-	"log"
+	"go.uber.org/zap"
 	"os"
 	"strconv"
 )
@@ -61,13 +61,13 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 			return ErrStorageDoesNotExist
 		}
 
-		log.Printf("Creating storage directory: %s\n", storagePath)
+		Logger.Info("Creating storage", zap.String("storagePath", storagePath))
 
 		err = os.MkdirAll(storagePath, 0755)
 
 		if err != nil {
 
-			log.Println("Failed to create storage directory:", err)
+			Logger.Info("Failed to create storage directory:", zap.Error(err))
 
 			return err
 
@@ -80,7 +80,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 			if err != nil {
 
-				log.Println("Error creating new data partition", err)
+				Logger.Error("error creating new data partition", zap.Error(err))
 
 				return err
 
@@ -92,7 +92,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 				if err != nil {
 
-					log.Println("Error closing data partition", err)
+					Logger.Error("error closing data partition", zap.Error(err))
 
 				}
 
@@ -102,7 +102,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 			if err != nil {
 
-				log.Println("Error truncating new data partition", err)
+				Logger.Error("error truncating new data partition", zap.Error(err))
 
 				return err
 
@@ -114,7 +114,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 	} else if err != nil {
 
-		log.Println("Failed to stat storage directory:", err)
+		Logger.Info("Failed to stat storage directory:", zap.Error(err))
 
 		return err
 	}
@@ -128,7 +128,7 @@ func writeNewIndex(storagePath string, partitionIndex uint32, blockSize uint32) 
 
 	if err != nil {
 
-		log.Println("Error creating new index partition", err)
+		Logger.Error("error creating new index partition", zap.Error(err))
 
 		return err
 
@@ -140,7 +140,7 @@ func writeNewIndex(storagePath string, partitionIndex uint32, blockSize uint32) 
 
 		if err != nil {
 
-			log.Println("Error closing data partition", err)
+			Logger.Error("error closing data partition", zap.Error(err))
 
 		}
 
@@ -152,7 +152,7 @@ func writeNewIndex(storagePath string, partitionIndex uint32, blockSize uint32) 
 
 	if err != nil {
 
-		log.Println("Error marshalling index ", err)
+		Logger.Error("error marshalling index ", zap.Error(err))
 
 		return err
 
@@ -162,7 +162,7 @@ func writeNewIndex(storagePath string, partitionIndex uint32, blockSize uint32) 
 
 	if err != nil {
 
-		log.Println("Error writing index ", err)
+		Logger.Error("error writing index ", zap.Error(err))
 
 		return err
 
