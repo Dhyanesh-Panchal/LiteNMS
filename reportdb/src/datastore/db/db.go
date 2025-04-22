@@ -2,7 +2,7 @@ package db
 
 import (
 	. "datastore/containers"
-	. "datastore/reader"
+	. "datastore/query"
 	. "datastore/utils"
 	. "datastore/writer"
 	"os"
@@ -16,7 +16,7 @@ type ReportDB struct {
 	dataWriteChannel chan []PolledDataPoint
 }
 
-func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
+func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-chan map[string]interface{}, queryResultChannel chan<- Result, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
 
 	defer globalShutdownWaitGroup.Done()
 

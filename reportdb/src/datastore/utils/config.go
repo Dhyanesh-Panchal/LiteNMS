@@ -14,6 +14,7 @@ var (
 	Writers               int
 	DataWriteChannelSize  int
 	Readers               int
+	QueryParsers          int
 	QueryChannelSize      int
 	BlockSize             uint32
 	Partitions            uint32
@@ -81,6 +82,8 @@ func LoadConfig() error {
 	DataWriteChannelSize = int(generalConfig["DataWriteChannelSize"].(float64))
 
 	Readers = int(generalConfig["Readers"].(float64))
+
+	QueryParsers = int(generalConfig["QueryParsers"].(float64))
 
 	QueryChannelSize = int(generalConfig["QueryChannelSize"].(float64))
 

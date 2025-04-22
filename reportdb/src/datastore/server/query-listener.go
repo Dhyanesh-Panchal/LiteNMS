@@ -1,7 +1,6 @@
 package server
 
 import (
-	. "datastore/reader"
 	. "datastore/utils"
 	"encoding/json"
 	"errors"
@@ -11,7 +10,7 @@ import (
 	"sync"
 )
 
-func InitQueryListener(queryReceiveChannel chan<- Query, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
+func InitQueryListener(queryReceiveChannel chan<- map[string]interface{}, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
 
 	defer globalShutdownWaitGroup.Done()
 
@@ -50,7 +49,7 @@ func InitQueryListener(queryReceiveChannel chan<- Query, globalShutdown <-chan b
 
 }
 
-func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, queryListenerShutdown chan struct{}) {
+func queryListener(context *zmq.Context, queryReceiveChannel chan<- map[string]interface{}, queryListenerShutdown chan struct{}) {
 
 	socket, err := context.NewSocket(zmq.PULL)
 
@@ -106,7 +105,7 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 			}
 
-			var query Query
+			var query map[string]interface{}
 
 			if err = json.Unmarshal(queryBytes, &query); err != nil {
 

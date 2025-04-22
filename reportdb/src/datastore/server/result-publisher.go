@@ -1,7 +1,7 @@
 package server
 
 import (
-	. "datastore/reader"
+	. "datastore/query"
 	. "datastore/utils"
 	"encoding/binary"
 	"encoding/json"

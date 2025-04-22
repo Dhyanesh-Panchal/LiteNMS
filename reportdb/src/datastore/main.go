@@ -3,7 +3,7 @@ package main
 import (
 	. "datastore/containers"
 	. "datastore/db"
-	. "datastore/reader"
+	. "datastore/query"
 	. "datastore/server"
 	. "datastore/utils"
 	"sync"
@@ -28,7 +28,7 @@ func main() {
 
 	dataWriteChannel := make(chan []PolledDataPoint, DataWriteChannelSize)
 
-	queryReceiveChannel := make(chan Query, QueryChannelSize)
+	queryReceiveChannel := make(chan map[string]interface{}, QueryChannelSize)
 
 	queryResultChannel := make(chan Result, QueryChannelSize)
 
