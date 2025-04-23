@@ -53,16 +53,32 @@ func Parser(parserId int, queryReceiveChannel <-chan map[string]interface{}, que
 
 		}
 
-		// merge all the days in single structure
-		//mergedDatapoints := make(map[uint32][]DataPoint)
+		//// merge all the days in single structure
+		//mergedDataPoints := make(map[uint32][]DataPoint)
 		//
 		//for _, day := range daysData {
 		//
+		//	for objectId, points := range day {
+		//
+		//		mergedDataPoints[objectId] = append(mergedDataPoints[objectId], points...)
+		//
+		//	}
+		//
 		//}
 
+		// Vertical aggregation
+
+		if verticalAgg := query["verticalAggregation"].(string); verticalAgg != "none" {
+
+			VerticalAggregator(daysData, verticalAgg)
+
+		}
+
 		queryResultChannel <- Result{
+
 			uint64(query["queryId"].(float64)),
-			daysData,
+
+			mergedDataPoints,
 		}
 
 	}
