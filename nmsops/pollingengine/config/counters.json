@@ -1,0 +1,14 @@
+{
+  "1": {
+    "dataType": "int64",
+    "pollingInterval": 3
+  },
+  "2": {
+    "dataType": "float64",
+    "pollingInterval": 2
+  },
+  "3": {
+    "dataType": "string",
+    "pollingInterval": 5
+  }
+}
