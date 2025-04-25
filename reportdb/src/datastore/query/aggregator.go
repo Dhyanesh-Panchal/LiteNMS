@@ -4,6 +4,7 @@ import (
 	. "datastore/containers"
 	. "datastore/utils"
 	"go.uber.org/zap"
+	"sort"
 	"sync"
 )
 
@@ -147,6 +148,12 @@ func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string,
 			})
 		}
 
+		// Sort the final Data by timestamp
+		sort.Slice(dataPoints, func(i, j int) bool {
+
+			return dataPoints[i].Timestamp < dataPoints[j].Timestamp
+
+		})
 		finalData[objectId] = dataPoints
 
 	}
