@@ -1,0 +1,12 @@
+{
+  "PollSenderPort": "7000",
+  "ProvisionListenerPort": "7005",
+  "PollWorkers": 151,
+  "PollChannelSize": 1000,
+  "DeviceSSHClientTimeout": 5,
+  "ConfigDBUser": "nms_backend",
+  "ConfigDBPassword": "litenms",
+  "ConfigDBName": "config_db",
+  "ConfigDBHost": "localhost",
+  "ConfigDBPort": "5432"
+}
