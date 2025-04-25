@@ -4,11 +4,14 @@ import (
 	. "datastore/containers"
 	. "datastore/utils"
 	"go.uber.org/zap"
-	"reflect"
 	"sync"
 )
 
-func VerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string, dataType string, numberOfObjects int) {
+const (
+	dataTypeNotSupported = "datatype not supported for aggregation"
+)
+
+func VerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string, dataType string) {
 
 	var completionWg sync.WaitGroup
 
@@ -16,7 +19,7 @@ func VerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string, d
 
 		completionWg.Add(1)
 
-		go verticalAggregateSingleDay(daysData, index, aggregation, dataType, numberOfObjects, &completionWg)
+		go verticalAggregateSingleDay(daysData[index], aggregation, dataType, &completionWg)
 
 	}
 
@@ -24,23 +27,17 @@ func VerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string, d
 
 }
 
-func verticalAggregateSingleDay(daysData []map[uint32][]DataPoint, dayIndex int, aggregation string, dataType string, numberOfObjects int, completionWg *sync.WaitGroup) {
+func verticalAggregateSingleDay(day map[uint32][]DataPoint, aggregation string, dataType string, completionWg *sync.WaitGroup) {
 
 	defer completionWg.Done()
 
-	day := daysData[dayIndex]
-
-	timeIndexedAggregatedData := make(map[uint32]interface{})
+	timeIndexedBatchedData := make(map[uint32][]interface{})
 
 	for objectId, points := range day {
 
 		for _, point := range points {
 
-			if val, exist := timeIndexedAggregatedData[point.Timestamp]; exist {
-
-				timeIndexedAggregatedData[point.Timestamp] = aggregatePoint(val, point.Value, aggregation, dataType)
-
-			}
+			timeIndexedBatchedData[point.Timestamp] = append(timeIndexedBatchedData[point.Timestamp], point.Value)
 
 		}
 
@@ -48,70 +45,176 @@ func verticalAggregateSingleDay(daysData []map[uint32][]DataPoint, dayIndex int,
 
 	}
 
-	if aggregation == "avg" {
+	// Using 0 as the final objectId which is aggregate of all the objectIds
+	day[0] = make([]DataPoint, 0)
 
-		for _, val := range timeIndexedAggregatedData {
+	for timestamp, batch := range timeIndexedBatchedData {
 
-			val = Divide(val, numberOfObjects)
+		var aggregatedValue interface{}
+
+		switch aggregation {
+		case "avg":
+			aggregatedValue = Avg(batch, dataType)
+		case "sum":
+			aggregatedValue = Sum(batch, dataType)
+		case "min":
+			aggregatedValue = Min(batch, dataType)
+		case "max":
+			aggregatedValue = Max(batch, dataType)
+		default:
+			Logger.Warn("aggregation not supported", zap.String("aggregation", aggregation), zap.Uint32("timestamp", timestamp), zap.Any("batch", batch), zap.String("dataType", dataType))
 
 		}
 
+		day[0] = append(day[0], DataPoint{
+			Timestamp: timestamp,
+
+			Value: aggregatedValue,
+		})
 	}
 
 }
 
-func aggregatePoint(value1 interface{}, value2 interface{}, aggregation string, dataType string) interface{} {
-
-	switch aggregation {
-
-	case "max":
-
-		return Max(value1, value2)
-
-	case "min":
-
-		return Min(value1, value2)
-
-	case "sum", "avg":
-
-		return Sum(value1, value2)
-
-	}
-
-	Logger.Info("aggregation not supported", zap.String("aggregation", aggregation))
-
-	return nil
-}
-
-func Max(value1 interface{}, value2 interface{}, dataType string) interface{} {
+func Max(values []interface{}, dataType string) interface{} {
 
 	switch dataType {
 
 	case "float64":
-		if value1.(float64) > value2.(float64) {
+		maxValue := values[0].(float64)
 
-			return value1
+		for _, value := range values[1:] {
 
-		} else {
+			if maxValue > value.(float64) {
 
-			return value2
+				maxValue = value.(float64)
 
+			}
 		}
 
-	case "float32":
-		if value1.(float32) > value2.(float32) {
+		return maxValue
 
-			return value1
+	case "int64":
+		maxValue := values[0].(int64)
 
-		} else {
+		for _, value := range values[1:] {
 
-			return value2
+			if maxValue > value.(int64) {
 
+				maxValue = value.(int64)
+
+			}
 		}
+
+		return maxValue
 
 	}
 
-	Logger.Info("aggregation not supported", zap.String("aggregation", dataType.String()))
+	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
+	return nil
+
+}
+
+func Min(values []interface{}, dataType string) interface{} {
+
+	switch dataType {
+
+	case "float64":
+		minValue := values[0].(float64)
+
+		for _, value := range values[1:] {
+
+			if minValue < value.(float64) {
+
+				minValue = value.(float64)
+
+			}
+		}
+
+		return minValue
+
+	case "int64":
+		minValue := values[0].(int64)
+
+		for _, value := range values[1:] {
+
+			if minValue < value.(int64) {
+
+				minValue = value.(int64)
+
+			}
+		}
+
+		return minValue
+
+	}
+
+	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
+	return nil
+
+}
+
+func Sum(values []interface{}, dataType string) interface{} {
+
+	switch dataType {
+
+	case "float64":
+		sum := 0.0
+
+		for _, value := range values {
+
+			sum += value.(float64)
+
+		}
+
+		return sum
+
+	case "int64":
+		var sum int64 = 0
+
+		for _, value := range values {
+
+			sum += value.(int64)
+
+		}
+
+		return sum
+
+	}
+
+	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
+	return nil
+
+}
+
+func Avg(values []interface{}, dataType string) interface{} {
+
+	switch dataType {
+
+	case "float64":
+		sum := 0.0
+
+		for _, value := range values {
+
+			sum += value.(float64)
+
+		}
+
+		return sum / float64(len(values))
+
+	case "int64":
+		var sum int64 = 0
+
+		for _, value := range values {
+
+			sum += value.(int64)
+
+		}
+
+		return sum / int64(len(values))
+
+	}
+
+	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
 	return nil
 
 }

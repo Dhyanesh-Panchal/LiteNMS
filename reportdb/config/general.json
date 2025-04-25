@@ -1,7 +1,8 @@
 {
   "Writers": 5,
   "DataWriteChannelSize": 100,
-  "Readers": 10,
+  "Readers": 20,
+  "QueryParsers": 10,
   "QueryChannelSize": 100,
   "Partitions": 5,
   "BlockSize": 1024,
