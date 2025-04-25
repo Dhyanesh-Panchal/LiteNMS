@@ -2,6 +2,7 @@ package query
 
 import (
 	. "datastore/containers"
+	. "datastore/utils"
 )
 
 func Parser(parserId int, queryReceiveChannel <-chan map[string]interface{}, queryResultChannel chan<- Result, readerRequestChannel chan<- ReaderRequest, readerResponseChannel <-chan map[string]interface{}) {
@@ -19,6 +20,8 @@ func Parser(parserId int, queryReceiveChannel <-chan map[string]interface{}, que
 		counterId := uint16(query["counterId"].(float64))
 
 		objectIds := query["objectIds"].([]uint32)
+
+		dataType := CounterConfig[counterId][DataType].(string)
 
 		// Total number of days will be: (endDate-startDate)/86400+1
 		daysData := make([]map[uint32][]DataPoint, (endDate-startDate)/86400+1)
@@ -53,24 +56,34 @@ func Parser(parserId int, queryReceiveChannel <-chan map[string]interface{}, que
 
 		}
 
-		//// merge all the days in single structure
-		//mergedDataPoints := make(map[uint32][]DataPoint)
-		//
-		//for _, day := range daysData {
-		//
-		//	for objectId, points := range day {
-		//
-		//		mergedDataPoints[objectId] = append(mergedDataPoints[objectId], points...)
-		//
-		//	}
-		//
-		//}
-
 		// Vertical aggregation
 
-		if verticalAgg := query["verticalAggregation"].(string); verticalAgg != "none" {
+		if verticalAggregation := query["verticalAggregation"].(string); verticalAggregation != "none" {
 
-			VerticalAggregator(daysData, verticalAgg)
+			GroupByVerticalAggregator(daysData, verticalAggregation, dataType)
+
+		}
+
+		normalizedDataPoints := make(map[uint32][]DataPoint)
+
+		if horizontalAggregation := query["horizontalAggregation"].(string); horizontalAggregation != "none" {
+
+			interval := uint32(query["interval"].(float64))
+
+			normalizedDataPoints = HorizontalAggregator(daysData, horizontalAggregation, dataType, interval)
+
+		} else {
+
+			// Drilldown, Just normalize the days to single datapoint
+			for _, day := range daysData {
+
+				for objectId, points := range day {
+
+					normalizedDataPoints[objectId] = append(normalizedDataPoints[objectId], points...)
+
+				}
+
+			}
 
 		}
 
@@ -78,15 +91,9 @@ func Parser(parserId int, queryReceiveChannel <-chan map[string]interface{}, que
 
 			uint64(query["queryId"].(float64)),
 
-			mergedDataPoints,
+			normalizedDataPoints,
 		}
 
 	}
-
-}
-
-func parseQuery(query map[string]interface{}) {
-
-	// recognise the days based on from-to
 
 }

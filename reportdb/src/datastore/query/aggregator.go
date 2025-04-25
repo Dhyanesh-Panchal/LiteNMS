@@ -11,7 +11,7 @@ const (
 	dataTypeNotSupported = "datatype not supported for aggregation"
 )
 
-func VerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string, dataType string) {
+func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string, dataType string) {
 
 	var completionWg sync.WaitGroup
 
@@ -75,6 +75,85 @@ func verticalAggregateSingleDay(day map[uint32][]DataPoint, aggregation string, 
 
 }
 
+func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string, dataType string, interval uint32) map[uint32][]DataPoint {
+
+	objectWiseTimeIndexedBatchedData := make(map[uint32]map[uint32][]interface{})
+
+	// Batching
+	for _, day := range daysData {
+
+		for objectId, points := range day {
+
+			if _, exist := objectWiseTimeIndexedBatchedData[objectId]; !exist {
+
+				objectWiseTimeIndexedBatchedData[objectId] = make(map[uint32][]interface{})
+
+			}
+
+			for _, point := range points {
+
+				if interval != 0 {
+
+					// Histogram Interval
+					histogramTimestamp := point.Timestamp - point.Timestamp%interval
+
+					objectWiseTimeIndexedBatchedData[objectId][histogramTimestamp] = append(objectWiseTimeIndexedBatchedData[objectId][histogramTimestamp], point.Value)
+				} else {
+
+					// Gauge/Grid aggregation, No interval present
+					// Using 0 as the common timestamp to aggregate whole from-to range
+
+					objectWiseTimeIndexedBatchedData[objectId][0] = append(objectWiseTimeIndexedBatchedData[objectId][0], point.Value)
+
+				}
+
+			}
+
+		}
+
+	}
+
+	// Reslice the days array, now object-wise data will be represented in single stream
+	daysData = daysData[:]
+
+	// Aggregation over the batch
+	finalData := make(map[uint32][]DataPoint)
+
+	for objectId, timeIndexedBatch := range objectWiseTimeIndexedBatchedData {
+
+		dataPoints := make([]DataPoint, 0)
+
+		for timestamp, batch := range timeIndexedBatch {
+
+			var aggregatedValue interface{}
+
+			switch aggregation {
+			case "avg":
+				aggregatedValue = Avg(batch, dataType)
+			case "sum":
+				aggregatedValue = Sum(batch, dataType)
+			case "min":
+				aggregatedValue = Min(batch, dataType)
+			case "max":
+				aggregatedValue = Max(batch, dataType)
+			default:
+				Logger.Error("aggregation not supported", zap.String("aggregation", aggregation))
+
+			}
+
+			dataPoints = append(dataPoints, DataPoint{
+				Timestamp: timestamp,
+				Value:     aggregatedValue,
+			})
+		}
+
+		finalData[objectId] = dataPoints
+
+	}
+
+	return finalData
+}
+
 func Max(values []interface{}, dataType string) interface{} {
 
 	switch dataType {
@@ -84,7 +163,7 @@ func Max(values []interface{}, dataType string) interface{} {
 
 		for _, value := range values[1:] {
 
-			if maxValue > value.(float64) {
+			if maxValue < value.(float64) {
 
 				maxValue = value.(float64)
 
@@ -98,7 +177,7 @@ func Max(values []interface{}, dataType string) interface{} {
 
 		for _, value := range values[1:] {
 
-			if maxValue > value.(int64) {
+			if maxValue < value.(int64) {
 
 				maxValue = value.(int64)
 
@@ -123,7 +202,7 @@ func Min(values []interface{}, dataType string) interface{} {
 
 		for _, value := range values[1:] {
 
-			if minValue < value.(float64) {
+			if minValue > value.(float64) {
 
 				minValue = value.(float64)
 
@@ -137,7 +216,7 @@ func Min(values []interface{}, dataType string) interface{} {
 
 		for _, value := range values[1:] {
 
-			if minValue < value.(int64) {
+			if minValue > value.(int64) {
 
 				minValue = value.(int64)
 
@@ -188,29 +267,16 @@ func Sum(values []interface{}, dataType string) interface{} {
 
 func Avg(values []interface{}, dataType string) interface{} {
 
+	sum := Sum(values, dataType)
+
 	switch dataType {
 
 	case "float64":
-		sum := 0.0
 
-		for _, value := range values {
-
-			sum += value.(float64)
-
-		}
-
-		return sum / float64(len(values))
+		return sum.(float64) / float64(len(values))
 
 	case "int64":
-		var sum int64 = 0
-
-		for _, value := range values {
-
-			sum += value.(int64)
-
-		}
-
-		return sum / int64(len(values))
+		return float64(sum.(int64)) / float64(len(values))
 
 	}
 
