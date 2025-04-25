@@ -45,11 +45,11 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 
 		config, port := job.DeviceConfig, job.DevicePort
 
-		client, err := ssh.Dial("tcp", strconv.Itoa(int(job.DeviceIP))+":"+port, config)
+		client, err := ssh.Dial("tcp", ConvertNumericToIp(job.DeviceIP)+":"+port, config)
 
 		if err != nil {
 
-			Logger.Info("Error dialing ssh connection", zap.Any("Job", job), zap.Error(err))
+			Logger.Info("Error dialing ssh connection", zap.Any("Poll Job", job), zap.Error(err))
 
 			continue
 
@@ -90,6 +90,8 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 		}
 
 		pollResultChannel <- dataPoint
+
+		Logger.Info("Poll success for", zap.Uint32("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
 
 	}
 

@@ -17,37 +17,64 @@ func InitSender(pollResultChannel chan PolledDataPoint, globalShutdownWaitGroup 
 
 	if err != nil {
 
-		panic(err)
+		Logger.Fatal("Could not create sender context", zap.Error(err))
 
 	}
+
+	defer context.Term()
 
 	socket, err := context.NewSocket(zmq.PUSH)
 
 	if err != nil {
 
-		panic(err)
+		Logger.Fatal("Could not create sender socket", zap.Error(err))
 
 	}
 
-	err = socket.Connect("tcp://localhost:" + PollSenderPort)
+	defer socket.Close()
+
+	err = socket.Connect("tcp://" + PollReceiverHost + ":" + PollSenderPort)
 
 	if err != nil {
 
-		panic(err)
+		Logger.Fatal("Could not connect sender socket", zap.String("Host", PollReceiverHost), zap.String("Port", PollSenderPort), zap.Error(err))
 
 	}
 
+	dataPoints := make([]PolledDataPoint, PollDataBatchSize)
+
+	size := 0
+
 	for dataPoint := range pollResultChannel {
 
-		dataBytes, _ := json.Marshal(dataPoint)
+		dataPoints[size] = dataPoint
 
-		_, err = socket.SendBytes(dataBytes, 0)
+		size = (size + 1) % PollDataBatchSize
 
-		if err != nil {
+		if size == 0 {
 
-			Logger.Error("error sending dataPoint ", zap.Any("dataPoint", dataPoint), zap.Error(err))
+			dataBytes, _ := json.Marshal(dataPoints)
+
+			_, err = socket.SendBytes(dataBytes, 0)
+
+			if err != nil {
+
+				Logger.Error("error sending dataPoints ", zap.Any("dataPoint", dataPoints), zap.Error(err))
+
+			}
 
 		}
+
+	}
+
+	// Send remaining dataPoints
+	dataBytes, _ := json.Marshal(dataPoints)
+
+	_, err = socket.SendBytes(dataBytes, 0)
+
+	if err != nil {
+
+		Logger.Error("error sending dataPoints ", zap.Any("dataPoint", dataPoints), zap.Error(err))
 
 	}
 

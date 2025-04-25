@@ -4,16 +4,19 @@ import (
 	"encoding/json"
 	"go.uber.org/zap"
 	"os"
+	"time"
 )
 
 var CounterConfig = map[uint16]map[string]interface{}{}
 
 var (
 	PollSenderPort         string
+	PollReceiverHost       string
 	ProvisionListenerPort  string
 	PollWorkers            int
 	PollChannelSize        int
-	DeviceSSHClientTimeout int
+	PollDataBatchSize      int
+	DeviceSSHClientTimeout time.Duration
 	ConfigDBUser           string
 	ConfigDBPassword       string
 	ConfigDBHost           string
@@ -68,13 +71,17 @@ func LoadConfig() error {
 	// Set General Config Variables
 	PollSenderPort = generalConfig["PollSenderPort"].(string)
 
+	PollReceiverHost = generalConfig["PollReceiverHost"].(string)
+
 	ProvisionListenerPort = generalConfig["ProvisionListenerPort"].(string)
 
 	PollWorkers = int(generalConfig["PollWorkers"].(float64))
 
 	PollChannelSize = int(generalConfig["PollChannelSize"].(float64))
 
-	DeviceSSHClientTimeout = int(generalConfig["DeviceSSHClientTimeout"].(float64))
+	PollDataBatchSize = int(generalConfig["PollDataBatchSize"].(float64))
+
+	DeviceSSHClientTimeout = time.Duration(generalConfig["DeviceSSHClientTimeout"].(float64))
 
 	ConfigDBUser = generalConfig["ConfigDBUser"].(string)
 

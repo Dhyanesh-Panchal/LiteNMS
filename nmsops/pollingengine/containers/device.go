@@ -9,6 +9,7 @@ import (
 	. "poller/utils"
 	"strconv"
 	"sync"
+	"time"
 )
 
 const (
@@ -173,6 +174,8 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []uint32) {
 				},
 
 				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+
+				Timeout: DeviceSSHClientTimeout * time.Second,
 			}
 
 		} else {
