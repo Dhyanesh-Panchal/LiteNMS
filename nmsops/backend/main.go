@@ -16,44 +16,47 @@ func main() {
 	// Initialize configuration
 	cfg := config.NewConfig()
 
-	// Initialize report database client
-	client, err := reportdb.InitClient()
-	if err != nil {
-		log.Fatalf("Failed to initialize report DB client: %v", err)
-	}
-	defer client.Shutdown()
-
 	reportDB, err := reportdb.InitClient()
 
 	if err != nil {
 		log.Fatalf("Failed to initialize report DB: %v", err)
 	}
 
-	// Initialize main database
-	mainDB, err := db.NewConfigDB(cfg.GetDBConnectionString())
+	defer reportDB.Shutdown()
+
+	configDB, err := db.NewConfigDB(cfg.GetDBConnectionString())
 
 	if err != nil {
 		log.Fatalf("Failed to initialize main DB: %v", err)
 	}
 
-	defer mainDB.Close()
+	defer configDB.Close()
 
 	router := gin.Default()
 
 	// Configure CORS
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
+
+		AllowOrigins: []string{"*"},
+
+		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+
+		AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
+
+		ExposeHeaders: []string{"Content-Length"},
+
 		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
+
+		MaxAge: 12 * time.Hour,
 	}))
 
-	routes.SetupRoutes(router, reportDB, mainDB)
+	routes.SetupRoutes(router, reportDB, configDB)
 
 	log.Println("Server starting at :8080")
+
 	if err := router.Run(":8080"); err != nil {
+
 		log.Fatal("Server exited with error: ", err)
+
 	}
 }

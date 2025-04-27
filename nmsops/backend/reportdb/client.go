@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
-	"fmt"
 	zmq "github.com/pebbe/zmq4"
 	"log"
 	"sync/atomic"
@@ -149,22 +148,13 @@ func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]
 
 			queryId := binary.LittleEndian.Uint64(resultBytes[:8])
 
-			fmt.Println("Result received for queryId ", queryId)
-
-			fmt.Printf("receiver wait channels map from receiver routine: %p\n", &receiverWaitChannels)
-
 			if channel, ok := receiverWaitChannels[queryId]; ok {
-				fmt.Println("Result Published on channel for queryId ", queryId)
 
 				channel <- resultBytes[8:]
 
 				close(channel)
 
 				delete(receiverWaitChannels, queryId)
-
-			} else {
-
-				fmt.Println("No channel on receiverChannels for queryId ", queryId, "receiverMap", receiverWaitChannels)
 
 			}
 
@@ -196,16 +186,10 @@ func (db *ReportDBClient) Query(from, to, interval uint32, objectIds []uint32, c
 
 	}
 
-	receiveChannel := make(chan []byte)
-
-	db.receiverWaitChannels[queryId] = receiveChannel
-
-	fmt.Printf("On the Query Side %p\n", &db.receiverWaitChannels)
+	db.receiverWaitChannels[queryId] = make(chan []byte)
 
 	// Send query
 	db.queryChannel <- queryBytes
-
-	fmt.Println("Query sent for queryID ", queryId)
 
 	select {
 
@@ -215,7 +199,7 @@ func (db *ReportDBClient) Query(from, to, interval uint32, objectIds []uint32, c
 
 		return nil, ErrQueryTimedOut
 
-	case resultBytes := <-receiveChannel:
+	case resultBytes := <-db.receiverWaitChannels[queryId]:
 
 		var result Result
 

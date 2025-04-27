@@ -23,19 +23,19 @@ func NewConfigDB(connectionString string) (*ConfigDB, error) {
 
 }
 
-func (mdb *ConfigDB) Query(query string, args ...interface{}) (*sql.Rows, error) {
-	return mdb.db.Query(query, args...)
+func (configDB *ConfigDB) Query(query string, args ...interface{}) (*sql.Rows, error) {
+	return configDB.db.Query(query, args...)
 }
 
-func (mdb *ConfigDB) QueryRow(query string, args ...interface{}) *sql.Row {
-	return mdb.db.QueryRow(query, args...)
+func (configDB *ConfigDB) QueryRow(query string, args ...interface{}) *sql.Row {
+	return configDB.db.QueryRow(query, args...)
 }
 
-func (mdb *ConfigDB) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return mdb.db.Exec(query, args...)
+func (configDB *ConfigDB) Exec(query string, args ...interface{}) (sql.Result, error) {
+	return configDB.db.Exec(query, args...)
 }
 
 // Close closes the database connection
-func (mdb *ConfigDB) Close() error {
-	return mdb.db.Close()
+func (configDB *ConfigDB) Close() error {
+	return configDB.db.Close()
 }
