@@ -1,32 +1,30 @@
 package routes
 
 import (
+	"github.com/gin-gonic/gin"
 	. "nms-backend/controllers"
 	. "nms-backend/db"
-	. "nms-backend/reportdb"
-
-	"github.com/gin-gonic/gin"
+	. "nms-backend/services"
 )
 
-func SetupRoutes(router *gin.Engine, reportDB *ReportDBClient, mainDB *ConfigDB) {
+func SetupRoutes(router *gin.Engine, reportDB *ReportDbClient, mainDB *ConfigDB, provisioningPublisher *ProvisioningPublisher) {
 
 	api := router.Group("/api")
 
 	queryController := NewQueryController(reportDB)
 
-	deviceController := NewDeviceController(mainDB)
+	deviceController := NewDeviceController(mainDB, provisioningPublisher)
 
 	credentialProfileController := NewCredentialProfileController(mainDB)
 
 	discoveryProfileController := NewDiscoveryProfileController(mainDB)
 
-	// Use POST for histogram queries with body parameters
 	api.POST("/query", queryController.HandleQuery)
 
 	// Device endpoints
 	api.GET("/devices", deviceController.GetAllDevices)
 
-	api.PUT("/devices/:ip/provision", deviceController.UpdateProvisionStatus)
+	api.PUT("/devices/update-provisioning", deviceController.UpdateProvisionStatusV2)
 
 	// Credential Profile endpoints
 	api.GET("/credential-profiles", credentialProfileController.GetCredentialProfiles)

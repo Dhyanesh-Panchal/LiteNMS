@@ -8,15 +8,8 @@ type CredentialProfile struct {
 	Port     int16  `json:"port" db:"port"`
 }
 
-// CreateCredentialProfileRequest represents the request body for creating a credential profile
-type CreateCredentialProfileRequest struct {
-	Hostname string `json:"hostname" binding:"required"`
-	Password string `json:"password" binding:"required"`
-	Port     int16  `json:"port" binding:"required"`
-}
-
-// UpdateCredentialProfileRequest represents the request body for updating a credential profile
-type UpdateCredentialProfileRequest struct {
+// CredentialProfileRequest represents the request body for creating and updating a credential profile
+type CredentialProfileRequest struct {
 	Hostname string `json:"hostname" binding:"required"`
 	Password string `json:"password" binding:"required"`
 	Port     int16  `json:"port" binding:"required"`
@@ -25,4 +18,4 @@ type UpdateCredentialProfileRequest struct {
 // CredentialProfileResponse represents the response for credential profile endpoints
 type CredentialProfileResponse struct {
 	Profiles []CredentialProfile `json:"profiles"`
-} 
+}

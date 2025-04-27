@@ -7,14 +7,8 @@ type DiscoveryProfile struct {
 	CredentialProfileIDs []int    `json:"credential_profile_ids" db:"credential_profiles"`
 }
 
-// CreateDiscoveryProfileRequest represents the request body for creating a discovery profile
-type CreateDiscoveryProfileRequest struct {
-	DeviceIPs            []uint32 `json:"device_ips" binding:"required"`
-	CredentialProfileIDs []int    `json:"credential_profile_ids" binding:"required"`
-}
-
-// UpdateDiscoveryProfileRequest represents the request body for updating a discovery profile
-type UpdateDiscoveryProfileRequest struct {
+// DiscoveryProfileRequest represents the request body for creating and updating a discovery profile
+type DiscoveryProfileRequest struct {
 	DeviceIPs            []uint32 `json:"device_ips" binding:"required"`
 	CredentialProfileIDs []int    `json:"credential_profile_ids" binding:"required"`
 }

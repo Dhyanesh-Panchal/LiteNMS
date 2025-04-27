@@ -2,18 +2,17 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
-	. "nms-backend/reportdb"
-
-	"github.com/gin-gonic/gin"
+	. "nms-backend/db"
 )
 
 type QueryController struct {
-	ReportDB *ReportDBClient
+	ReportDB *ReportDbClient
 }
 
-func NewQueryController(report *ReportDBClient) *QueryController {
+func NewQueryController(report *ReportDbClient) *QueryController {
 	return &QueryController{
 		ReportDB: report,
 	}
@@ -101,7 +100,7 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Database error: %v", err)})
 
 		return
-		
+
 	}
 
 	ctx.JSON(http.StatusOK, response)

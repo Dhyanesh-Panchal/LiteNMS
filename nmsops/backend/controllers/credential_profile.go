@@ -69,7 +69,7 @@ func (credentialProfileController *CredentialProfileController) GetCredentialPro
 // CreateCredentialProfile handles POST request to create a new credential profile
 func (credentialProfileController *CredentialProfileController) CreateCredentialProfile(ctx *gin.Context) {
 
-	var req CreateCredentialProfileRequest
+	var req CredentialProfileRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 
@@ -118,7 +118,7 @@ func (credentialProfileController *CredentialProfileController) UpdateCredential
 
 	}
 
-	var req UpdateCredentialProfileRequest
+	var req CredentialProfileRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 

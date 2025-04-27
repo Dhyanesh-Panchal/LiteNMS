@@ -4,8 +4,8 @@ import (
 	"log"
 	"nms-backend/config"
 	"nms-backend/db"
-	"nms-backend/reportdb"
 	"nms-backend/routes"
+	"nms-backend/services"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -16,10 +16,10 @@ func main() {
 	// Initialize configuration
 	cfg := config.NewConfig()
 
-	reportDB, err := reportdb.InitClient()
+	reportDB, err := db.InitReportDbClient()
 
 	if err != nil {
-		log.Fatalf("Failed to initialize report DB: %v", err)
+		log.Fatal("Failed to initialize report DB", err)
 	}
 
 	defer reportDB.Shutdown()
@@ -27,10 +27,20 @@ func main() {
 	configDB, err := db.NewConfigDB(cfg.GetDBConnectionString())
 
 	if err != nil {
-		log.Fatalf("Failed to initialize main DB: %v", err)
+		log.Fatal("Failed to initialize main DB", err)
 	}
 
 	defer configDB.Close()
+
+	provisioningPublisher, err := services.InitProvisioningPublisher()
+
+	if err != nil {
+
+		log.Fatal("Failed to initialize provisioning publisher", err)
+
+	}
+
+	defer provisioningPublisher.Close()
 
 	router := gin.Default()
 
@@ -50,7 +60,7 @@ func main() {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	routes.SetupRoutes(router, reportDB, configDB)
+	routes.SetupRoutes(router, reportDB, configDB, provisioningPublisher)
 
 	log.Println("Server starting at :8080")
 

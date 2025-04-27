@@ -102,7 +102,7 @@ func parseNextDiscoveryProfileRow(rows *sql.Rows) (DiscoveryProfile, error) {
 
 // CreateDiscoveryProfile handles POST request to create a new discovery profile
 func (discoveryProfileController *DiscoveryProfileController) CreateDiscoveryProfile(ctx *gin.Context) {
-	var req CreateDiscoveryProfileRequest
+	var req DiscoveryProfileRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Printf("Error binding JSON: %v", err)
 		ctx.JSON(400, gin.H{"error": "Invalid request body"})
@@ -141,7 +141,7 @@ func (discoveryProfileController *DiscoveryProfileController) UpdateDiscoveryPro
 		return
 	}
 
-	var req UpdateDiscoveryProfileRequest
+	var req DiscoveryProfileRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Printf("Error binding JSON: %v", err)
 		ctx.JSON(400, gin.H{"error": "Invalid request body"})
