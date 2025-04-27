@@ -22,10 +22,10 @@ func NewDiscoveryProfileController(db *ConfigDB) *DiscoveryProfileController {
 }
 
 // GetDiscoveryProfiles handles GET request to fetch all discovery profiles
-func (c *DiscoveryProfileController) GetDiscoveryProfiles(ctx *gin.Context) {
+func (discoveryProfileController *DiscoveryProfileController) GetDiscoveryProfiles(ctx *gin.Context) {
 	query := `SELECT discovery_profile_id, device_ips, credential_profiles FROM discovery_profile`
 
-	rows, err := c.db.Query(query)
+	rows, err := discoveryProfileController.db.Query(query)
 
 	if err != nil {
 
@@ -101,7 +101,7 @@ func parseNextDiscoveryProfileRow(rows *sql.Rows) (DiscoveryProfile, error) {
 }
 
 // CreateDiscoveryProfile handles POST request to create a new discovery profile
-func (c *DiscoveryProfileController) CreateDiscoveryProfile(ctx *gin.Context) {
+func (discoveryProfileController *DiscoveryProfileController) CreateDiscoveryProfile(ctx *gin.Context) {
 	var req CreateDiscoveryProfileRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		log.Printf("Error binding JSON: %v", err)
@@ -119,7 +119,7 @@ func (c *DiscoveryProfileController) CreateDiscoveryProfile(ctx *gin.Context) {
 		RETURNING discovery_profile_id`
 
 	var profileID int
-	err := c.db.QueryRow(query, pq.Array(req.DeviceIPs), pq.Array(req.CredentialProfileIDs)).Scan(&profileID)
+	err := discoveryProfileController.db.QueryRow(query, pq.Array(req.DeviceIPs), pq.Array(req.CredentialProfileIDs)).Scan(&profileID)
 	if err != nil {
 		log.Printf("Error creating discovery profile: %v", err)
 		ctx.JSON(500, gin.H{"error": "Failed to create discovery profile"})
@@ -133,7 +133,7 @@ func (c *DiscoveryProfileController) CreateDiscoveryProfile(ctx *gin.Context) {
 }
 
 // UpdateDiscoveryProfile handles PUT request to update an existing discovery profile
-func (c *DiscoveryProfileController) UpdateDiscoveryProfile(ctx *gin.Context) {
+func (discoveryProfileController *DiscoveryProfileController) UpdateDiscoveryProfile(ctx *gin.Context) {
 	profileID, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
 		log.Printf("Error converting profile ID: %v", err)
@@ -153,7 +153,7 @@ func (c *DiscoveryProfileController) UpdateDiscoveryProfile(ctx *gin.Context) {
 		SET device_ips = $1, credential_profiles = $2
 		WHERE discovery_profile_id = $3`
 
-	result, err := c.db.Exec(query, pq.Array(req.DeviceIPs), pq.Array(req.CredentialProfileIDs), profileID)
+	result, err := discoveryProfileController.db.Exec(query, pq.Array(req.DeviceIPs), pq.Array(req.CredentialProfileIDs), profileID)
 	if err != nil {
 		log.Printf("Error updating discovery profile: %v", err)
 		ctx.JSON(500, gin.H{"error": "Failed to update discovery profile"})
@@ -175,7 +175,7 @@ func (c *DiscoveryProfileController) UpdateDiscoveryProfile(ctx *gin.Context) {
 	ctx.JSON(200, gin.H{"message": "Discovery profile updated successfully"})
 }
 
-func (c *DiscoveryProfileController) RunDiscovery(ctx *gin.Context) {
+func (discoveryProfileController *DiscoveryProfileController) RunDiscovery(ctx *gin.Context) {
 
 	discoveryProfileID, err := strconv.Atoi(ctx.Param("id"))
 
@@ -191,7 +191,7 @@ func (c *DiscoveryProfileController) RunDiscovery(ctx *gin.Context) {
 
 	query := `SELECT discovery_profile_id, device_ips, credential_profiles FROM discovery_profile WHERE discovery_profile_id = $1`
 
-	rows, err := c.db.Query(query, discoveryProfileID)
+	rows, err := discoveryProfileController.db.Query(query, discoveryProfileID)
 
 	if err != nil {
 
@@ -223,7 +223,7 @@ func (c *DiscoveryProfileController) RunDiscovery(ctx *gin.Context) {
 
 	query = `SELECT credential_profile_id, hostname, password, port FROM credential_profiles WHERE credential_profile_id = ANY($1) `
 
-	rows, err = c.db.Query(query, pq.Array(discoveryProfile.CredentialProfileIDs))
+	rows, err = discoveryProfileController.db.Query(query, pq.Array(discoveryProfile.CredentialProfileIDs))
 
 	if err != nil {
 
@@ -265,7 +265,7 @@ func (c *DiscoveryProfileController) RunDiscovery(ctx *gin.Context) {
 
 	discoveredDevices := services.Discover(discoveryProfile.DeviceIPs, credentials)
 
-	err = InsertDiscoveredDevices(c.db, discoveredDevices)
+	err = InsertDiscoveredDevices(discoveryProfileController.db, discoveredDevices)
 
 	if err != nil {
 
@@ -275,6 +275,6 @@ func (c *DiscoveryProfileController) RunDiscovery(ctx *gin.Context) {
 
 	}
 
-	ctx.JSON(200, gin.H{"message": "Discovery successfully", "discovered_devices": discoveredDevices})
+	ctx.JSON(200, gin.H{"message": "Discovery successfully", "discovered_devices": discoveredDevices, "device_count": len(discoveredDevices)})
 
 }

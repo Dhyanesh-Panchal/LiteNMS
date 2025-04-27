@@ -1,6 +1,7 @@
 package server
 
 import (
+	. "datastore/query"
 	. "datastore/utils"
 	"encoding/json"
 	"errors"
@@ -10,7 +11,7 @@ import (
 	"sync"
 )
 
-func InitQueryListener(queryReceiveChannel chan<- map[string]interface{}, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
+func InitQueryListener(queryReceiveChannel chan<- Query, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
 
 	defer globalShutdownWaitGroup.Done()
 
@@ -49,7 +50,7 @@ func InitQueryListener(queryReceiveChannel chan<- map[string]interface{}, global
 
 }
 
-func queryListener(context *zmq.Context, queryReceiveChannel chan<- map[string]interface{}, queryListenerShutdown chan struct{}) {
+func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, queryListenerShutdown chan struct{}) {
 
 	socket, err := context.NewSocket(zmq.PULL)
 
@@ -105,13 +106,15 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- map[string]i
 
 			}
 
-			var query map[string]interface{}
+			var query Query
 
 			if err = json.Unmarshal(queryBytes, &query); err != nil {
 
 				Logger.Error("error unmarshalling query ", zap.Error(err))
 
 			}
+
+			Logger.Debug("Received query ", zap.Any("query", query))
 
 			queryReceiveChannel <- query
 

@@ -12,7 +12,7 @@ func TestQueryEngine(t *testing.T) {
 
 	utils.LoadConfig()
 
-	queryReceiveChannel := make(chan map[string]interface{}, 10)
+	queryReceiveChannel := make(chan Query, 10)
 
 	queryResultChannel := make(chan Result, 10)
 
@@ -24,15 +24,15 @@ func TestQueryEngine(t *testing.T) {
 
 	go InitQueryEngine(queryReceiveChannel, queryResultChannel, storagePool, &shutdownWaitGroup)
 
-	query := map[string]interface{}{
-		"queryId":               float64(10),
-		"counterId":             float64(2),
-		"from":                  float64(1744716600),
-		"to":                    float64(1744867800),
-		"objectIds":             []uint32{169093219, 2130706433},
-		"verticalAggregation":   "sum",
-		"horizontalAggregation": "avg",
-		"interval":              float64(0),
+	query := Query{
+		QueryId:               10,
+		CounterId:             2,
+		From:                  1745576802,
+		To:                    1745577802,
+		ObjectIds:             []uint32{2886731944},
+		VerticalAggregation:   "none",
+		HorizontalAggregation: "avg",
+		Interval:              30,
 	}
 
 	queryReceiveChannel <- query

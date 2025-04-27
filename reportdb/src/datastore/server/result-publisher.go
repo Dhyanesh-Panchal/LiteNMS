@@ -69,6 +69,8 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 			Logger.Error("error sending query result ", zap.Error(err))
 
 		}
+
+		Logger.Debug("Sent query result ", zap.Any("result", result))
 	}
 
 	Logger.Info("Query result publisher shutting down")

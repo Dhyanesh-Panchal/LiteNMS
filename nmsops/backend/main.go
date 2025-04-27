@@ -23,13 +23,19 @@ func main() {
 	}
 	defer client.Shutdown()
 
-	reportAdapter := db.NewZMQReportAdapter(client)
+	reportDB, err := reportdb.InitClient()
+
+	if err != nil {
+		log.Fatalf("Failed to initialize report DB: %v", err)
+	}
 
 	// Initialize main database
 	mainDB, err := db.NewConfigDB(cfg.GetDBConnectionString())
+
 	if err != nil {
 		log.Fatalf("Failed to initialize main DB: %v", err)
 	}
+
 	defer mainDB.Close()
 
 	router := gin.Default()
@@ -44,7 +50,7 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	routes.SetupRoutes(router, reportAdapter, mainDB)
+	routes.SetupRoutes(router, reportDB, mainDB)
 
 	log.Println("Server starting at :8080")
 	if err := router.Run(":8080"); err != nil {

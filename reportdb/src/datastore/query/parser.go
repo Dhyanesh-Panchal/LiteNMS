@@ -3,25 +3,24 @@ package query
 import (
 	. "datastore/containers"
 	. "datastore/utils"
+	"go.uber.org/zap"
+	"sync"
+	"time"
 )
 
-func Parser(parserId int, queryReceiveChannel <-chan map[string]interface{}, queryResultChannel chan<- Result, readerRequestChannel chan<- ReaderRequest, readerResponseChannel <-chan map[string]interface{}) {
+func Parser(parserId int, queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, readerRequestChannel chan<- ReaderRequest, readerResponseChannel <-chan map[string]interface{}, parsersWaitGroup *sync.WaitGroup) {
+
+	defer parsersWaitGroup.Done()
 
 	for query := range queryReceiveChannel {
 
-		from := uint32(query["from"].(float64))
+		benchmarkTime := time.Now()
 
-		to := uint32(query["to"].(float64))
+		startDate := query.From - (query.From % 86400)
 
-		startDate := from - (from % 86400)
+		endDate := query.To - (query.To % 86400)
 
-		endDate := to - (to % 86400)
-
-		counterId := uint16(query["counterId"].(float64))
-
-		objectIds := query["objectIds"].([]uint32)
-
-		dataType := CounterConfig[counterId][DataType].(string)
+		dataType := CounterConfig[query.CounterId][DataType].(string)
 
 		// Total number of days will be: (endDate-startDate)/86400+1
 		daysData := make([]map[uint32][]DataPoint, (endDate-startDate)/86400+1)
@@ -35,11 +34,11 @@ func Parser(parserId int, queryReceiveChannel <-chan map[string]interface{}, que
 				RequestIndex: requestIndex,
 				StorageKey: StoragePoolKey{
 					Date:      UnixToDate(date),
-					CounterId: counterId,
+					CounterId: query.CounterId,
 				},
-				From:      from,
-				To:        to,
-				ObjectIds: objectIds,
+				From:      query.From,
+				To:        query.To,
+				ObjectIds: query.ObjectIds,
 			}
 
 			readerRequestChannel <- request
@@ -47,34 +46,32 @@ func Parser(parserId int, queryReceiveChannel <-chan map[string]interface{}, que
 			requestIndex++
 		}
 
-		// Listen for response
+		// Listen for response from reader
 		for range len(daysData) {
 
 			response := <-readerResponseChannel
 
-			daysData[response["requestIndex"].(int)] = response["data"].(map[uint32][]DataPoint)
+			daysData[response["request_index"].(int)] = response["data"].(map[uint32][]DataPoint)
 
 		}
 
 		// Vertical aggregation
 
-		if verticalAggregation := query["verticalAggregation"].(string); verticalAggregation != "none" {
+		if query.VerticalAggregation != "none" {
 
-			GroupByVerticalAggregator(daysData, verticalAggregation, dataType)
+			GroupByVerticalAggregator(daysData, query.VerticalAggregation, dataType)
 
 		}
 
 		normalizedDataPoints := make(map[uint32][]DataPoint)
 
-		if horizontalAggregation := query["horizontalAggregation"].(string); horizontalAggregation != "none" {
+		if query.HorizontalAggregation != "none" {
 
-			interval := uint32(query["interval"].(float64))
-
-			normalizedDataPoints = HorizontalAggregator(daysData, horizontalAggregation, dataType, interval)
+			normalizedDataPoints = HorizontalAggregator(daysData, query.HorizontalAggregation, dataType, query.Interval)
 
 		} else {
 
-			// Drilldown, Just normalize the days to single datapoint
+			// Drilldown, Just normalize the days to single slice of datapoints
 			for _, day := range daysData {
 
 				for objectId, points := range day {
@@ -87,9 +84,11 @@ func Parser(parserId int, queryReceiveChannel <-chan map[string]interface{}, que
 
 		}
 
+		Logger.Info("Query result successful in ", zap.Any("ProcessingTime", time.Since(benchmarkTime)), zap.Uint64("queryId", query.QueryId), zap.Any("data", normalizedDataPoints))
+
 		queryResultChannel <- Result{
 
-			uint64(query["queryId"].(float64)),
+			query.QueryId,
 
 			normalizedDataPoints,
 		}

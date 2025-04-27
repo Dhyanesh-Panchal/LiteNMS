@@ -7,12 +7,14 @@ import (
 )
 
 type Query struct {
-	QueryId     uint64   `json:"query_id"`
-	From        uint32   `json:"from"`
-	To          uint32   `json:"to"`
-	ObjectIds   []uint32 `json:"object_ids"`
-	CounterId   uint16   `json:"counter_id"`
-	Aggregation string   `json:"aggregation"`
+	QueryId               uint64   `json:"query_id"`
+	From                  uint32   `json:"from"`
+	To                    uint32   `json:"to"`
+	ObjectIds             []uint32 `json:"object_ids"`
+	CounterId             uint16   `json:"counter_id"`
+	VerticalAggregation   string   `json:"vertical_aggregation"`
+	HorizontalAggregation string   `json:"horizontal_aggregation"`
+	Interval              uint32   `json:"interval"`
 }
 
 type Result struct {
@@ -21,7 +23,7 @@ type Result struct {
 	Data interface{} `json:"data"`
 }
 
-func InitQueryEngine(queryReceiveChannel <-chan map[string]interface{}, queryResultChannel chan<- Result, storagePool *StoragePool, shutdownWaitGroup *sync.WaitGroup) {
+func InitQueryEngine(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, storagePool *StoragePool, shutdownWaitGroup *sync.WaitGroup) {
 
 	defer shutdownWaitGroup.Done()
 
@@ -51,11 +53,19 @@ func InitQueryEngine(queryReceiveChannel <-chan map[string]interface{}, queryRes
 
 	// Spawn Query Parsers
 
+	var parsersWaitGroup sync.WaitGroup
+
+	parsersWaitGroup.Add(QueryParsers)
+
 	for parserId := range QueryParsers {
 
-		go Parser(parserId, queryReceiveChannel, queryResultChannel, readerRequestChannel, parserWaitChannels[parserId])
+		go Parser(parserId, queryReceiveChannel, queryResultChannel, readerRequestChannel, parserWaitChannels[parserId], &parsersWaitGroup)
 
 	}
+
+	parsersWaitGroup.Wait()
+
+	close(readerRequestChannel)
 
 	readersWaitGroup.Wait()
 

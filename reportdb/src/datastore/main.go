@@ -28,7 +28,7 @@ func main() {
 
 	dataWriteChannel := make(chan []PolledDataPoint, DataWriteChannelSize)
 
-	queryReceiveChannel := make(chan map[string]interface{}, QueryChannelSize)
+	queryReceiveChannel := make(chan Query, QueryChannelSize)
 
 	queryResultChannel := make(chan Result, QueryChannelSize)
 

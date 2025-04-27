@@ -5,7 +5,6 @@ import (
 	. "datastore/storage"
 	. "datastore/utils"
 	"errors"
-	"fmt"
 	"go.uber.org/zap"
 	"sync"
 )
@@ -51,7 +50,7 @@ func Reader(readerRequestChannel <-chan ReaderRequest, parserWaitChannels []chan
 			// send response
 			parserWaitChannels[request.ParserId] <- map[string]interface{}{
 
-				"requestIndex": request.RequestIndex,
+				"request_index": request.RequestIndex,
 
 				"data": map[uint32][]DataPoint{},
 
@@ -64,12 +63,10 @@ func Reader(readerRequestChannel <-chan ReaderRequest, parserWaitChannels []chan
 
 		readSingleDay(storageEngine, request.StorageKey, request.ObjectIds, finalDataPoints, request.From, request.To)
 
-		fmt.Println("Data for ", request.ParserId, request.RequestIndex, request.StorageKey, request.ObjectIds)
-
 		// respond to the Parser
 		parserWaitChannels[request.ParserId] <- map[string]interface{}{
 
-			"requestIndex": request.RequestIndex,
+			"request_index": request.RequestIndex,
 
 			"data": finalDataPoints,
 
@@ -83,53 +80,6 @@ func Reader(readerRequestChannel <-chan ReaderRequest, parserWaitChannels []chan
 	Logger.Info("Reader exiting.")
 
 }
-
-//func queryHistogram(from uint32, to uint32, counterId uint16, objects []uint32, storagePool *StoragePool) (map[uint32][]DataPoint, error) {
-//
-//	finalData := map[uint32][]DataPoint{}
-//
-//	for date := from - (from % 86400); date <= to; date += 86400 {
-//
-//		dateObject := UnixToDate(date)
-//
-//		storageKey := StoragePoolKey{
-//
-//			Date: dateObject,
-//
-//			CounterId: counterId,
-//		}
-//
-//		storageEngine, err := storagePool.GetStorage(storageKey, false)
-//
-//		if err != nil {
-//
-//			if errors.Is(err, ErrStorageDoesNotExist) {
-//
-//				Logger.Info("Storage not present for date:"+dateObject.Format(), zap.Uint16("counterID:", counterId))
-//
-//				continue
-//
-//			}
-//
-//			return nil, err
-//
-//		}
-//
-//		readSingleDay(dateObject, storageEngine, counterId, objects, finalData, from, to)
-//
-//		if storageKey.Date.Day != time.Now().Day() {
-//
-//			// Close storage for days other than current day.
-//			// current day's storage is constantly used by writer hence no need to close it.
-//
-//			storagePool.CloseStorage(storageKey)
-//		}
-//
-//	}
-//
-//	return finalData, nil
-//
-//}
 
 func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds []uint32, finalDataPoints map[uint32][]DataPoint, from uint32, to uint32) {
 

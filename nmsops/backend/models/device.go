@@ -10,4 +10,8 @@ type Device struct {
 // DeviceResponse represents the response format for device API endpoints
 type DeviceResponse struct {
 	Devices []Device `json:"devices"`
-} 
+}
+
+type DeviceProvisionUpdateRequest struct {
+	ProvisionUpdateIps []uint32 `json:"provision_update_ips"`
+}

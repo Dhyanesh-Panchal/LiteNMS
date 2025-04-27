@@ -3,16 +3,16 @@ package routes
 import (
 	. "nms-backend/controllers"
 	. "nms-backend/db"
-	. "nms-backend/models"
+	. "nms-backend/reportdb"
 
 	"github.com/gin-gonic/gin"
 )
 
-func SetupRoutes(router *gin.Engine, reportDB ReportDB, mainDB *ConfigDB) {
+func SetupRoutes(router *gin.Engine, reportDB *ReportDBClient, mainDB *ConfigDB) {
 
 	api := router.Group("/api")
 
-	histogramController := NewHistogramController(reportDB)
+	queryController := NewQueryController(reportDB)
 
 	deviceController := NewDeviceController(mainDB)
 
@@ -21,29 +21,7 @@ func SetupRoutes(router *gin.Engine, reportDB ReportDB, mainDB *ConfigDB) {
 	discoveryProfileController := NewDiscoveryProfileController(mainDB)
 
 	// Use POST for histogram queries with body parameters
-	api.POST("/histogram", histogramController.GetHistogram)
-
-	// Keep the GET endpoint temporarily for backward compatibility
-	// but mark it as deprecated in API docs
-	api.GET("/histogram", func(c *gin.Context) {
-
-		c.JSON(400, gin.H{
-
-			"error": "GET /api/histogram is deprecated. Please use POST /api/histogram with JSON body",
-
-			"example": HistogramQueryRequest{
-
-				From: 1744610677,
-
-				To: 1744620677,
-
-				CounterID: 1,
-
-				ObjectIDs: []uint32{169093227, 2130706433},
-			},
-		})
-
-	})
+	api.POST("/query", queryController.HandleQuery)
 
 	// Device endpoints
 	api.GET("/devices", deviceController.GetAllDevices)

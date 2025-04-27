@@ -20,11 +20,11 @@ func NewCredentialProfileController(db *ConfigDB) *CredentialProfileController {
 }
 
 // GetCredentialProfiles handles GET request to fetch all credential profiles
-func (c *CredentialProfileController) GetCredentialProfiles(ctx *gin.Context) {
+func (credentialProfileController *CredentialProfileController) GetCredentialProfiles(ctx *gin.Context) {
 
 	query := `SELECT credential_profile_id, hostname, password, port FROM credential_profiles`
 
-	rows, err := c.db.Query(query)
+	rows, err := credentialProfileController.db.Query(query)
 
 	if err != nil {
 
@@ -67,7 +67,7 @@ func (c *CredentialProfileController) GetCredentialProfiles(ctx *gin.Context) {
 }
 
 // CreateCredentialProfile handles POST request to create a new credential profile
-func (c *CredentialProfileController) CreateCredentialProfile(ctx *gin.Context) {
+func (credentialProfileController *CredentialProfileController) CreateCredentialProfile(ctx *gin.Context) {
 
 	var req CreateCredentialProfileRequest
 
@@ -86,7 +86,7 @@ func (c *CredentialProfileController) CreateCredentialProfile(ctx *gin.Context) 
 
 	var profileID int
 
-	err := c.db.QueryRow(query, req.Hostname, req.Password, req.Port).Scan(&profileID)
+	err := credentialProfileController.db.QueryRow(query, req.Hostname, req.Password, req.Port).Scan(&profileID)
 
 	if err != nil {
 
@@ -106,7 +106,7 @@ func (c *CredentialProfileController) CreateCredentialProfile(ctx *gin.Context) 
 }
 
 // UpdateCredentialProfile handles PUT request to update an existing credential profile
-func (c *CredentialProfileController) UpdateCredentialProfile(ctx *gin.Context) {
+func (credentialProfileController *CredentialProfileController) UpdateCredentialProfile(ctx *gin.Context) {
 
 	profileID, err := strconv.Atoi(ctx.Param("id"))
 
@@ -133,7 +133,7 @@ func (c *CredentialProfileController) UpdateCredentialProfile(ctx *gin.Context) 
 		SET hostname = $1, password = $2, port = $3
 		WHERE credential_profile_id = $4`
 
-	result, err := c.db.Exec(query, req.Hostname, req.Password, req.Port, profileID)
+	result, err := credentialProfileController.db.Exec(query, req.Hostname, req.Password, req.Port, profileID)
 
 	if err != nil {
 
@@ -166,7 +166,7 @@ func (c *CredentialProfileController) UpdateCredentialProfile(ctx *gin.Context) 
 }
 
 // DeleteCredentialProfile handles DELETE request to remove a credential profile
-func (c *CredentialProfileController) DeleteCredentialProfile(ctx *gin.Context) {
+func (credentialProfileController *CredentialProfileController) DeleteCredentialProfile(ctx *gin.Context) {
 
 	profileID, err := strconv.Atoi(ctx.Param("id"))
 
@@ -183,7 +183,7 @@ func (c *CredentialProfileController) DeleteCredentialProfile(ctx *gin.Context) 
 
 	var existingID int
 
-	err = c.db.QueryRow(checkQuery, profileID).Scan(&existingID)
+	err = credentialProfileController.db.QueryRow(checkQuery, profileID).Scan(&existingID)
 
 	if err != nil {
 
@@ -195,7 +195,7 @@ func (c *CredentialProfileController) DeleteCredentialProfile(ctx *gin.Context) 
 
 	query := `DELETE FROM credential_profiles WHERE credential_profile_id = $1`
 
-	result, err := c.db.Exec(query, profileID)
+	result, err := credentialProfileController.db.Exec(query, profileID)
 
 	if err != nil {
 

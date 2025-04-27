@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"fmt"
 	zmq "github.com/pebbe/zmq4"
 	"log"
 	"sync/atomic"
@@ -16,12 +17,14 @@ var (
 )
 
 type Query struct {
-	QueryId     uint64   `json:"query_id"`
-	From        uint32   `json:"from"`
-	To          uint32   `json:"to"`
-	ObjectIds   []uint32 `json:"object_ids"`
-	CounterId   uint16   `json:"counter_id"`
-	Aggregation string   `json:"aggregation"`
+	QueryId               uint64   `json:"query_id"`
+	From                  uint32   `json:"from"`
+	To                    uint32   `json:"to"`
+	ObjectIds             []uint32 `json:"object_ids"`
+	CounterId             uint16   `json:"counter_id"`
+	VerticalAggregation   string   `json:"vertical_aggregation"`
+	HorizontalAggregation string   `json:"horizontal_aggregation"`
+	Interval              uint32   `json:"interval"`
 }
 
 type DataPoint struct {
@@ -35,7 +38,7 @@ type Result struct {
 	Data map[uint32][]DataPoint `json:"data"`
 }
 
-type ReportDbClient struct {
+type ReportDBClient struct {
 	context *zmq.Context
 
 	receiverWaitChannels map[uint64]chan []byte
@@ -47,7 +50,7 @@ type ReportDbClient struct {
 	queryId uint64
 }
 
-func InitClient() (*ReportDbClient, error) {
+func InitClient() (*ReportDBClient, error) {
 
 	context, err := zmq.NewContext()
 
@@ -67,7 +70,7 @@ func InitClient() (*ReportDbClient, error) {
 
 	go resultReceiveRoutine(context, receiverWaitChannels, shutdownChannel)
 
-	return &ReportDbClient{context, receiverWaitChannels, querySendChannel, shutdownChannel, 0}, nil
+	return &ReportDBClient{context, receiverWaitChannels, querySendChannel, shutdownChannel, 0}, nil
 
 }
 
@@ -146,13 +149,22 @@ func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]
 
 			queryId := binary.LittleEndian.Uint64(resultBytes[:8])
 
+			fmt.Println("Result received for queryId ", queryId)
+
+			fmt.Printf("receiver wait channels map from receiver routine: %p\n", &receiverWaitChannels)
+
 			if channel, ok := receiverWaitChannels[queryId]; ok {
+				fmt.Println("Result Published on channel for queryId ", queryId)
 
 				channel <- resultBytes[8:]
 
 				close(channel)
 
 				delete(receiverWaitChannels, queryId)
+
+			} else {
+
+				fmt.Println("No channel on receiverChannels for queryId ", queryId, "receiverMap", receiverWaitChannels)
 
 			}
 
@@ -161,17 +173,19 @@ func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]
 
 }
 
-func (db *ReportDbClient) Query(from, to uint32, objectIds []uint32, counterId uint16) (map[uint32][]DataPoint, error) {
+func (db *ReportDBClient) Query(from, to, interval uint32, objectIds []uint32, counterId uint16, verticalAggregation, horizontalAggregation string) (map[uint32][]DataPoint, error) {
 
 	queryId := atomic.SwapUint64(&db.queryId, db.queryId+1)
 
 	queryBytes, err := json.Marshal(Query{
-		QueryId:     queryId,
-		From:        from,
-		To:          to,
-		ObjectIds:   objectIds,
-		CounterId:   counterId,
-		Aggregation: "none",
+		QueryId:               queryId,
+		From:                  from,
+		To:                    to,
+		ObjectIds:             objectIds,
+		CounterId:             counterId,
+		VerticalAggregation:   verticalAggregation,
+		HorizontalAggregation: horizontalAggregation,
+		Interval:              interval,
 	})
 
 	if err != nil {
@@ -182,12 +196,16 @@ func (db *ReportDbClient) Query(from, to uint32, objectIds []uint32, counterId u
 
 	}
 
-	receiveChan := make(chan []byte)
+	receiveChannel := make(chan []byte)
 
-	db.receiverWaitChannels[queryId] = receiveChan
+	db.receiverWaitChannels[queryId] = receiveChannel
+
+	fmt.Printf("On the Query Side %p\n", &db.receiverWaitChannels)
 
 	// Send query
 	db.queryChannel <- queryBytes
+
+	fmt.Println("Query sent for queryID ", queryId)
 
 	select {
 
@@ -197,7 +215,7 @@ func (db *ReportDbClient) Query(from, to uint32, objectIds []uint32, counterId u
 
 		return nil, ErrQueryTimedOut
 
-	case resultBytes := <-receiveChan:
+	case resultBytes := <-receiveChannel:
 
 		var result Result
 
@@ -214,7 +232,7 @@ func (db *ReportDbClient) Query(from, to uint32, objectIds []uint32, counterId u
 
 }
 
-func (db *ReportDbClient) Shutdown() {
+func (db *ReportDBClient) Shutdown() {
 
 	close(db.queryChannel)
 
