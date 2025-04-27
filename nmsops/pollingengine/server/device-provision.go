@@ -1,8 +1,8 @@
 package server
 
 import (
+	"encoding/binary"
 	"errors"
-	"github.com/goccy/go-json"
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
 	. "poller/containers"
@@ -57,13 +57,15 @@ func provisionListener(deviceList *DeviceList, provisionListenerShutdown chan st
 
 	}
 
-	err = socket.Bind("tcp://*:" + ProvisionListenerPort)
+	err = socket.Connect("tcp://" + BackendHost + ":" + ProvisionListenerPort)
 
 	if err != nil {
 
 		Logger.Fatal("Error binding the socket", zap.Error(err))
 
 	}
+
+	socket.SetSubscribe("")
 
 	for {
 
@@ -103,22 +105,46 @@ func provisionListener(deviceList *DeviceList, provisionListenerShutdown chan st
 
 			}
 
-			var provisionUpdate map[string][]uint32
+			provisionUpdateIps := make([]uint32, len(responseBytes)/4)
 
-			err = json.Unmarshal(responseBytes, &provisionUpdate)
+			err = decode(responseBytes, provisionUpdateIps)
 
 			if err != nil {
 
-				Logger.Error("error unmarshalling the provision Update ", zap.Error(err))
+				Logger.Error("error decoding the provision Update ", zap.Error(err))
 
 			}
 
-			deviceList.UpdateProvisionedDeviceList(provisionUpdate["statusUpdateIps"])
+			deviceList.UpdateProvisionedDeviceList(provisionUpdateIps)
 
-			Logger.Info("Updated the device provisioning list", zap.Any("provisionUpdate", provisionUpdate))
+			Logger.Info("Updated the device provisioning list", zap.Any("provisionUpdate", provisionUpdateIps))
 
 		}
 
 	}
+
+}
+
+func decode(dataBytes []byte, data []uint32) (err error) {
+
+	err = nil
+
+	defer func() {
+		if r := recover(); r != nil {
+
+			Logger.Error("Panic in decoder", zap.Any("recover", r))
+
+			err = r.(error)
+
+		}
+	}()
+
+	for i := 0; i < len(dataBytes)/4; i++ {
+
+		data[i] = binary.LittleEndian.Uint32(dataBytes[i*4 : (i+1)*4])
+
+	}
+
+	return err
 
 }

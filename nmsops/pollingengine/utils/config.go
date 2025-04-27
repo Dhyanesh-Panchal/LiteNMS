@@ -11,7 +11,7 @@ var CounterConfig = map[uint16]map[string]interface{}{}
 
 var (
 	PollSenderPort         string
-	PollReceiverHost       string
+	BackendHost            string
 	ProvisionListenerPort  string
 	PollWorkers            int
 	PollChannelSize        int
@@ -71,7 +71,7 @@ func LoadConfig() error {
 	// Set General Config Variables
 	PollSenderPort = generalConfig["PollSenderPort"].(string)
 
-	PollReceiverHost = generalConfig["PollReceiverHost"].(string)
+	BackendHost = generalConfig["BackendHost"].(string)
 
 	ProvisionListenerPort = generalConfig["ProvisionListenerPort"].(string)
 

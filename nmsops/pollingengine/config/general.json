@@ -1,6 +1,6 @@
 {
   "PollSenderPort": "7000",
-  "PollReceiverHost": "localhost",
+  "BackendHost": "localhost",
   "ProvisionListenerPort": "7005",
   "PollWorkers": 151,
   "PollChannelSize": 1000,

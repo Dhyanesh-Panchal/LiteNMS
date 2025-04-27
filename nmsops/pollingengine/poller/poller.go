@@ -42,7 +42,7 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 	defer globalShutdownWaitGroup.Done()
 
 	for job := range pollJobChannel {
-
+		
 		config, port := job.DeviceConfig, job.DevicePort
 
 		client, err := ssh.Dial("tcp", ConvertNumericToIp(job.DeviceIP)+":"+port, config)

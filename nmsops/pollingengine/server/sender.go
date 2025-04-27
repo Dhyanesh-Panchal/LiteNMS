@@ -33,11 +33,11 @@ func InitSender(pollResultChannel chan PolledDataPoint, globalShutdownWaitGroup 
 
 	defer socket.Close()
 
-	err = socket.Connect("tcp://" + PollReceiverHost + ":" + PollSenderPort)
+	err = socket.Connect("tcp://" + BackendHost + ":" + PollSenderPort)
 
 	if err != nil {
 
-		Logger.Fatal("Could not connect sender socket", zap.String("Host", PollReceiverHost), zap.String("Port", PollSenderPort), zap.Error(err))
+		Logger.Fatal("Could not connect sender socket", zap.String("Host", BackendHost), zap.String("Port", PollSenderPort), zap.Error(err))
 
 	}
 
