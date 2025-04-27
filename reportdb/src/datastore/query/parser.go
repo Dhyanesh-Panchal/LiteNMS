@@ -71,7 +71,7 @@ func Parser(parserId int, queryReceiveChannel <-chan Query, queryResultChannel c
 
 		} else {
 
-			// Drilldown, Just normalize the days to single slice of datapoints
+			// Drilldown, Just normalize the days to single slice of dataPoints
 			for _, day := range daysData {
 
 				for objectId, points := range day {

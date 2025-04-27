@@ -129,14 +129,19 @@ func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string,
 			var aggregatedValue interface{}
 
 			switch aggregation {
+
 			case "avg":
 				aggregatedValue = Avg(batch, dataType)
+
 			case "sum":
 				aggregatedValue = Sum(batch, dataType)
+
 			case "min":
 				aggregatedValue = Min(batch, dataType)
+
 			case "max":
 				aggregatedValue = Max(batch, dataType)
+
 			default:
 				Logger.Error("aggregation not supported", zap.String("aggregation", aggregation))
 
@@ -154,6 +159,7 @@ func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string,
 			return dataPoints[i].Timestamp < dataPoints[j].Timestamp
 
 		})
+
 		finalData[objectId] = dataPoints
 
 	}
@@ -196,6 +202,7 @@ func Max(values []interface{}, dataType string) interface{} {
 	}
 
 	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
+
 	return nil
 
 }
@@ -235,6 +242,7 @@ func Min(values []interface{}, dataType string) interface{} {
 	}
 
 	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
+
 	return nil
 
 }
@@ -268,6 +276,7 @@ func Sum(values []interface{}, dataType string) interface{} {
 	}
 
 	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
+
 	return nil
 
 }
@@ -288,6 +297,7 @@ func Avg(values []interface{}, dataType string) interface{} {
 	}
 
 	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
+
 	return nil
 
 }
