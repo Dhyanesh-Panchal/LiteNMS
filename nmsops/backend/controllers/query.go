@@ -43,6 +43,15 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 
 	}
 
+	// Validate the from and to range
+
+	if req.From > req.To {
+
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid time range, from must be less than or equal to to"})
+
+		return
+	}
+
 	// Validate ObjectIDs aren't empty
 
 	if len(req.ObjectIds) == 0 {
@@ -57,11 +66,11 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 
 	switch req.VerticalAggregation {
 
-	case "avg", "sum", "min", "max", "none":
+	case "avg", "sum", "min", "max", "count", "none":
 
 	default:
 
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid aggregation function. Its must be either 'avg', 'sum', 'min', 'max' or 'none'"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid aggregation function. Its must be either 'avg', 'sum', 'min', 'max', 'count' or 'none'"})
 
 		return
 
@@ -69,11 +78,11 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 
 	switch req.HorizontalAggregation {
 
-	case "avg", "sum", "min", "max", "none":
+	case "avg", "sum", "min", "max", "count", "none":
 
 	default:
 
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid aggregation function. Its must be either 'avg', 'sum', 'min', 'max' or 'none'"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid aggregation function. Its must be either 'avg', 'sum', 'min', 'max', 'count' or 'none'"})
 
 		return
 
