@@ -16,9 +16,13 @@ func InitPollScheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, gl
 
 	schedularContext, cancel := context.WithCancel(context.Background())
 
+	var counterSchedularWaitGroup sync.WaitGroup
+
 	for counterId, _ := range CounterConfig {
 
-		go counterSchedule(counterId, pollJobChannel, deviceList, schedularContext)
+		counterSchedularWaitGroup.Add(1)
+
+		go counterScheduler(counterId, pollJobChannel, deviceList, schedularContext, &counterSchedularWaitGroup)
 
 	}
 
@@ -26,9 +30,17 @@ func InitPollScheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, gl
 
 	cancel()
 
+	counterSchedularWaitGroup.Wait()
+
+	close(pollJobChannel)
+
+	Logger.Debug("Poll Job channel closed")
+
 }
 
-func counterSchedule(counterId uint16, pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularContext context.Context) {
+func counterScheduler(counterId uint16, pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularContext context.Context, counterSchedularWaitGroup *sync.WaitGroup) {
+
+	defer counterSchedularWaitGroup.Done()
 
 	pollTicker := time.NewTicker(time.Duration(CounterConfig[counterId]["pollingInterval"].(float64)) * time.Second)
 

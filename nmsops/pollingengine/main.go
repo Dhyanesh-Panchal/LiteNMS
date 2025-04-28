@@ -34,7 +34,7 @@ func main() {
 
 	// server components
 
-	globalShutdownWaitGroup.Add(2)
+	globalShutdownWaitGroup.Add(3)
 
 	go InitSender(pollResultChannel, &globalShutdownWaitGroup)
 
@@ -42,11 +42,13 @@ func main() {
 
 	// Pollers
 
-	globalShutdownWaitGroup.Add(PollWorkers)
+	var pollerShutdownWaitGroup sync.WaitGroup
+
+	pollerShutdownWaitGroup.Add(PollWorkers)
 
 	for range PollWorkers {
 
-		go Poller(pollJobChannel, pollResultChannel, &globalShutdownWaitGroup)
+		go Poller(pollJobChannel, pollResultChannel, &pollerShutdownWaitGroup)
 
 	}
 
@@ -58,11 +60,13 @@ func main() {
 
 	Logger.Info("Global shutdown called")
 
-	close(pollJobChannel)
+	globalContextCancel()
+
+	pollerShutdownWaitGroup.Wait()
+
+	Logger.Debug("All Pollers exited")
 
 	close(pollResultChannel)
-
-	globalContextCancel()
 
 	globalShutdownWaitGroup.Wait()
 

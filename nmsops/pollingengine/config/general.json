@@ -2,7 +2,7 @@
   "PollSenderPort": "7000",
   "BackendHost": "localhost",
   "ProvisionListenerPort": "7005",
-  "PollWorkers": 151,
+  "PollWorkers": 50,
   "PollChannelSize": 1000,
   "PollDataBatchSize": 10,
   "DeviceSSHClientTimeout": 5,

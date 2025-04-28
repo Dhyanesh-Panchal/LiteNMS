@@ -37,9 +37,9 @@ var CounterCommand = map[uint16]string{
 	3: "whoami",
 }
 
-func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPoint, globalShutdownWaitGroup *sync.WaitGroup) {
+func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPoint, shutdownWaitGroup *sync.WaitGroup) {
 
-	defer globalShutdownWaitGroup.Done()
+	defer shutdownWaitGroup.Done()
 
 	for job := range pollJobChannel {
 
