@@ -96,3 +96,7 @@ func LoadConfig() error {
 	return nil
 
 }
+
+func GetConfigDBConnectionString() string {
+	return "postgres://" + ConfigDBUser + ":" + ConfigDBPassword + "@" + ConfigDBHost + ":" + ConfigDBPort + "/" + ConfigDBName + "?sslmode=disable"
+}

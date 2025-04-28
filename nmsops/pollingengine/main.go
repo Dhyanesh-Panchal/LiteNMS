@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"go.uber.org/zap"
 	. "poller/containers"
 	. "poller/poller"
@@ -22,13 +21,18 @@ func main() {
 
 	globalShutdownChannel := InitShutdownHandler(3)
 
-	globalContext, globalContextCancel := context.WithCancel(context.Background())
-
 	pollResultChannel := make(chan PolledDataPoint, PollChannelSize)
 
 	pollJobChannel := make(chan PollJob, PollChannelSize)
 
-	deviceList := NewDeviceList(globalContext)
+	deviceList, err := NewDeviceList()
+
+	if err != nil {
+
+		Logger.Error("Error creating device list", zap.Error(err))
+
+		return
+	}
 
 	globalShutdownWaitGroup := sync.WaitGroup{}
 
@@ -59,8 +63,6 @@ func main() {
 	<-globalShutdownChannel
 
 	Logger.Info("Global shutdown called")
-
-	globalContextCancel()
 
 	pollerShutdownWaitGroup.Wait()
 

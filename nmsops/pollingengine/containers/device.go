@@ -1,9 +1,8 @@
 package containers
 
 import (
-	"context"
-	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"database/sql"
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
 	. "poller/utils"
@@ -31,31 +30,20 @@ type DeviceList struct {
 
 	devicePort map[uint32]string
 
-	db *pgxpool.Pool
-
-	globalContext context.Context
+	db *sql.DB
 
 	lock sync.RWMutex
 }
 
-func NewDeviceList(globalContext context.Context) *DeviceList {
+func NewDeviceList() (*DeviceList, error) {
 
-	connStr := fmt.Sprintf(
+	db, err := sql.Open("postgres", GetConfigDBConnectionString())
 
-		"postgres://%s:%s@%s:%s/%s",
+	if err != nil {
 
-		ConfigDBUser,
+		return nil, err
 
-		ConfigDBPassword,
-
-		ConfigDBHost,
-
-		ConfigDBPort,
-
-		ConfigDBName,
-	)
-
-	db, err := pgxpool.New(globalContext, connStr)
+	}
 
 	if err != nil {
 
@@ -65,7 +53,7 @@ func NewDeviceList(globalContext context.Context) *DeviceList {
 
 	// Get the provisioned deviceConfig from the configDB
 
-	rows, err := db.Query(globalContext, allDevicesQuery)
+	rows, err := db.Query(allDevicesQuery)
 
 	if err != nil {
 
@@ -119,10 +107,8 @@ func NewDeviceList(globalContext context.Context) *DeviceList {
 
 		devicePort: ports,
 
-		globalContext: globalContext,
-
 		db: db,
-	}
+	}, nil
 
 }
 
@@ -132,7 +118,7 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []uint32) {
 
 	defer list.lock.Unlock()
 
-	rows, err := list.db.Query(list.globalContext, specificDevicesQuery, statusUpdateIps)
+	rows, err := list.db.Query(specificDevicesQuery, pq.Array(statusUpdateIps))
 
 	if err != nil {
 
