@@ -67,7 +67,7 @@ func Parser(parserId int, queryReceiveChannel <-chan Query, queryResultChannel c
 
 		if query.HorizontalAggregation != "none" {
 
-			normalizedDataPoints = HorizontalAggregator(daysData, query.HorizontalAggregation, dataType, query.Interval)
+			normalizedDataPoints = HorizontalAggregator(daysData, query.HorizontalAggregation, dataType, query.Interval, query.From)
 
 		} else {
 

@@ -31,6 +31,7 @@ func Reader(readerRequestChannel <-chan ReaderRequest, parserWaitChannels []chan
 
 		storageEngine, err := storagePool.GetStorage(request.StorageKey, false)
 
+		// Initialize the
 		finalDataPoints := make(map[uint32][]DataPoint)
 
 		for _, objectId := range request.ObjectIds {
@@ -47,7 +48,7 @@ func Reader(readerRequestChannel <-chan ReaderRequest, parserWaitChannels []chan
 
 			}
 
-			// send response
+			// send response with empty data
 			parserWaitChannels[request.ParserId] <- map[string]interface{}{
 
 				"request_index": request.RequestIndex,
@@ -90,6 +91,7 @@ func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds 
 		if err != nil {
 
 			Logger.Info("Error getting dataPoint ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
+
 			continue
 
 		}

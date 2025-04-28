@@ -16,21 +16,31 @@ func main() {
 	// Initialize configuration
 	cfg := config.NewConfig()
 
+	// Initialize the reportDb client
+
 	reportDB, err := db.InitReportDbClient()
 
 	if err != nil {
+
 		log.Fatal("Failed to initialize report DB", err)
+
 	}
 
 	defer reportDB.Shutdown()
 
+	// Initialize configDb client
+
 	configDB, err := db.NewConfigDB(cfg.GetDBConnectionString())
 
 	if err != nil {
+
 		log.Fatal("Failed to initialize main DB", err)
+		
 	}
 
 	defer configDB.Close()
+
+	// Initialize the provisioning publisher
 
 	provisioningPublisher, err := services.InitProvisioningPublisher()
 

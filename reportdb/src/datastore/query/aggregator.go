@@ -76,7 +76,7 @@ func verticalAggregateSingleDay(day map[uint32][]DataPoint, aggregation string, 
 
 }
 
-func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string, dataType string, interval uint32) map[uint32][]DataPoint {
+func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string, dataType string, interval uint32, from uint32) map[uint32][]DataPoint {
 
 	objectWiseTimeIndexedBatchedData := make(map[uint32]map[uint32][]interface{})
 
@@ -96,7 +96,9 @@ func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string,
 				if interval != 0 {
 
 					// Histogram Interval
-					histogramTimestamp := point.Timestamp - point.Timestamp%interval
+					currentTimestamp := point.Timestamp - from // normalizing the time range to start histogram interval at 'from' timestamp.
+
+					histogramTimestamp := (currentTimestamp - currentTimestamp%interval) + from
 
 					objectWiseTimeIndexedBatchedData[objectId][histogramTimestamp] = append(objectWiseTimeIndexedBatchedData[objectId][histogramTimestamp], point.Value)
 				} else {

@@ -42,20 +42,12 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 	defer globalShutdownWaitGroup.Done()
 
 	for job := range pollJobChannel {
-		
+
 		config, port := job.DeviceConfig, job.DevicePort
 
-		client, err := ssh.Dial("tcp", ConvertNumericToIp(job.DeviceIP)+":"+port, config)
+		deviceIp := ConvertNumericToIp(job.DeviceIP)
 
-		if err != nil {
-
-			Logger.Info("Error dialing ssh connection", zap.Any("Poll Job", job), zap.Error(err))
-
-			continue
-
-		}
-
-		resp, err := poll(client, CounterCommand[job.CounterId])
+		resp, err := poll(config, deviceIp, port, CounterCommand[job.CounterId])
 
 		if err != nil {
 
@@ -69,8 +61,10 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 
 		case "int", "int32", "int64", "uint", "uint32", "uint64":
 			value, _ = strconv.Atoi(resp)
+
 		case "float32", "float64":
 			value, _ = strconv.ParseFloat(resp, 64)
+
 		case "string":
 			value = resp
 
@@ -99,7 +93,20 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 
 }
 
-func poll(client *ssh.Client, cmd string) (string, error) {
+func poll(config *ssh.ClientConfig, deviceIp, port, cmd string) (string, error) {
+
+	client, err := ssh.Dial("tcp", deviceIp+":"+port, config)
+
+	if err != nil {
+
+		Logger.Info("Error dialing ssh connection", zap.String("Device IP", deviceIp), zap.String("port", port), zap.Error(err))
+
+		return "", err
+
+	}
+
+	defer client.Close()
+
 	session, err := client.NewSession()
 
 	if err != nil {

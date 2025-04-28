@@ -14,15 +14,15 @@ import (
 
 const (
 	allDevicesQuery = `
-SELECT d.ip, c.hostname, c.password, c.port  FROM device d
-JOIN credential_profiles c ON d.credential_id = c.credential_profile_id
-WHERE d.is_provisioned = TRUE;
+		SELECT d.ip, c.hostname, c.password, c.port  FROM device d
+		JOIN credential_profiles c ON d.credential_id = c.credential_profile_id
+		WHERE d.is_provisioned = TRUE;
 `
 
 	specificDevicesQuery = `
-SELECT d.ip, c.hostname, c.password, c.port, d.is_provisioned  FROM device d
-JOIN credential_profiles c ON d.credential_id = c.credential_profile_id
-WHERE d.ip = ANY($1);
+		SELECT d.ip, c.hostname, c.password, c.port, d.is_provisioned  FROM device d
+		JOIN credential_profiles c ON d.credential_id = c.credential_profile_id
+		WHERE d.ip = ANY($1);
 `
 )
 
@@ -177,6 +177,8 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []uint32) {
 
 				Timeout: DeviceSSHClientTimeout * time.Second,
 			}
+
+			list.devicePort[ip] = strconv.Itoa(port)
 
 		} else {
 

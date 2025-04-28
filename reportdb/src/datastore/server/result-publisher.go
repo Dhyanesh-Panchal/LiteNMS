@@ -32,6 +32,8 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 		Logger.Error("error initializing query result publisher socket", zap.Error(err))
 
+		return
+
 	}
 
 	defer socket.Close()
@@ -42,7 +44,11 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 		Logger.Error("error binding query result publisher socket", zap.Error(err))
 
+		return
+
 	}
+
+	// Listen for the results
 
 	for result := range queryResultChannel {
 
@@ -70,7 +76,6 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 		}
 
-		Logger.Debug("Sent query result ", zap.Any("result", result))
 	}
 
 	Logger.Info("Query result publisher shutting down")

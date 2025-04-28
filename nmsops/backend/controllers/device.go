@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/lib/pq"
@@ -218,6 +219,12 @@ func InsertDiscoveredDevices(db *ConfigDB, devices []Device) error {
 		err := db.QueryRow(query, device.IP, device.CredentialID, device.IsProvisioned).Scan(&ip)
 
 		if err != nil {
+
+			if errors.Is(err, sql.ErrNoRows) {
+
+				return nil
+
+			}
 
 			return errors.New("failed to insert discovered device")
 
