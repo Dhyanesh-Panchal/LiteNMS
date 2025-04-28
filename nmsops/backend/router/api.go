@@ -1,4 +1,4 @@
-package routes
+package router
 
 import (
 	"github.com/gin-gonic/gin"
@@ -7,24 +7,24 @@ import (
 	. "nms-backend/services"
 )
 
-func SetupRoutes(router *gin.Engine, reportDB *ReportDbClient, mainDB *ConfigDB, provisioningPublisher *ProvisioningPublisher) {
+func SetupRoutes(router *gin.Engine, reportDB *ReportDBClient, configDB *ConfigDBClient, provisioningPublisher *ProvisioningPublisher) {
 
 	api := router.Group("/api")
 
 	queryController := NewQueryController(reportDB)
 
-	deviceController := NewDeviceController(mainDB, provisioningPublisher)
+	deviceController := NewDeviceController(configDB, provisioningPublisher)
 
-	credentialProfileController := NewCredentialProfileController(mainDB)
+	credentialProfileController := NewCredentialProfileController(configDB)
 
-	discoveryProfileController := NewDiscoveryProfileController(mainDB)
+	discoveryProfileController := NewDiscoveryProfileController(configDB)
 
 	api.POST("/query", queryController.HandleQuery)
 
 	// Device endpoints
 	api.GET("/devices", deviceController.GetAllDevices)
 
-	api.PUT("/devices/update-provisioning", deviceController.UpdateProvisionStatusV2)
+	api.PUT("/devices/update-provisioning", deviceController.UpdateProvisionStatus)
 
 	// Credential Profile endpoints
 	api.GET("/credential-profiles", credentialProfileController.GetCredentialProfiles)
@@ -44,7 +44,4 @@ func SetupRoutes(router *gin.Engine, reportDB *ReportDbClient, mainDB *ConfigDB,
 
 	api.PUT("/discovery-profiles/:id", discoveryProfileController.UpdateDiscoveryProfile)
 
-	// future:
-	// api.GET("/devices", ...)
-	// api.POST("/alerts", ...)
 }

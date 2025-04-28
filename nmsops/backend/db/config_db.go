@@ -5,11 +5,11 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type ConfigDB struct {
+type ConfigDBClient struct {
 	db *sql.DB
 }
 
-func NewConfigDB(connectionString string) (*ConfigDB, error) {
+func InitConfigDBClient(connectionString string) (*ConfigDBClient, error) {
 
 	db, err := sql.Open("postgres", connectionString)
 
@@ -19,23 +19,23 @@ func NewConfigDB(connectionString string) (*ConfigDB, error) {
 
 	}
 
-	return &ConfigDB{db: db}, nil
+	return &ConfigDBClient{db: db}, nil
 
 }
 
-func (configDB *ConfigDB) Query(query string, args ...interface{}) (*sql.Rows, error) {
+func (configDB *ConfigDBClient) Query(query string, args ...interface{}) (*sql.Rows, error) {
 	return configDB.db.Query(query, args...)
 }
 
-func (configDB *ConfigDB) QueryRow(query string, args ...interface{}) *sql.Row {
+func (configDB *ConfigDBClient) QueryRow(query string, args ...interface{}) *sql.Row {
 	return configDB.db.QueryRow(query, args...)
 }
 
-func (configDB *ConfigDB) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (configDB *ConfigDBClient) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return configDB.db.Exec(query, args...)
 }
 
 // Close closes the database connection
-func (configDB *ConfigDB) Close() error {
+func (configDB *ConfigDBClient) Close() error {
 	return configDB.db.Close()
 }

@@ -11,10 +11,10 @@ import (
 const CredentialProfileNotFound = "Credential profile not found"
 
 type CredentialProfileController struct {
-	db *ConfigDB
+	db *ConfigDBClient
 }
 
-func NewCredentialProfileController(db *ConfigDB) *CredentialProfileController {
+func NewCredentialProfileController(db *ConfigDBClient) *CredentialProfileController {
 
 	return &CredentialProfileController{db: db}
 }

@@ -3,7 +3,8 @@ package services
 import (
 	"encoding/binary"
 	zmq "github.com/pebbe/zmq4"
-	"log"
+	"go.uber.org/zap"
+	. "nms-backend/utils"
 )
 
 type ProvisioningPublisher struct {
@@ -17,7 +18,7 @@ func InitProvisioningPublisher() (*ProvisioningPublisher, error) {
 
 	if err != nil {
 
-		log.Println("Error initializing provisioning publisher context")
+		Logger.Error("Failed to initialize provisioning publisher client", zap.Error(err))
 
 		return nil, err
 
@@ -27,7 +28,7 @@ func InitProvisioningPublisher() (*ProvisioningPublisher, error) {
 
 	if err != nil {
 
-		log.Println("Error initializing provisioning publisher socket")
+		Logger.Error("Failed to initialize provisioning publisher socket", zap.Error(err))
 
 		return nil, err
 
@@ -37,7 +38,7 @@ func InitProvisioningPublisher() (*ProvisioningPublisher, error) {
 
 	if err != nil {
 
-		log.Println("Error binding provisioning publisher socket")
+		Logger.Error("Error binding provisioning publisher socket", zap.Error(err))
 
 		return nil, err
 
@@ -60,7 +61,7 @@ func (publisher *ProvisioningPublisher) SendUpdate(objectIds []uint32, topic str
 
 	if err != nil {
 
-		log.Println("Error sending update: ", err)
+		Logger.Error("Error sending update", zap.Error(err))
 
 		return err
 	}
@@ -75,7 +76,7 @@ func (publisher *ProvisioningPublisher) Close() error {
 
 	if err != nil {
 
-		log.Println("Error closing socket: ", err)
+		Logger.Error("Error closing provisioning publisher socket", zap.Error(err))
 
 		return err
 
@@ -85,7 +86,7 @@ func (publisher *ProvisioningPublisher) Close() error {
 
 	if err != nil {
 
-		log.Println("Error closing context: ", err)
+		Logger.Error("Error terminating provisioning publisher context", zap.Error(err))
 
 		return err
 

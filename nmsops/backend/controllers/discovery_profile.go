@@ -3,10 +3,11 @@ package controllers
 import (
 	"database/sql"
 	"errors"
-	"log"
+	"go.uber.org/zap"
 	. "nms-backend/db"
 	. "nms-backend/models"
-	"nms-backend/services"
+	. "nms-backend/services"
+	. "nms-backend/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -14,10 +15,10 @@ import (
 )
 
 type DiscoveryProfileController struct {
-	db *ConfigDB
+	db *ConfigDBClient
 }
 
-func NewDiscoveryProfileController(db *ConfigDB) *DiscoveryProfileController {
+func NewDiscoveryProfileController(db *ConfigDBClient) *DiscoveryProfileController {
 	return &DiscoveryProfileController{db: db}
 }
 
@@ -29,7 +30,7 @@ func (discoveryProfileController *DiscoveryProfileController) GetDiscoveryProfil
 
 	if err != nil {
 
-		log.Printf("Error querying discovery profiles: %v", err)
+		Logger.Error("Error querying discovery profiles:", zap.Error(err))
 
 		ctx.JSON(500, gin.H{"error": "Failed to query discovery profiles"})
 
@@ -47,23 +48,13 @@ func (discoveryProfileController *DiscoveryProfileController) GetDiscoveryProfil
 
 		if err != nil {
 
-			log.Printf("Error scanning discovery profile: %v", err)
+			Logger.Error("Error parsing discovery profile row", zap.Error(err))
 
 			ctx.JSON(500, gin.H{"error": "Failed to scan discovery profile"})
 
 		}
 
 		profiles = append(profiles, profile)
-	}
-
-	if err := rows.Err(); err != nil {
-
-		log.Printf("Error iterating over discovery profiles: %v", err)
-
-		ctx.JSON(500, gin.H{"error": "Error iterating over discovery profiles"})
-
-		return
-
 	}
 
 	ctx.JSON(200, DiscoveryProfileResponse{Profiles: profiles})
@@ -102,16 +93,18 @@ func parseNextDiscoveryProfileRow(rows *sql.Rows) (DiscoveryProfile, error) {
 
 // CreateDiscoveryProfile handles POST request to create a new discovery profile
 func (discoveryProfileController *DiscoveryProfileController) CreateDiscoveryProfile(ctx *gin.Context) {
-	var req DiscoveryProfileRequest
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		log.Printf("Error binding JSON: %v", err)
-		ctx.JSON(400, gin.H{"error": "Invalid request body"})
-		return
-	}
 
-	// Log the request for debugging
-	log.Printf("Creating discovery profile with device_ips: %v, credential_profile_ids: %v",
-		req.DeviceIPs, req.CredentialProfileIDs)
+	var req DiscoveryProfileRequest
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+
+		Logger.Error("Error parsing request body", zap.Error(err))
+
+		ctx.JSON(400, gin.H{"error": "Invalid request body"})
+
+		return
+
+	}
 
 	query := `
 		INSERT INTO discovery_profile (device_ips, credential_profiles)
@@ -119,33 +112,52 @@ func (discoveryProfileController *DiscoveryProfileController) CreateDiscoveryPro
 		RETURNING discovery_profile_id`
 
 	var profileID int
+
 	err := discoveryProfileController.db.QueryRow(query, pq.Array(req.DeviceIPs), pq.Array(req.CredentialProfileIDs)).Scan(&profileID)
+
 	if err != nil {
-		log.Printf("Error creating discovery profile: %v", err)
+
+		Logger.Error("Error creating discovery profile", zap.Error(err))
+
 		ctx.JSON(500, gin.H{"error": "Failed to create discovery profile"})
+
 		return
+
 	}
 
 	ctx.JSON(201, gin.H{
+
 		"message": "Discovery profile created successfully",
-		"id":      profileID,
+
+		"id": profileID,
 	})
 }
 
 // UpdateDiscoveryProfile handles PUT request to update an existing discovery profile
 func (discoveryProfileController *DiscoveryProfileController) UpdateDiscoveryProfile(ctx *gin.Context) {
+
 	profileID, err := strconv.Atoi(ctx.Param("id"))
+
 	if err != nil {
-		log.Printf("Error converting profile ID: %v", err)
+
+		Logger.Error("Error parsing discovery profile id", zap.Error(err))
+
 		ctx.JSON(400, gin.H{"error": "Invalid profile ID"})
+
 		return
+
 	}
 
 	var req DiscoveryProfileRequest
+
 	if err := ctx.ShouldBindJSON(&req); err != nil {
-		log.Printf("Error binding JSON: %v", err)
+
+		Logger.Error("Error parsing request body", zap.Error(err))
+
 		ctx.JSON(400, gin.H{"error": "Invalid request body"})
+
 		return
+
 	}
 
 	query := `
@@ -154,22 +166,35 @@ func (discoveryProfileController *DiscoveryProfileController) UpdateDiscoveryPro
 		WHERE discovery_profile_id = $3`
 
 	result, err := discoveryProfileController.db.Exec(query, pq.Array(req.DeviceIPs), pq.Array(req.CredentialProfileIDs), profileID)
+
 	if err != nil {
-		log.Printf("Error updating discovery profile: %v", err)
+
+		Logger.Error("Error updating discovery profile", zap.Error(err))
+
 		ctx.JSON(500, gin.H{"error": "Failed to update discovery profile"})
+
 		return
+
 	}
 
 	rowsAffected, err := result.RowsAffected()
+
 	if err != nil {
-		log.Printf("Error getting rows affected: %v", err)
+
+		Logger.Error("Error getting rows affected", zap.Error(err))
+
 		ctx.JSON(500, gin.H{"error": "Failed to get rows affected"})
+
 		return
+
 	}
 
 	if rowsAffected == 0 {
+
 		ctx.JSON(404, gin.H{"error": "Discovery profile not found"})
+
 		return
+
 	}
 
 	ctx.JSON(200, gin.H{"message": "Discovery profile updated successfully"})
@@ -181,7 +206,7 @@ func (discoveryProfileController *DiscoveryProfileController) RunDiscovery(ctx *
 
 	if err != nil {
 
-		log.Printf("Error converting discoveryProfile ID: %v", err)
+		Logger.Error("Error parsing discovery profile id", zap.Error(err))
 
 		ctx.JSON(400, gin.H{"error": "Invalid discoveryProfile ID"})
 
@@ -195,7 +220,7 @@ func (discoveryProfileController *DiscoveryProfileController) RunDiscovery(ctx *
 
 	if err != nil {
 
-		log.Printf("Error running discovery discoveryProfile: %v", err)
+		Logger.Error("Error querying discovery profiles", zap.Error(err))
 
 		ctx.JSON(500, gin.H{"error": "Failed to run discovery discoveryProfile"})
 
@@ -214,7 +239,7 @@ func (discoveryProfileController *DiscoveryProfileController) RunDiscovery(ctx *
 
 	if err != nil {
 
-		log.Printf("Error scanning discovery profile: %v", err)
+		Logger.Error("Error parsing discovery profile row", zap.Error(err))
 
 		ctx.JSON(500, gin.H{"error": "Failed to scan discovery profile"})
 
@@ -227,7 +252,7 @@ func (discoveryProfileController *DiscoveryProfileController) RunDiscovery(ctx *
 
 	if err != nil {
 
-		log.Printf("Error retriving credential profiles: %v", err)
+		Logger.Error("Error querying Credential profiles", zap.Error(err))
 
 		ctx.JSON(500, gin.H{"error": "Failed to retrieve credential profiles"})
 
@@ -263,14 +288,14 @@ func (discoveryProfileController *DiscoveryProfileController) RunDiscovery(ctx *
 
 	// Run Discovery
 
-	discoveredDevices := services.Discover(discoveryProfile.DeviceIPs, credentials)
+	discoveredDevices := RunDiscovery(discoveryProfile.DeviceIPs, credentials)
 
 	err = InsertDiscoveredDevices(discoveryProfileController.db, discoveredDevices)
 
 	if err != nil {
 
-		log.Printf("Error inserting discovered devices: %v", err)
-
+		Logger.Error("Error inserting discovered devices", zap.Error(err))
+		
 		ctx.JSON(500, gin.H{"error": "Failed to insert discovered devices"})
 
 	}

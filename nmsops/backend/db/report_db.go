@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	zmq "github.com/pebbe/zmq4"
-	"log"
+	"go.uber.org/zap"
+	. "nms-backend/utils"
 	"sync/atomic"
 	"time"
 )
@@ -37,7 +38,7 @@ type Result struct {
 	Data map[uint32][]DataPoint `json:"data"`
 }
 
-type ReportDbClient struct {
+type ReportDBClient struct {
 	context *zmq.Context
 
 	receiverWaitChannels map[uint64]chan []byte
@@ -49,7 +50,7 @@ type ReportDbClient struct {
 	queryId uint64
 }
 
-func InitReportDbClient() (*ReportDbClient, error) {
+func InitReportDBClient() (*ReportDBClient, error) {
 
 	context, err := zmq.NewContext()
 
@@ -69,7 +70,7 @@ func InitReportDbClient() (*ReportDbClient, error) {
 
 	go resultReceiveRoutine(context, receiverWaitChannels, shutdownChannel)
 
-	return &ReportDbClient{context, receiverWaitChannels, querySendChannel, shutdownChannel, 0}, nil
+	return &ReportDBClient{context, receiverWaitChannels, querySendChannel, shutdownChannel, 0}, nil
 
 }
 
@@ -79,7 +80,7 @@ func querySendRoutine(context *zmq.Context, queryChannel chan []byte) {
 
 	if err != nil {
 
-		log.Println(ErrCreatingSocket)
+		Logger.Error("Error creating zmq socket", zap.Error(err))
 
 		return
 
@@ -95,13 +96,13 @@ func querySendRoutine(context *zmq.Context, queryChannel chan []byte) {
 
 		if err != nil {
 
-			log.Println("Error sending query", err)
+			Logger.Error("Error sending query", zap.Error(err))
 
 		}
 
 	}
 
-	log.Println("Query send routine closed")
+	Logger.Info("Query sender routine closed")
 }
 
 func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]chan []byte, shutdown chan struct{}) {
@@ -110,7 +111,7 @@ func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]
 
 	if err != nil {
 
-		log.Println("Error creating socket", err)
+		Logger.Error("Error creating zmq socket", zap.Error(err))
 
 		return
 	}
@@ -119,7 +120,7 @@ func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]
 
 	if err != nil {
 
-		log.Println(ErrCreatingSocket)
+		Logger.Error("Error connecting the socket", zap.Error(err))
 
 	}
 
@@ -141,9 +142,18 @@ func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]
 
 			if err != nil {
 
-				log.Println("Error receiving query", err)
+				if errors.Is(zmq.AsErrno(err), zmq.ETERM) {
+
+					Logger.Info("Result receiver's ZMQ-Context terminated, closing the socket")
+
+				} else {
+
+					Logger.Error("error receiving query ", zap.Error(err))
+
+				}
 
 				continue
+
 			}
 
 			queryId := binary.LittleEndian.Uint64(resultBytes[:8])
@@ -163,7 +173,7 @@ func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]
 
 }
 
-func (db *ReportDbClient) Query(from, to, interval uint32, objectIds []uint32, counterId uint16, verticalAggregation, horizontalAggregation string) (map[uint32][]DataPoint, error) {
+func (db *ReportDBClient) Query(from, to, interval uint32, objectIds []uint32, counterId uint16, verticalAggregation, horizontalAggregation string) (map[uint32][]DataPoint, error) {
 
 	queryId := atomic.SwapUint64(&db.queryId, db.queryId+1)
 
@@ -180,7 +190,7 @@ func (db *ReportDbClient) Query(from, to, interval uint32, objectIds []uint32, c
 
 	if err != nil {
 
-		log.Println("Error marshalling query", err)
+		Logger.Error("Error serializing query", zap.Error(err))
 
 		return nil, err
 
@@ -195,7 +205,7 @@ func (db *ReportDbClient) Query(from, to, interval uint32, objectIds []uint32, c
 
 	case <-time.After(10 * time.Second):
 
-		log.Println("Timeout while receiving query")
+		Logger.Error("Query timeout", zap.Uint64("queryId", queryId))
 
 		return nil, ErrQueryTimedOut
 
@@ -205,7 +215,7 @@ func (db *ReportDbClient) Query(from, to, interval uint32, objectIds []uint32, c
 
 		if err = json.Unmarshal(resultBytes, &result); err != nil {
 
-			log.Println("Error unmarshalling result", err)
+			Logger.Error("Error deserializing query result", zap.Error(err))
 
 			return nil, err
 		}
@@ -216,7 +226,7 @@ func (db *ReportDbClient) Query(from, to, interval uint32, objectIds []uint32, c
 
 }
 
-func (db *ReportDbClient) Shutdown() {
+func (db *ReportDBClient) Shutdown() {
 
 	close(db.queryChannel)
 

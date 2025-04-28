@@ -10,17 +10,23 @@ import (
 	. "nms-backend/services"
 
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
 type DeviceController struct {
-	db *ConfigDB
+	db *ConfigDBClient
 
 	provisioningPublisher *ProvisioningPublisher
 }
 
-func NewDeviceController(db *ConfigDB, provisioningPublisher *ProvisioningPublisher) *DeviceController {
-	return &DeviceController{db: db, provisioningPublisher: provisioningPublisher}
+func NewDeviceController(db *ConfigDBClient, provisioningPublisher *ProvisioningPublisher) *DeviceController {
+
+	return &DeviceController{
+
+		db: db,
+
+		provisioningPublisher: provisioningPublisher,
+	}
+
 }
 
 // GetAllDevices handles the GET request to fetch all devices
@@ -75,81 +81,8 @@ func (deviceController *DeviceController) GetAllDevices(ctx *gin.Context) {
 	ctx.JSON(200, response)
 }
 
-// UpdateProvisionStatus handles PUT request to update device provision status
+// UpdateProvisionStatus handles PUT request to update devices provision status
 func (deviceController *DeviceController) UpdateProvisionStatus(ctx *gin.Context) {
-
-	ip, err := strconv.ParseUint(ctx.Param("ip"), 10, 32)
-
-	if err != nil {
-
-		ctx.JSON(400, gin.H{"error": "Invalid IP address"})
-
-		return
-
-	}
-
-	var req struct {
-		IsProvisioned bool `json:"is_provisioned"`
-	}
-
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-
-		ctx.JSON(400, gin.H{"error": "Invalid request body"})
-
-		return
-
-	}
-
-	// First check if the device exists
-	checkQuery := `SELECT ip FROM device WHERE ip = $1`
-
-	var existingIP uint32
-
-	err = deviceController.db.QueryRow(checkQuery, ip).Scan(&existingIP)
-
-	if err != nil {
-
-		ctx.JSON(404, gin.H{"error": "Device not found"})
-
-		return
-
-	}
-
-	query := `UPDATE device SET is_provisioned = $1 WHERE ip = $2`
-
-	result, err := deviceController.db.Exec(query, req.IsProvisioned, ip)
-
-	if err != nil {
-
-		ctx.JSON(500, gin.H{"error": "Failed to update device provision status"})
-
-		return
-
-	}
-
-	rowsAffected, err := result.RowsAffected()
-
-	if err != nil {
-
-		ctx.JSON(500, gin.H{"error": "Failed to get rows affected"})
-
-		return
-
-	}
-
-	if rowsAffected == 0 {
-
-		ctx.JSON(404, gin.H{"error": "Device not found"})
-
-		return
-
-	}
-
-	ctx.JSON(200, gin.H{"message": "Device provision status updated successfully"})
-
-}
-
-func (deviceController *DeviceController) UpdateProvisionStatusV2(ctx *gin.Context) {
 
 	var req DeviceProvisionUpdateRequest
 
@@ -206,7 +139,7 @@ func (deviceController *DeviceController) UpdateProvisionStatusV2(ctx *gin.Conte
 	ctx.JSON(200, gin.H{"message": "Device provision status updated successfully", "provision_count": rowsAffected})
 }
 
-func InsertDiscoveredDevices(db *ConfigDB, devices []Device) error {
+func InsertDiscoveredDevices(db *ConfigDBClient, devices []Device) error {
 	for _, device := range devices {
 
 		query := `

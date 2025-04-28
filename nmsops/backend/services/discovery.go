@@ -1,8 +1,8 @@
 package services
 
 import (
+	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
-	"log"
 	. "nms-backend/models"
 	. "nms-backend/utils"
 	"strconv"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func Discover(discoveryIps []uint32, credentialProfiles []CredentialProfile) []Device {
+func RunDiscovery(discoveryIps []uint32, credentialProfiles []CredentialProfile) []Device {
 
 	var discoveredDevices []Device
 
@@ -88,6 +88,8 @@ func discoverDevice(ip uint32, credentialProfile CredentialProfile, config *ssh.
 
 	if err != nil {
 
+		Logger.Error("Failed to initialize the client", zap.Error(err))
+
 		return false
 
 	}
@@ -97,6 +99,8 @@ func discoverDevice(ip uint32, credentialProfile CredentialProfile, config *ssh.
 	session, err := client.NewSession()
 
 	if err != nil {
+
+		Logger.Error("Failed to create session", zap.Error(err))
 
 		return false
 
@@ -108,11 +112,13 @@ func discoverDevice(ip uint32, credentialProfile CredentialProfile, config *ssh.
 
 	if err != nil {
 
+		Logger.Error("Failed to execute command", zap.Error(err))
+
 		return false
 
 	}
 
-	log.Println("Discovery Successful for Device:", ip, "Credential:", credentialProfile, "Response:", string(resp))
+	Logger.Info("Discovery Successful for", zap.String("ip", ConvertNumericToIp(ip)), zap.Any("Credential", credentialProfile), zap.String("Response", string(resp)))
 
 	return true
 

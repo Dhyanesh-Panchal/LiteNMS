@@ -3,19 +3,23 @@ package controllers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"log"
+	"go.uber.org/zap"
 	"net/http"
 	. "nms-backend/db"
+	. "nms-backend/utils"
 )
 
 type QueryController struct {
-	ReportDB *ReportDbClient
+	ReportDB *ReportDBClient
 }
 
-func NewQueryController(report *ReportDbClient) *QueryController {
+func NewQueryController(report *ReportDBClient) *QueryController {
+
 	return &QueryController{
+
 		ReportDB: report,
 	}
+
 }
 
 func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
@@ -25,7 +29,7 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 
-		log.Printf("JSON binding error: %v", err)
+		Logger.Error("Error parsing request", zap.Error(err))
 
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid JSON request: %v", err)})
 
@@ -96,15 +100,11 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 
 	}
 
-	// Log the parsed request for debugging
-	log.Printf("Processed request: From=%d, To=%d, CounterID=%d, ObjectIDs=%v",
-		req.From, req.To, req.CounterId, req.ObjectIds)
-
 	response, err := queryController.ReportDB.Query(req.From, req.To, req.Interval, req.ObjectIds, req.CounterId, req.VerticalAggregation, req.HorizontalAggregation)
 
 	if err != nil {
 
-		log.Printf("Database query error: %v", err)
+		Logger.Error("Error querying database", zap.Error(err))
 
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Database error: %v", err)})
 

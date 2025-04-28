@@ -1,0 +1,7 @@
+{
+  "ConfigDBUser": "nms_backend",
+  "ConfigDBPassword": "litenms",
+  "ConfigDBName": "config_db",
+  "ConfigDBHost": "localhost",
+  "ConfigDBPort": "5432"
+}

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"log"
-	"nms-backend/config"
-	"nms-backend/db"
-	"nms-backend/routes"
-	"nms-backend/services"
+	"go.uber.org/zap"
+	. "nms-backend/db"
+	. "nms-backend/router"
+	. "nms-backend/services"
+	. "nms-backend/utils"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -14,39 +14,49 @@ import (
 
 func main() {
 	// Initialize configuration
-	cfg := config.NewConfig()
-
-	// Initialize the reportDb client
-
-	reportDB, err := db.InitReportDbClient()
+	err := LoadConfig()
 
 	if err != nil {
 
-		log.Fatal("Failed to initialize report DB", err)
+		Logger.Error("error loading config:", zap.Error(err))
 
+		return
+
+	}
+
+	// Initialize the reportDb client
+	reportDB, err := InitReportDBClient()
+
+	if err != nil {
+
+		Logger.Error("error initializing reportDB:", zap.Error(err))
+
+		return
 	}
 
 	defer reportDB.Shutdown()
 
 	// Initialize configDb client
-
-	configDB, err := db.NewConfigDB(cfg.GetDBConnectionString())
+	configDB, err := InitConfigDBClient(GetConfigDBConnectionString())
 
 	if err != nil {
 
-		log.Fatal("Failed to initialize main DB", err)
-		
+		Logger.Error("error initializing configDB:", zap.Error(err))
+
+		return
+
 	}
 
 	defer configDB.Close()
 
 	// Initialize the provisioning publisher
-
-	provisioningPublisher, err := services.InitProvisioningPublisher()
+	provisioningPublisher, err := InitProvisioningPublisher()
 
 	if err != nil {
 
-		log.Fatal("Failed to initialize provisioning publisher", err)
+		Logger.Error("error initializing provisioningPublisher:", zap.Error(err))
+
+		return
 
 	}
 
@@ -70,13 +80,13 @@ func main() {
 		MaxAge: 12 * time.Hour,
 	}))
 
-	routes.SetupRoutes(router, reportDB, configDB, provisioningPublisher)
+	SetupRoutes(router, reportDB, configDB, provisioningPublisher)
 
-	log.Println("Server starting at :8080")
+	Logger.Info("Server started at port 8080")
 
 	if err := router.Run(":8080"); err != nil {
 
-		log.Fatal("Server exited with error: ", err)
+		Logger.Error("Server exited with error:", zap.Error(err))
 
 	}
 }
