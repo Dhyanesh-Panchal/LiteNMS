@@ -55,19 +55,21 @@ func Parser(parserId int, queryReceiveChannel <-chan Query, queryResultChannel c
 
 		}
 
+		// If the datatype is string, there is no point of aggregation. Hence for string queries, just normalize the days and send the drilldown.
+
 		// Vertical aggregation
 
-		if query.VerticalAggregation != "none" {
+		if query.VerticalAggregation != "none" && dataType != "string" {
 
-			GroupByVerticalAggregator(daysData, query.VerticalAggregation, dataType)
+			GroupByVerticalAggregator(daysData, query.VerticalAggregation)
 
 		}
 
 		normalizedDataPoints := make(map[uint32][]DataPoint)
 
-		if query.HorizontalAggregation != "none" {
+		if query.HorizontalAggregation != "none" && dataType != "string" {
 
-			normalizedDataPoints = HorizontalAggregator(daysData, query.HorizontalAggregation, dataType, query.Interval, query.From)
+			normalizedDataPoints = HorizontalAggregator(daysData, query.HorizontalAggregation, query.Interval, query.From)
 
 		} else {
 

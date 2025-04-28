@@ -4,6 +4,7 @@ import (
 	. "datastore/containers"
 	. "datastore/utils"
 	"go.uber.org/zap"
+	"reflect"
 	"sort"
 	"sync"
 )
@@ -12,7 +13,7 @@ const (
 	dataTypeNotSupported = "datatype not supported for aggregation"
 )
 
-func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string, dataType string) {
+func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string) {
 
 	var completionWg sync.WaitGroup
 
@@ -20,7 +21,7 @@ func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation st
 
 		completionWg.Add(1)
 
-		go verticalAggregateSingleDay(daysData[index], aggregation, dataType, &completionWg)
+		go verticalAggregateSingleDay(daysData[index], aggregation, &completionWg)
 
 	}
 
@@ -28,7 +29,7 @@ func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation st
 
 }
 
-func verticalAggregateSingleDay(day map[uint32][]DataPoint, aggregation string, dataType string, completionWg *sync.WaitGroup) {
+func verticalAggregateSingleDay(day map[uint32][]DataPoint, aggregation string, completionWg *sync.WaitGroup) {
 
 	defer completionWg.Done()
 
@@ -55,15 +56,17 @@ func verticalAggregateSingleDay(day map[uint32][]DataPoint, aggregation string, 
 
 		switch aggregation {
 		case "avg":
-			aggregatedValue = Avg(batch, dataType)
+			aggregatedValue = Avg(batch)
 		case "sum":
-			aggregatedValue = Sum(batch, dataType)
+			aggregatedValue = Sum(batch)
 		case "min":
-			aggregatedValue = Min(batch, dataType)
+			aggregatedValue = Min(batch)
 		case "max":
-			aggregatedValue = Max(batch, dataType)
+			aggregatedValue = Max(batch)
+		case "count":
+			aggregatedValue = len(batch)
 		default:
-			Logger.Warn("aggregation not supported", zap.String("aggregation", aggregation), zap.Uint32("timestamp", timestamp), zap.Any("batch", batch), zap.String("dataType", dataType))
+			Logger.Warn("aggregation not supported", zap.String("aggregation", aggregation), zap.Uint32("timestamp", timestamp), zap.Any("batch", batch))
 
 		}
 
@@ -76,7 +79,7 @@ func verticalAggregateSingleDay(day map[uint32][]DataPoint, aggregation string, 
 
 }
 
-func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string, dataType string, interval uint32, from uint32) map[uint32][]DataPoint {
+func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string, interval uint32, from uint32) map[uint32][]DataPoint {
 
 	objectWiseTimeIndexedBatchedData := make(map[uint32]map[uint32][]interface{})
 
@@ -133,16 +136,19 @@ func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string,
 			switch aggregation {
 
 			case "avg":
-				aggregatedValue = Avg(batch, dataType)
+				aggregatedValue = Avg(batch)
 
 			case "sum":
-				aggregatedValue = Sum(batch, dataType)
+				aggregatedValue = Sum(batch)
 
 			case "min":
-				aggregatedValue = Min(batch, dataType)
+				aggregatedValue = Min(batch)
 
 			case "max":
-				aggregatedValue = Max(batch, dataType)
+				aggregatedValue = Max(batch)
+
+			case "count":
+				aggregatedValue = len(batch)
 
 			default:
 				Logger.Error("aggregation not supported", zap.String("aggregation", aggregation))
@@ -169,11 +175,12 @@ func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string,
 	return finalData
 }
 
-func Max(values []interface{}, dataType string) interface{} {
+func Max(values []interface{}) interface{} {
 
-	switch dataType {
+	switch dataType := reflect.TypeOf(values[0]).Kind(); dataType {
 
-	case "float64":
+	case reflect.Float64:
+
 		maxValue := values[0].(float64)
 
 		for _, value := range values[1:] {
@@ -183,11 +190,13 @@ func Max(values []interface{}, dataType string) interface{} {
 				maxValue = value.(float64)
 
 			}
+
 		}
 
 		return maxValue
 
-	case "int64":
+	case reflect.Int64:
+
 		maxValue := values[0].(int64)
 
 		for _, value := range values[1:] {
@@ -197,23 +206,26 @@ func Max(values []interface{}, dataType string) interface{} {
 				maxValue = value.(int64)
 
 			}
+
 		}
 
 		return maxValue
 
+	default:
+
+		Logger.Error(dataTypeNotSupported, zap.Any("datatype", dataType))
+
 	}
 
-	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
-
 	return nil
-
 }
 
-func Min(values []interface{}, dataType string) interface{} {
+func Min(values []interface{}) interface{} {
 
-	switch dataType {
+	switch dataType := reflect.TypeOf(values[0]).Kind(); dataType {
 
-	case "float64":
+	case reflect.Float64:
+
 		minValue := values[0].(float64)
 
 		for _, value := range values[1:] {
@@ -223,11 +235,13 @@ func Min(values []interface{}, dataType string) interface{} {
 				minValue = value.(float64)
 
 			}
+
 		}
 
 		return minValue
 
-	case "int64":
+	case reflect.Int64:
+
 		minValue := values[0].(int64)
 
 		for _, value := range values[1:] {
@@ -237,23 +251,25 @@ func Min(values []interface{}, dataType string) interface{} {
 				minValue = value.(int64)
 
 			}
+
 		}
 
 		return minValue
 
+	default:
+
+		Logger.Error(dataTypeNotSupported, zap.Any("datatype", dataType))
+
 	}
 
-	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
-
 	return nil
-
 }
 
-func Sum(values []interface{}, dataType string) interface{} {
+func Sum(values []interface{}) interface{} {
 
-	switch dataType {
+	switch dataType := reflect.TypeOf(values[0]).Kind(); dataType {
 
-	case "float64":
+	case reflect.Float64:
 		sum := 0.0
 
 		for _, value := range values {
@@ -264,7 +280,7 @@ func Sum(values []interface{}, dataType string) interface{} {
 
 		return sum
 
-	case "int64":
+	case reflect.Int64:
 		var sum int64 = 0
 
 		for _, value := range values {
@@ -275,30 +291,35 @@ func Sum(values []interface{}, dataType string) interface{} {
 
 		return sum
 
-	}
+	default:
 
-	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
+		Logger.Error(dataTypeNotSupported, zap.Any("datatype", dataType))
+
+	}
 
 	return nil
 
 }
 
-func Avg(values []interface{}, dataType string) interface{} {
+func Avg(values []interface{}) interface{} {
 
-	sum := Sum(values, dataType)
+	sum := Sum(values)
 
-	switch dataType {
+	switch dataType := reflect.TypeOf(values[0]).Kind(); dataType {
 
-	case "float64":
+	case reflect.Float64:
 
 		return sum.(float64) / float64(len(values))
 
-	case "int64":
+	case reflect.Int64:
+
 		return float64(sum.(int64)) / float64(len(values))
 
-	}
+	default:
 
-	Logger.Error(dataTypeNotSupported, zap.String("datatype", dataType))
+		Logger.Error(dataTypeNotSupported, zap.Any("datatype", dataType))
+
+	}
 
 	return nil
 
