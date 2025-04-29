@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"errors"
 	"math"
+	"net"
 	"strconv"
 	"strings"
 )
@@ -61,5 +63,39 @@ func GetIpListFromCIDRNetworkIp(CIDRNetworkIp string) []string {
 	}
 
 	return IpList
+
+}
+
+var ErrInvalidCIDRIp = errors.New("invalid CIDR IP")
+
+func ValidateCIDRIp(ip string) bool {
+
+	_, _, err := net.ParseCIDR(ip)
+
+	if err != nil {
+
+		return false
+
+	} else {
+
+		return true
+
+	}
+
+}
+
+func ValidateIpAddress(IpAddress string) bool {
+
+	ip := net.ParseIP(IpAddress)
+
+	if ip == nil {
+
+		return false
+
+	} else {
+
+		return true
+
+	}
 
 }

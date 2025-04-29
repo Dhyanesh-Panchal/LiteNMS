@@ -2,7 +2,7 @@ package models
 
 // Device represents a network device in the system
 type Device struct {
-	IP            uint32 `json:"ip" db:"ip"`
+	IP            string `json:"ip" db:"ip"`
 	CredentialID  int    `json:"credential_id" db:"credential_id"`
 	IsProvisioned bool   `json:"is_provisioned" db:"is_provisioned"`
 }
@@ -13,5 +13,5 @@ type DeviceResponse struct {
 }
 
 type DeviceProvisionUpdateRequest struct {
-	ProvisionUpdateIps []uint32 `json:"provision_update_ips"`
+	ProvisionUpdateIps []string `json:"provision_update_ips"`
 }

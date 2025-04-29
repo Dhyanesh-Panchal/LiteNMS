@@ -147,7 +147,7 @@ func InsertDiscoveredDevices(db *ConfigDBClient, devices []Device) error {
 		VALUES ($1, $2, $3)
 		RETURNING ip`
 
-		var ip uint32
+		var ip string
 
 		err := db.QueryRow(query, device.IP, device.CredentialID, device.IsProvisioned).Scan(&ip)
 
@@ -159,7 +159,7 @@ func InsertDiscoveredDevices(db *ConfigDBClient, devices []Device) error {
 
 			}
 
-			return errors.New("failed to insert discovered device")
+			return err
 
 		}
 

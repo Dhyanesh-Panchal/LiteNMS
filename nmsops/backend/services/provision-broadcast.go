@@ -1,7 +1,7 @@
 package services
 
 import (
-	"encoding/binary"
+	"github.com/goccy/go-json"
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
 	. "nms-backend/utils"
@@ -53,11 +53,22 @@ func InitProvisioningPublisher() (*ProvisioningPublisher, error) {
 
 }
 
-func (publisher *ProvisioningPublisher) SendUpdate(objectIds []uint32, topic string) error {
+func (publisher *ProvisioningPublisher) SendUpdate(objectIds []string, topic string) error {
 
-	dataBytes := encode(objectIds)
+	dataBytes, err := json.Marshal(map[string][]string{
 
-	_, err := publisher.socket.Send(topic+string(dataBytes), 0) // Currently publishing on "" topic.
+		"updateProvisionIps": objectIds,
+	})
+
+	if err != nil {
+
+		Logger.Error("Error marshalling update provision status", zap.Error(err))
+
+		return err
+
+	}
+
+	_, err = publisher.socket.Send(topic+string(dataBytes), 0) // Currently publishing on "" topic.
 
 	if err != nil {
 
@@ -93,19 +104,5 @@ func (publisher *ProvisioningPublisher) Close() error {
 	}
 
 	return nil
-
-}
-
-func encode(objectIds []uint32) []byte {
-
-	bytes := make([]byte, 4*len(objectIds))
-
-	for index, objectId := range objectIds {
-
-		binary.LittleEndian.PutUint32(bytes[index*4:], objectId)
-
-	}
-
-	return bytes
 
 }

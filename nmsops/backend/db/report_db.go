@@ -173,9 +173,17 @@ func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]
 
 }
 
-func (db *ReportDBClient) Query(from, to, interval uint32, objectIds []uint32, counterId uint16, verticalAggregation, horizontalAggregation string) (map[uint32][]DataPoint, error) {
+func (db *ReportDBClient) Query(from, to, interval uint32, objectIps []string, counterId uint16, verticalAggregation, horizontalAggregation string) (interface{}, error) {
 
 	queryId := atomic.SwapUint64(&db.queryId, db.queryId+1)
+
+	objectIds := make([]uint32, len(objectIps))
+
+	for index, ip := range objectIps {
+
+		objectIds[index] = ConvertIpToNumeric(ip)
+
+	}
 
 	queryBytes, err := json.Marshal(Query{
 		QueryId:               queryId,
@@ -220,8 +228,35 @@ func (db *ReportDBClient) Query(from, to, interval uint32, objectIds []uint32, c
 			return nil, err
 		}
 
-		return result.Data, nil
+		return parseResponse(result.Data), nil
 
+	}
+
+}
+
+func parseResponse(data map[uint32][]DataPoint) interface{} {
+
+	if result, exist := data[0]; exist {
+
+		// Result of Query without groupBy
+		// Hence return the single result array.
+
+		return result
+
+	} else {
+
+		// query with groupBy over objectIds
+		// Convert objectIds to string and return the map.
+
+		response := make(map[string][]DataPoint)
+
+		for objectId, result := range data {
+
+			response[ConvertNumericToIp(objectId)] = result
+
+		}
+
+		return response
 	}
 
 }

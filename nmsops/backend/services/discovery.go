@@ -10,13 +10,13 @@ import (
 	"time"
 )
 
-func RunDiscovery(discoveryIps []uint32, credentialProfiles []CredentialProfile) []Device {
+func RunDiscovery(discoveryIps []string, credentialProfiles []CredentialProfile) []Device {
 
 	var discoveredDevices []Device
 
 	lock := &sync.Mutex{}
 
-	discoveryStatus := make(map[uint32]bool, len(discoveryIps))
+	discoveryStatus := make(map[string]bool, len(discoveryIps))
 
 	for _, credentialProfile := range credentialProfiles {
 
@@ -31,10 +31,10 @@ func RunDiscovery(discoveryIps []uint32, credentialProfiles []CredentialProfile)
 
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 
-			Timeout: time.Second * 10,
+			Timeout: time.Second * 3,
 		}
 
-		var wg sync.WaitGroup
+		var discoveryWorkersWaitGroup sync.WaitGroup
 
 		for _, ip := range discoveryIps {
 
@@ -46,11 +46,11 @@ func RunDiscovery(discoveryIps []uint32, credentialProfiles []CredentialProfile)
 
 			}
 
-			wg.Add(1)
+			discoveryWorkersWaitGroup.Add(1)
 
 			go func() {
 
-				defer wg.Done()
+				defer discoveryWorkersWaitGroup.Done()
 
 				result := discoverDevice(ip, credentialProfile, config)
 
@@ -74,21 +74,23 @@ func RunDiscovery(discoveryIps []uint32, credentialProfiles []CredentialProfile)
 
 		}
 
-		wg.Wait()
+		discoveryWorkersWaitGroup.Wait()
 
 	}
+
+	Logger.Debug("discovery for", zap.Any("discoveredDevices", discoveredDevices))
 
 	return discoveredDevices
 
 }
 
-func discoverDevice(ip uint32, credentialProfile CredentialProfile, config *ssh.ClientConfig) bool {
+func discoverDevice(ip string, credentialProfile CredentialProfile, config *ssh.ClientConfig) bool {
 
-	client, err := ssh.Dial("tcp", ConvertNumericToIp(ip)+":"+strconv.Itoa(int(credentialProfile.Port)), config)
+	client, err := ssh.Dial("tcp", ip+":"+strconv.Itoa(int(credentialProfile.Port)), config)
 
 	if err != nil {
 
-		Logger.Error("Failed to initialize the client", zap.Error(err))
+		Logger.Info("Failed to initialize the client", zap.Error(err))
 
 		return false
 
@@ -118,7 +120,7 @@ func discoverDevice(ip uint32, credentialProfile CredentialProfile, config *ssh.
 
 	}
 
-	Logger.Info("Discovery Successful for", zap.String("ip", ConvertNumericToIp(ip)), zap.Any("Credential", credentialProfile), zap.String("Response", string(resp)))
+	Logger.Info("Discovery Successful for", zap.String("ip", ip), zap.Any("Credential", credentialProfile), zap.String("Response", string(resp)))
 
 	return true
 

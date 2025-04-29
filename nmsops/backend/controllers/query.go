@@ -6,6 +6,7 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	. "nms-backend/db"
+	. "nms-backend/models"
 	. "nms-backend/utils"
 )
 
@@ -23,7 +24,7 @@ func NewQueryController(report *ReportDBClient) *QueryController {
 }
 
 func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
-	var req Query
+	var req UserQuery
 
 	// Bind JSON from request body
 
