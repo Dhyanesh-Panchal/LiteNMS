@@ -17,12 +17,14 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 	defer writerWaitGroup.Done()
 
+	dataBytesContainer := make([]byte, 0)
+
 	for dataBatch := range writersChannel {
 
 		Logger.Info("writer received data", zap.Any("dataBatch", dataBatch))
 
 		// Serialize the Data
-		data, err := SerializeBatch(dataBatch.Values, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string))
+		err := SerializeBatch(dataBatch.Values, &dataBytesContainer, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string))
 
 		if err != nil {
 
@@ -38,13 +40,17 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 		}
 
-		err = storageEngine.Put(dataBatch.ObjectId, data)
+		err = storageEngine.Put(dataBatch.ObjectId, dataBytesContainer)
 
 		if err != nil {
 
 			Logger.Error("error writing to storage:", zap.Error(err))
 
 		}
+
+		// reslice the dataBytesContainer
+		dataBytesContainer = dataBytesContainer[:0]
+		
 	}
 
 	Logger.Info("Writer exiting.")

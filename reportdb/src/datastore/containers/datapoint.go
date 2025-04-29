@@ -12,113 +12,136 @@ type DataPoint struct {
 	Value     interface{} `json:"value"`
 }
 
-func SerializeBatch(data []DataPoint, dataType string) ([]byte, error) {
+func SerializeBatch(data []DataPoint, dataContainer *[]byte, dataType string) error {
 
 	if len(data) == 0 {
 
-		return nil, nil
+		return nil
 
 	}
 
 	switch dataType {
+
 	case "float64":
-		return serializeFloat64(data), nil
+
+		serializeFloat64(data, dataContainer)
+
+		return nil
+
 	case "float32":
-		return serializeFloat32(data), nil
+
+		serializeFloat32(data, dataContainer)
+
+		return nil
+
 	case "uint64", "uint", "int64", "int":
-		return serializeUint64(data), nil
+
+		serializeUint64(data, dataContainer)
+
+		return nil
+
 	case "uint32", "int32":
-		return serializeUint32(data), nil
+
+		serializeUint32(data, dataContainer)
+
+		return nil
+
 	case "string":
-		return serializeStrings(data), nil
+
+		serializeStrings(data, dataContainer)
+
+		return nil
 	default:
-		return nil, fmt.Errorf("unsupported data type: %s", dataType)
+		return fmt.Errorf("unsupported data type: %s", dataType)
 	}
 }
 
-func serializeFloat64(data []DataPoint) []byte {
+func serializeFloat64(data []DataPoint, dataContainer *[]byte) {
 
-	buffer := make([]byte, len(data)*12)
+	if cap(*dataContainer) < len(data)*12 {
+
+		*dataContainer = make([]byte, len(data)*12)
+
+	} else {
+
+		*dataContainer = (*dataContainer)[:len(data)*12]
+
+	}
 
 	for index, dataPoint := range data {
 
-		binary.LittleEndian.PutUint32(buffer[index*12:index*12+4], dataPoint.Timestamp)
+		binary.LittleEndian.PutUint32((*dataContainer)[index*12:index*12+4], dataPoint.Timestamp)
 
-		binary.LittleEndian.PutUint64(buffer[index*12+4:index*12+12], math.Float64bits(dataPoint.Value.(float64)))
+		binary.LittleEndian.PutUint64((*dataContainer)[index*12+4:index*12+12], math.Float64bits(dataPoint.Value.(float64)))
 
 	}
-
-	return buffer
 }
 
-func serializeFloat32(data []DataPoint) []byte {
+func serializeFloat32(data []DataPoint, dataContainer *[]byte) {
 
-	buffer := make([]byte, len(data)*8)
+	if cap(*dataContainer) < len(data)*8 {
+
+		*dataContainer = make([]byte, len(data)*8)
+
+	} else {
+
+		*dataContainer = (*dataContainer)[:len(data)*8]
+
+	}
 
 	for index, dataPoint := range data {
 
-		binary.LittleEndian.PutUint32(buffer[index*8:index*8+4], dataPoint.Timestamp)
+		binary.LittleEndian.PutUint32((*dataContainer)[index*8:index*8+4], dataPoint.Timestamp)
 
-		binary.LittleEndian.PutUint32(buffer[index*8+4:index*8+8], math.Float32bits(dataPoint.Value.(float32)))
+		binary.LittleEndian.PutUint32((*dataContainer)[index*8+4:index*8+8], math.Float32bits(dataPoint.Value.(float32)))
 
 	}
-
-	return buffer
 }
 
-//func serializeInt64(data []DataPoint) []byte {
-//	buffer := make([]byte, len(data)*12)
-//
-//	for index, dataPoint := range data {
-//		binary.LittleEndian.PutUint32(buffer[index*12:index*12+4], dataPoint.Timestamp)
-//		binary.LittleEndian.PutUint64(buffer[index*12+4:index*12+12], uint64(dataPoint.Value.(float64)))
-//
-//	}
-//
-//	return buffer
-//}
-//func serializeInt32(data []DataPoint) []byte {
-//	buffer := make([]byte, len(data)*8)
-//
-//	for index, dataPoint := range data {
-//		binary.LittleEndian.PutUint32(buffer[index*8:index*8+4], dataPoint.Timestamp)
-//		binary.LittleEndian.PutUint32(buffer[index*8+4:index*8+8], uint32(dataPoint.Value.(float64)))
-//	}
-//
-//	return buffer
-//}
+func serializeUint64(data []DataPoint, dataContainer *[]byte) {
 
-func serializeUint64(data []DataPoint) []byte {
+	if cap(*dataContainer) < len(data)*12 {
 
-	buffer := make([]byte, len(data)*12)
+		*dataContainer = make([]byte, len(data)*12)
+
+	} else {
+
+		*dataContainer = (*dataContainer)[:len(data)*12]
+
+	}
 
 	for index, dataPoint := range data {
 
-		binary.LittleEndian.PutUint32(buffer[index*12:index*12+4], dataPoint.Timestamp)
+		binary.LittleEndian.PutUint32((*dataContainer)[index*12:index*12+4], dataPoint.Timestamp)
 
-		binary.LittleEndian.PutUint64(buffer[index*12+4:index*12+12], uint64(dataPoint.Value.(float64)))
+		binary.LittleEndian.PutUint64((*dataContainer)[index*12+4:index*12+12], uint64(dataPoint.Value.(float64)))
 
 	}
-
-	return buffer
 }
 
-func serializeUint32(data []DataPoint) []byte {
+func serializeUint32(data []DataPoint, dataContainer *[]byte) {
 
-	buffer := make([]byte, len(data)*8)
+	if cap(*dataContainer) < len(data)*8 {
+
+		*dataContainer = make([]byte, len(data)*8)
+
+	} else {
+
+		*dataContainer = (*dataContainer)[:len(data)*8]
+
+	}
 
 	for index, dataPoint := range data {
 
-		binary.LittleEndian.PutUint32(buffer[index*8:index*8+4], dataPoint.Timestamp)
+		binary.LittleEndian.PutUint32((*dataContainer)[index*8:index*8+4], dataPoint.Timestamp)
 
-		binary.LittleEndian.PutUint32(buffer[index*8+4:index*8+8], uint32(dataPoint.Value.(float64)))
+		binary.LittleEndian.PutUint32((*dataContainer)[index*8+4:index*8+8], uint32(dataPoint.Value.(float64)))
 
 	}
 
-	return buffer
 }
 
-func serializeStrings(data []DataPoint) []byte {
+func serializeStrings(data []DataPoint, dataContainer *[]byte) {
 	// Serialize string
 
 	bufferSize := 0
@@ -129,23 +152,30 @@ func serializeStrings(data []DataPoint) []byte {
 
 	}
 
-	buffer := make([]byte, bufferSize)
+	if cap(*dataContainer) < bufferSize {
+
+		*dataContainer = make([]byte, bufferSize)
+
+	} else {
+
+		*dataContainer = (*dataContainer)[:bufferSize]
+
+	}
 
 	offset := 0
 	for _, value := range data {
 
-		binary.LittleEndian.PutUint32(buffer[offset:offset+4], value.Timestamp)
+		binary.LittleEndian.PutUint32((*dataContainer)[offset:offset+4], value.Timestamp)
 
 		val := value.Value.(string)
 
-		binary.LittleEndian.PutUint32(buffer[offset+4:offset+8], uint32(len(val)))
+		binary.LittleEndian.PutUint32((*dataContainer)[offset+4:offset+8], uint32(len(val)))
 
-		copy(buffer[offset+8:offset+8+len(val)], val)
+		copy((*dataContainer)[offset+8:offset+8+len(val)], val)
 
 		offset += 8 + len(val)
 
 	}
-	return buffer
 }
 
 // --------------- Deserialize-------------
