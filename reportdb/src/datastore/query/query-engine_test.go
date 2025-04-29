@@ -26,13 +26,13 @@ func TestQueryEngine(t *testing.T) {
 
 	query := Query{
 		QueryId:               10,
-		CounterId:             2,
-		From:                  1745576802,
-		To:                    1745577802,
-		ObjectIds:             []uint32{2886731944},
+		CounterId:             1,
+		From:                  1745911865,
+		To:                    1745911929,
+		ObjectIds:             []uint32{2886732126},
 		VerticalAggregation:   "none",
-		HorizontalAggregation: "avg",
-		Interval:              30,
+		HorizontalAggregation: "none",
+		Interval:              0,
 	}
 
 	queryReceiveChannel <- query

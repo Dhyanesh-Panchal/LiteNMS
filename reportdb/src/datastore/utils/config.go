@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"go.uber.org/zap"
 	"os"
+	"runtime/debug"
 )
 
 const DataType = "dataType"
@@ -28,6 +29,8 @@ var (
 )
 
 func LoadConfig() error {
+
+	debug.SetGCPercent(300)
 
 	currentWorkingDirectory, _ := os.Getwd()
 
