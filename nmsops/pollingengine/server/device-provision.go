@@ -1,8 +1,8 @@
 package server
 
 import (
-	"encoding/binary"
 	"errors"
+	"github.com/goccy/go-json"
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
 	. "poller/containers"
@@ -105,9 +105,9 @@ func provisionListener(deviceList *DeviceList, provisionListenerShutdown chan st
 
 			}
 
-			provisionUpdateIps := make([]uint32, len(responseBytes)/4)
+			var provisionUpdateIps map[string][]string
 
-			err = decode(responseBytes, provisionUpdateIps)
+			err = json.Unmarshal(responseBytes, &provisionUpdateIps)
 
 			if err != nil {
 
@@ -115,36 +115,12 @@ func provisionListener(deviceList *DeviceList, provisionListenerShutdown chan st
 
 			}
 
-			deviceList.UpdateProvisionedDeviceList(provisionUpdateIps)
+			deviceList.UpdateProvisionedDeviceList(provisionUpdateIps["updateProvisionIps"])
 
 			Logger.Info("Updated the device provisioning list", zap.Any("provisionUpdate", provisionUpdateIps))
 
 		}
 
 	}
-
-}
-
-func decode(dataBytes []byte, data []uint32) (err error) {
-
-	err = nil
-
-	defer func() {
-		if r := recover(); r != nil {
-
-			Logger.Error("Panic in decoder", zap.Any("recover", r))
-
-			err = r.(error)
-
-		}
-	}()
-
-	for i := 0; i < len(dataBytes)/4; i++ {
-
-		data[i] = binary.LittleEndian.Uint32(dataBytes[i*4 : (i+1)*4])
-
-	}
-
-	return err
 
 }

@@ -26,9 +26,9 @@ const (
 )
 
 type DeviceList struct {
-	deviceConfig map[uint32]*ssh.ClientConfig
+	deviceConfig map[string]*ssh.ClientConfig
 
-	devicePort map[uint32]string
+	devicePort map[string]string
 
 	db *sql.DB
 
@@ -65,15 +65,13 @@ func NewDeviceList() (*DeviceList, error) {
 
 	// Create ssh clients for deviceConfig and save it to map
 
-	devices := make(map[uint32]*ssh.ClientConfig)
+	devices := make(map[string]*ssh.ClientConfig)
 
-	ports := make(map[uint32]string)
+	ports := make(map[string]string)
 
 	for rows.Next() {
 
-		var ip uint32
-
-		var hostname, password string
+		var ip, hostname, password string
 
 		var port int
 
@@ -112,7 +110,7 @@ func NewDeviceList() (*DeviceList, error) {
 
 }
 
-func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []uint32) {
+func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []string) {
 
 	list.lock.Lock()
 
@@ -130,9 +128,7 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []uint32) {
 
 	for rows.Next() {
 
-		var ip uint32
-
-		var hostname, password string
+		var ip, hostname, password string
 
 		var port int
 
@@ -170,7 +166,7 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []uint32) {
 
 			// Device Unprovisioned
 
-			Logger.Info("Unprovisioning device", zap.Uint32("IP:", ip))
+			Logger.Info("Unprovisioning device", zap.String("IP:", ip))
 
 			delete(list.deviceConfig, ip)
 
@@ -180,7 +176,7 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []uint32) {
 
 }
 
-func (list *DeviceList) GetDevices() (map[uint32]*ssh.ClientConfig, map[uint32]string) {
+func (list *DeviceList) GetDevices() (map[string]*ssh.ClientConfig, map[string]string) {
 
 	list.lock.RLock()
 

@@ -22,7 +22,7 @@ type PolledDataPoint struct {
 type PollJob struct {
 	Timestamp uint32
 
-	DeviceIP uint32
+	DeviceIP string
 
 	DeviceConfig *ssh.ClientConfig
 
@@ -43,11 +43,7 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 
 	for job := range pollJobChannel {
 
-		config, port := job.DeviceConfig, job.DevicePort
-
-		deviceIp := ConvertNumericToIp(job.DeviceIP)
-
-		resp, err := poll(config, deviceIp, port, CounterCommand[job.CounterId])
+		resp, err := poll(job.DeviceConfig, job.DeviceIP, job.DevicePort, CounterCommand[job.CounterId])
 
 		if err != nil {
 
@@ -76,7 +72,7 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 
 			Timestamp: job.Timestamp,
 
-			ObjectId: job.DeviceIP,
+			ObjectId: ConvertIpToNumeric(job.DeviceIP),
 
 			CounterId: job.CounterId,
 
@@ -85,7 +81,7 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 
 		pollResultChannel <- dataPoint
 
-		Logger.Info("Poll success for", zap.Uint32("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
+		Logger.Info("Poll success for", zap.String("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
 
 	}
 
