@@ -24,19 +24,16 @@ var (
 	QueryListenerBindPort string
 	QueryResultBindPort   string
 	ProfilingPort         string
+	StorageDirectory      string
 )
-
-var CurrentWorkingDirectory string
-
-var StorageDirectory string
 
 func LoadConfig() error {
 
-	CurrentWorkingDirectory, _ = os.Getwd()
+	currentWorkingDirectory, _ := os.Getwd()
 
-	StorageDirectory = CurrentWorkingDirectory + "/data"
+	StorageDirectory = currentWorkingDirectory + "/data"
 
-	configFilesDir := CurrentWorkingDirectory + "/config"
+	configFilesDir := currentWorkingDirectory + "/config"
 
 	countersConfigData, err := os.ReadFile(configFilesDir + "/counters.json")
 

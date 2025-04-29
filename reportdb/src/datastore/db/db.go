@@ -6,7 +6,6 @@ import (
 	. "datastore/utils"
 	. "datastore/writer"
 	"os"
-	"path/filepath"
 	"sync"
 )
 
@@ -23,7 +22,8 @@ func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-cha
 	defer Logger.Info("database closed")
 
 	// Ensure storage directory is created.
-	err := os.MkdirAll(filepath.Dir(filepath.Dir(CurrentWorkingDirectory))+"/data", 0777)
+	//err := os.MkdirAll(filepath.Dir(filepath.Dir(CurrentWorkingDirectory))+"/data", 0777)
+	err := os.MkdirAll(StorageDirectory, 0777)
 
 	if err != nil {
 

@@ -7,7 +7,6 @@ import (
 	"errors"
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
-	"log"
 	"sync"
 )
 
@@ -56,7 +55,9 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 	if err != nil {
 
-		log.Fatal("Error initializing query listener socket", err)
+		Logger.Error("Error initializing query listener socket", zap.Error(err))
+
+		return
 
 	}
 
@@ -64,7 +65,7 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 	if err != nil {
 
-		log.Fatal("Error binding the ", err)
+		Logger.Error("Error binding query listener socket", zap.String("port", QueryListenerBindPort), zap.Error(err))
 
 	}
 

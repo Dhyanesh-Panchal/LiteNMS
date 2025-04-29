@@ -17,7 +17,7 @@ func main() {
 
 	if err != nil {
 
-		Logger.Info("error loading config:" + err.Error())
+		Logger.Error("error loading config:" + err.Error())
 
 		return
 
