@@ -27,9 +27,9 @@ func TestQueryEngine(t *testing.T) {
 	query := Query{
 		QueryId:               10,
 		CounterId:             2,
-		From:                  1745576802,
-		To:                    1745577802,
-		ObjectIds:             []uint32{2886731944},
+		From:                  1745919900,
+		To:                    1745920376,
+		ObjectIds:             []uint32{2886732109},
 		VerticalAggregation:   "none",
 		HorizontalAggregation: "avg",
 		Interval:              30,

@@ -2,7 +2,7 @@ package containers
 
 import (
 	. "datastore/utils"
-	"encoding/json"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	"log"
 	"os"
@@ -12,17 +12,17 @@ import (
 )
 
 type ObjectBlock struct {
-	Offset uint64 `json:"offset"`
+	Offset uint64 `msgpack:"offset" json:"offset"`
 
-	RemainingCapacity uint32 `json:"remaining_capacity"`
+	RemainingCapacity uint32 `msgpack:"remaining_capacity" json:"remaining_capacity"`
 }
 
 type Index struct {
-	BlockSize uint32 `json:"block_size"`
+	BlockSize uint32 `msgpack:"block_size" json:"block_size"`
 
-	NextFreeBlockOffset uint64 `json:"next_free_block_offset"`
+	NextFreeBlockOffset uint64 `msgpack:"next_free_block_offset" json:"next_free_block_offset"`
 
-	ObjectIndex map[uint32][]ObjectBlock `json:"object_index"`
+	ObjectIndex map[uint32][]ObjectBlock `msgpack:"object_index"  json:"object_index"`
 
 	mu sync.RWMutex
 }
@@ -42,7 +42,7 @@ func NewIndex(blockSize uint32) *Index {
 
 func loadIndex(partitionId uint32, storagePath string) (*Index, error) {
 
-	indexFilePath := storagePath + "/index_" + strconv.Itoa(int(partitionId)) + ".json"
+	indexFilePath := storagePath + "/index_" + strconv.Itoa(int(partitionId)) + ".bin"
 
 	indexBytes, err := os.ReadFile(indexFilePath)
 
@@ -56,7 +56,7 @@ func loadIndex(partitionId uint32, storagePath string) (*Index, error) {
 
 	var index Index
 
-	if err = json.Unmarshal(indexBytes, &index); err != nil {
+	if err = msgpack.Unmarshal(indexBytes, &index); err != nil {
 
 		log.Printf("Error unmarshalling index file: %v", err)
 
@@ -126,11 +126,9 @@ func (index *Index) WriteIndexToFile(storagePath string, partitionId uint32) err
 
 	defer index.mu.Unlock()
 
-	// Change from MarshalIndent to Only Marshal
-
-	indexBytes, err := json.MarshalIndent(index, "", "  ")
-
-	indexFilePath := storagePath + "/index_" + strconv.Itoa(int(partitionId)) + ".json"
+	indexBytes, err := msgpack.Marshal(index)
+	
+	indexFilePath := storagePath + "/index_" + strconv.Itoa(int(partitionId)) + ".bin"
 
 	err = os.WriteFile(indexFilePath, indexBytes, 0644)
 

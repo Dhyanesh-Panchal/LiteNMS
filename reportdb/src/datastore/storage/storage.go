@@ -3,7 +3,6 @@ package storage
 import (
 	. "datastore/storage/containers"
 	. "datastore/utils"
-	"encoding/json"
 	"errors"
 	"go.uber.org/zap"
 	"os"
@@ -58,7 +57,9 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 	if os.IsNotExist(err) {
 
 		if !createIfNotExist {
+
 			return ErrStorageDoesNotExist
+
 		}
 
 		Logger.Info("Creating storage", zap.String("storagePath", storagePath))
@@ -108,8 +109,17 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 			}
 
-			err = writeNewIndex(storagePath, partitionIndex, blockSize)
+			index := NewIndex(blockSize)
 
+			err = index.WriteIndexToFile(storagePath, partitionIndex)
+
+			if err != nil {
+
+				Logger.Error("error marshalling index ", zap.Error(err))
+
+				return err
+
+			}
 		}
 
 	} else if err != nil {
@@ -122,54 +132,35 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 	return nil
 }
 
-func writeNewIndex(storagePath string, partitionIndex uint32, blockSize uint32) error {
-
-	indexFile, err := os.Create(storagePath + "/index_" + strconv.Itoa(int(partitionIndex)) + ".json")
-
-	if err != nil {
-
-		Logger.Error("error creating new index partition", zap.Error(err))
-
-		return err
-
-	}
-
-	defer func(indexFile *os.File) {
-
-		err := indexFile.Close()
-
-		if err != nil {
-
-			Logger.Error("error closing data partition", zap.Error(err))
-
-		}
-
-	}(indexFile)
-
-	index := NewIndex(blockSize)
-
-	indexBytes, err := json.MarshalIndent(index, "", "  ")
-
-	if err != nil {
-
-		Logger.Error("error marshalling index ", zap.Error(err))
-
-		return err
-
-	}
-
-	_, err = indexFile.Write(indexBytes)
-
-	if err != nil {
-
-		Logger.Error("error writing index ", zap.Error(err))
-
-		return err
-
-	}
-
-	return nil
-}
+//func writeNewIndex(storagePath string, partitionIndex uint32, blockSize uint32) error {
+//
+//	indexFile, err := os.Create(storagePath + "/index_" + strconv.Itoa(int(partitionIndex)) + ".bin")
+//
+//	if err != nil {
+//
+//		Logger.Error("error creating new index partition", zap.Error(err))
+//
+//		return err
+//
+//	}
+//
+//	defer func(indexFile *os.File) {
+//
+//		err := indexFile.Close()
+//
+//		if err != nil {
+//
+//			Logger.Error("error closing data partition", zap.Error(err))
+//
+//		}
+//
+//	}(indexFile)
+//
+//
+//
+//
+//	return nil
+//}
 
 // -------------- Storage Engine Interface functions -----------------
 
