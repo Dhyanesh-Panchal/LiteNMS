@@ -115,7 +115,7 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 			}
 
-			Logger.Debug("Received query ", zap.Any("query", query))
+			//Logger.Debug("Received query ", zap.Any("query", query))
 
 			queryReceiveChannel <- query
 

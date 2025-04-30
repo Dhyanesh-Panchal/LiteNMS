@@ -50,8 +50,6 @@ func QueryParser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Res
 
 		for date := startDate; date <= endDate; date += 86400 {
 
-			Logger.Debug("Day:", zap.Any("date", UnixToDate(date)))
-
 			select {
 
 			case <-queryTimeoutContext.Done():
