@@ -7,6 +7,7 @@ import (
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
 	. "nms-backend/utils"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -36,6 +37,8 @@ type Result struct {
 	QueryId uint64 `json:"query_id"`
 
 	Data map[uint32][]DataPoint `json:"data"`
+
+	Error string `json:"error"`
 }
 
 type ReportDBClient struct {
@@ -43,11 +46,43 @@ type ReportDBClient struct {
 
 	receiverWaitChannels map[uint64]chan []byte
 
+	lock sync.RWMutex
+
 	queryChannel chan []byte
 
 	shutdownChannel chan struct{}
 
 	queryId uint64
+}
+
+func (db *ReportDBClient) PutReceiverChannel(queryId uint64, channel chan []byte) {
+
+	db.lock.Lock()
+
+	defer db.lock.Unlock()
+
+	db.receiverWaitChannels[queryId] = channel
+
+}
+
+func (db *ReportDBClient) GetReceiverChannel(queryId uint64) chan []byte {
+
+	db.lock.RLock()
+
+	defer db.lock.RUnlock()
+
+	if channel, ok := db.receiverWaitChannels[queryId]; ok {
+
+		delete(db.receiverWaitChannels, queryId)
+
+		return channel
+
+	} else {
+
+		return nil
+
+	}
+
 }
 
 func InitReportDBClient() (*ReportDBClient, error) {
@@ -62,15 +97,23 @@ func InitReportDBClient() (*ReportDBClient, error) {
 
 	receiverWaitChannels := make(map[uint64]chan []byte)
 
-	querySendChannel := make(chan []byte)
+	querySendChannel := make(chan []byte, 100)
 
 	shutdownChannel := make(chan struct{})
 
+	client := ReportDBClient{
+		context:              context,
+		receiverWaitChannels: receiverWaitChannels,
+		queryChannel:         querySendChannel,
+		shutdownChannel:      shutdownChannel,
+		queryId:              0,
+	}
+
 	go querySendRoutine(context, querySendChannel)
 
-	go resultReceiveRoutine(context, receiverWaitChannels, shutdownChannel)
+	go resultReceiveRoutine(context, &client, shutdownChannel)
 
-	return &ReportDBClient{context, receiverWaitChannels, querySendChannel, shutdownChannel, 0}, nil
+	return &client, nil
 
 }
 
@@ -105,7 +148,7 @@ func querySendRoutine(context *zmq.Context, queryChannel chan []byte) {
 	Logger.Info("Query sender routine closed")
 }
 
-func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]chan []byte, shutdown chan struct{}) {
+func resultReceiveRoutine(context *zmq.Context, dbClient *ReportDBClient, shutdown chan struct{}) {
 
 	socket, err := context.NewSocket(zmq.PULL)
 
@@ -158,15 +201,13 @@ func resultReceiveRoutine(context *zmq.Context, receiverWaitChannels map[uint64]
 
 			queryId := binary.LittleEndian.Uint64(resultBytes[:8])
 
-			if channel, ok := receiverWaitChannels[queryId]; ok {
+			Logger.Debug("Received query Result", zap.Uint64("query_id", queryId))
 
-				channel <- resultBytes[8:]
+			receiverChannel := dbClient.GetReceiverChannel(queryId)
 
-				close(channel)
+			receiverChannel <- resultBytes[8:]
 
-				delete(receiverWaitChannels, queryId)
-
-			}
+			close(receiverChannel)
 
 		}
 	}
@@ -204,22 +245,26 @@ func (db *ReportDBClient) Query(from, to, interval uint32, objectIps []string, c
 
 	}
 
-	db.receiverWaitChannels[queryId] = make(chan []byte)
+	Logger.Debug("Query Id assigned", zap.Uint64("queryId", queryId))
+
+	receiverChannel := make(chan []byte)
+
+	db.PutReceiverChannel(queryId, receiverChannel)
 
 	// Send query
 	db.queryChannel <- queryBytes
 
+	var result Result
+
 	select {
 
-	case <-time.After(10 * time.Second):
+	case <-time.NewTimer(10 * time.Second).C:
 
 		Logger.Error("Query timeout", zap.Uint64("queryId", queryId))
 
 		return nil, ErrQueryTimedOut
 
-	case resultBytes := <-db.receiverWaitChannels[queryId]:
-
-		var result Result
+	case resultBytes := <-receiverChannel:
 
 		if err = json.Unmarshal(resultBytes, &result); err != nil {
 
@@ -228,10 +273,11 @@ func (db *ReportDBClient) Query(from, to, interval uint32, objectIps []string, c
 			return nil, err
 		}
 
-		return parseResponse(result.Data), nil
+		Logger.Debug("Result received", zap.Uint64("queryId", queryId), zap.Any("result", result))
 
 	}
 
+	return parseResponse(result.Data), nil
 }
 
 func parseResponse(data map[uint32][]DataPoint) interface{} {
