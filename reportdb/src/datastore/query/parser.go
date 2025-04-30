@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	. "datastore/containers"
 	. "datastore/utils"
 	"go.uber.org/zap"
@@ -8,13 +9,33 @@ import (
 	"time"
 )
 
-func Parser(parserId int, queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, readerRequestChannel chan<- ReaderRequest, readerResponseChannel <-chan map[string]interface{}, parsersWaitGroup *sync.WaitGroup) {
+func QueryParser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, storagePool *StoragePool, parsersWaitGroup *sync.WaitGroup) {
 
 	defer parsersWaitGroup.Done()
+
+	// Initialize Readers
+
+	readerRequestChannel := make(chan ReaderRequest, 10) // TODO: Shift channel size to config
+
+	readerResponseChannel := make(chan map[string]interface{}, 10)
+
+	var readersWaitGroup sync.WaitGroup
+
+	readersWaitGroup.Add(Readers)
+
+	for range Readers {
+
+		go Reader(readerRequestChannel, readerResponseChannel, storagePool, &readersWaitGroup)
+
+	}
+
+	// Listen for query
 
 	for query := range queryReceiveChannel {
 
 		benchmarkTime := time.Now()
+
+		queryTimeoutContext, queryTimeoutContextCancel := context.WithTimeout(context.Background(), time.Duration(QueryTimeoutTime)*time.Second)
 
 		startDate := query.From - (query.From % 86400)
 
@@ -29,29 +50,51 @@ func Parser(parserId int, queryReceiveChannel <-chan Query, queryResultChannel c
 
 		for date := startDate; date <= endDate; date += 86400 {
 
-			request := ReaderRequest{
-				ParserId:     parserId,
+			Logger.Debug("Day:", zap.Any("date", UnixToDate(date)))
+
+			select {
+
+			case <-queryTimeoutContext.Done():
+
+				break
+
+			case readerRequestChannel <- ReaderRequest{
+
 				RequestIndex: requestIndex,
+
 				StorageKey: StoragePoolKey{
 					Date:      UnixToDate(date),
 					CounterId: query.CounterId,
 				},
-				From:      query.From,
-				To:        query.To,
+
+				From: query.From,
+
+				To: query.To,
+
 				ObjectIds: query.ObjectIds,
+
+				TimeoutContext: queryTimeoutContext,
+			}:
+
+				requestIndex++
 			}
 
-			readerRequestChannel <- request
-
-			requestIndex++
 		}
 
 		// Listen for response from reader
 		for range len(daysData) {
 
-			response := <-readerResponseChannel
+			select {
 
-			daysData[response["request_index"].(int)] = response["data"].(map[uint32][]DataPoint)
+			case <-queryTimeoutContext.Done():
+
+				break
+
+			case response := <-readerResponseChannel:
+
+				daysData[response["request_index"].(int)] = response["data"].(map[uint32][]DataPoint)
+
+			}
 
 		}
 
@@ -61,24 +104,36 @@ func Parser(parserId int, queryReceiveChannel <-chan Query, queryResultChannel c
 
 		if query.VerticalAggregation != "none" && dataType != "string" {
 
-			GroupByVerticalAggregator(daysData, query.VerticalAggregation)
+			GroupByVerticalAggregator(daysData, query.VerticalAggregation, queryTimeoutContext)
 
 		}
+
+		// Necessary structures initialization
 
 		normalizedDataPoints := make(map[uint32][]DataPoint)
 
 		if query.HorizontalAggregation != "none" && dataType != "string" {
 
-			normalizedDataPoints = HorizontalAggregator(daysData, query.HorizontalAggregation, query.Interval, query.From)
+			HorizontalAggregator(daysData, query.HorizontalAggregation, query.Interval, query.From, normalizedDataPoints, queryTimeoutContext)
 
 		} else {
 
 			// Drilldown, Just normalize the days to single slice of dataPoints
 			for _, day := range daysData {
 
-				for objectId, points := range day {
+				select {
 
-					normalizedDataPoints[objectId] = append(normalizedDataPoints[objectId], points...)
+				case <-queryTimeoutContext.Done():
+
+					break
+
+				default:
+
+					for objectId, points := range day {
+
+						normalizedDataPoints[objectId] = append(normalizedDataPoints[objectId], points...)
+
+					}
 
 				}
 
@@ -86,15 +141,41 @@ func Parser(parserId int, queryReceiveChannel <-chan Query, queryResultChannel c
 
 		}
 
-		Logger.Info("Query result successful in ", zap.Any("ProcessingTime", time.Since(benchmarkTime)), zap.Uint64("queryId", query.QueryId), zap.Any("data", normalizedDataPoints))
+		select {
+		case <-queryTimeoutContext.Done():
 
-		queryResultChannel <- Result{
+			Logger.Info("Query timed out.", zap.Uint64("queryId", query.QueryId))
 
-			query.QueryId,
+			queryResultChannel <- Result{
 
-			normalizedDataPoints,
+				query.QueryId,
+
+				nil,
+
+				"query timed out",
+			}
+
+		default:
+
+			Logger.Info("Query result successful in ", zap.Any("ProcessingTime", time.Since(benchmarkTime)), zap.Uint64("queryId", query.QueryId), zap.Any("data-points", normalizedDataPoints))
+
+			queryResultChannel <- Result{
+
+				query.QueryId,
+
+				normalizedDataPoints,
+
+				"",
+			}
+
 		}
 
+		queryTimeoutContextCancel()
+
 	}
+
+	close(readerRequestChannel)
+
+	readersWaitGroup.Wait()
 
 }

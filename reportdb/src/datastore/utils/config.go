@@ -17,6 +17,7 @@ var (
 	Readers               int
 	QueryParsers          int
 	QueryChannelSize      int
+	QueryTimeoutTime      int
 	BlockSize             uint32
 	Partitions            uint32
 	InitialFileSize       int64
@@ -86,6 +87,8 @@ func LoadConfig() error {
 	QueryParsers = int(generalConfig["QueryParsers"].(float64))
 
 	QueryChannelSize = int(generalConfig["QueryChannelSize"].(float64))
+
+	QueryTimeoutTime = int(generalConfig["QueryTimeoutTime"].(float64))
 
 	Partitions = uint32(generalConfig["Partitions"].(float64))
 

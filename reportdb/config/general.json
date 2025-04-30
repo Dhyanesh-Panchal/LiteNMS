@@ -1,9 +1,10 @@
 {
   "Writers": 5,
   "DataWriteChannelSize": 100,
-  "Readers": 20,
+  "Readers": 7,
   "QueryParsers": 10,
   "QueryChannelSize": 100,
+  "QueryTimeoutTime": 5,
   "Partitions": 5,
   "BlockSize": 1024,
   "FileSizeGrowthDelta": 10,

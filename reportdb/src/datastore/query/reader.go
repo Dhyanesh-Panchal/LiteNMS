@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	. "datastore/containers"
 	. "datastore/storage"
 	. "datastore/utils"
@@ -10,8 +11,6 @@ import (
 )
 
 type ReaderRequest struct {
-	ParserId int
-
 	RequestIndex int
 
 	StorageKey StoragePoolKey
@@ -21,9 +20,11 @@ type ReaderRequest struct {
 	To uint32
 
 	ObjectIds []uint32
+
+	TimeoutContext context.Context
 }
 
-func Reader(readerRequestChannel <-chan ReaderRequest, parserWaitChannels []chan map[string]interface{}, storagePool *StoragePool, readersWaitGroup *sync.WaitGroup) {
+func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel chan map[string]interface{}, storagePool *StoragePool, readersWaitGroup *sync.WaitGroup) {
 
 	defer readersWaitGroup.Done()
 
@@ -31,7 +32,6 @@ func Reader(readerRequestChannel <-chan ReaderRequest, parserWaitChannels []chan
 
 		storageEngine, err := storagePool.GetStorage(request.StorageKey, false)
 
-		// Initialize the
 		finalDataPoints := make(map[uint32][]DataPoint)
 
 		for _, objectId := range request.ObjectIds {
@@ -49,7 +49,7 @@ func Reader(readerRequestChannel <-chan ReaderRequest, parserWaitChannels []chan
 			}
 
 			// send response with empty data
-			parserWaitChannels[request.ParserId] <- map[string]interface{}{
+			readerResponseChannel <- map[string]interface{}{
 
 				"request_index": request.RequestIndex,
 
@@ -64,8 +64,8 @@ func Reader(readerRequestChannel <-chan ReaderRequest, parserWaitChannels []chan
 
 		readSingleDay(storageEngine, request.StorageKey, request.ObjectIds, finalDataPoints, request.From, request.To)
 
-		// respond to the Parser
-		parserWaitChannels[request.ParserId] <- map[string]interface{}{
+		// respond to the QueryParser
+		readerResponseChannel <- map[string]interface{}{
 
 			"request_index": request.RequestIndex,
 

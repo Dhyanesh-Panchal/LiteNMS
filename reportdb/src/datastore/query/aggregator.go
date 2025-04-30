@@ -1,6 +1,7 @@
 package query
 
 import (
+	"context"
 	. "datastore/containers"
 	. "datastore/utils"
 	"go.uber.org/zap"
@@ -10,22 +11,39 @@ import (
 )
 
 const (
-	dataTypeNotSupported = "datatype not supported for aggregation"
+	dataTypeNotSupported   = "datatype not supported for aggregation"
+	VerticalDayAggregators = 10
 )
 
-func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string) {
+func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string, queryTimeoutContext context.Context) {
 
-	var completionWg sync.WaitGroup
+	for dayIndex := 0; dayIndex < len(daysData); {
 
-	for index := range len(daysData) {
+		select {
 
-		completionWg.Add(1)
+		case <-queryTimeoutContext.Done():
 
-		go verticalAggregateSingleDay(daysData[index], aggregation, &completionWg)
+			return
+
+		default:
+
+			var completionWg sync.WaitGroup
+
+			for range min(len(daysData)-dayIndex, VerticalDayAggregators) {
+
+				completionWg.Add(1)
+
+				go verticalAggregateSingleDay(daysData[dayIndex], aggregation, &completionWg)
+
+				dayIndex++
+
+			}
+
+			completionWg.Wait()
+
+		}
 
 	}
-
-	completionWg.Wait()
 
 }
 
@@ -79,7 +97,7 @@ func verticalAggregateSingleDay(day map[uint32][]DataPoint, aggregation string, 
 
 }
 
-func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string, interval uint32, from uint32) map[uint32][]DataPoint {
+func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string, interval uint32, from uint32, finalData map[uint32][]DataPoint, queryTimeoutContext context.Context) {
 
 	objectWiseTimeIndexedBatchedData := make(map[uint32]map[uint32][]interface{})
 
@@ -88,28 +106,39 @@ func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string,
 
 		for objectId, points := range day {
 
-			if _, exist := objectWiseTimeIndexedBatchedData[objectId]; !exist {
+			select {
 
-				objectWiseTimeIndexedBatchedData[objectId] = make(map[uint32][]interface{})
+			case <-queryTimeoutContext.Done():
 
-			}
+				return
 
-			for _, point := range points {
+			default:
 
-				if interval != 0 {
+				if _, exist := objectWiseTimeIndexedBatchedData[objectId]; !exist {
 
-					// Histogram Interval
-					currentTimestamp := point.Timestamp - from // normalizing the time range to start histogram interval at 'from' timestamp.
+					objectWiseTimeIndexedBatchedData[objectId] = make(map[uint32][]interface{})
 
-					histogramTimestamp := (currentTimestamp - currentTimestamp%interval) + from
+				}
 
-					objectWiseTimeIndexedBatchedData[objectId][histogramTimestamp] = append(objectWiseTimeIndexedBatchedData[objectId][histogramTimestamp], point.Value)
-				} else {
+				for _, point := range points {
 
-					// Gauge/Grid aggregation, No interval present
-					// Using 0 as the common timestamp to aggregate whole from-to range
+					if interval != 0 {
 
-					objectWiseTimeIndexedBatchedData[objectId][0] = append(objectWiseTimeIndexedBatchedData[objectId][0], point.Value)
+						// Histogram Interval
+						currentTimestamp := point.Timestamp - from // normalizing the time range to start histogram interval at 'from' timestamp.
+
+						histogramTimestamp := (currentTimestamp - currentTimestamp%interval) + from
+
+						objectWiseTimeIndexedBatchedData[objectId][histogramTimestamp] = append(objectWiseTimeIndexedBatchedData[objectId][histogramTimestamp], point.Value)
+
+					} else {
+
+						// Gauge/Grid aggregation, No interval present
+						// Using 0 as the common timestamp to aggregate whole from-to range
+
+						objectWiseTimeIndexedBatchedData[objectId][0] = append(objectWiseTimeIndexedBatchedData[objectId][0], point.Value)
+
+					}
 
 				}
 
@@ -122,43 +151,51 @@ func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string,
 	// Reslice the days array, now object-wise data will be represented in single stream
 	daysData = daysData[:]
 
-	// Aggregation over the batch
-	finalData := make(map[uint32][]DataPoint)
-
 	for objectId, timeIndexedBatch := range objectWiseTimeIndexedBatchedData {
 
 		dataPoints := make([]DataPoint, 0)
 
 		for timestamp, batch := range timeIndexedBatch {
 
-			var aggregatedValue interface{}
+			select {
 
-			switch aggregation {
+			case <-queryTimeoutContext.Done():
 
-			case "avg":
-				aggregatedValue = Avg(batch)
-
-			case "sum":
-				aggregatedValue = Sum(batch)
-
-			case "min":
-				aggregatedValue = Min(batch)
-
-			case "max":
-				aggregatedValue = Max(batch)
-
-			case "count":
-				aggregatedValue = len(batch)
+				return
 
 			default:
-				Logger.Error("aggregation not supported", zap.String("aggregation", aggregation))
+
+				var aggregatedValue interface{}
+
+				switch aggregation {
+
+				case "avg":
+					aggregatedValue = Avg(batch)
+
+				case "sum":
+					aggregatedValue = Sum(batch)
+
+				case "min":
+					aggregatedValue = Min(batch)
+
+				case "max":
+					aggregatedValue = Max(batch)
+
+				case "count":
+					aggregatedValue = len(batch)
+
+				default:
+					Logger.Error("aggregation not supported", zap.String("aggregation", aggregation))
+
+				}
+
+				dataPoints = append(dataPoints, DataPoint{
+					Timestamp: timestamp,
+					Value:     aggregatedValue,
+				})
 
 			}
 
-			dataPoints = append(dataPoints, DataPoint{
-				Timestamp: timestamp,
-				Value:     aggregatedValue,
-			})
 		}
 
 		// Sort the final Data by timestamp
@@ -172,7 +209,6 @@ func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string,
 
 	}
 
-	return finalData
 }
 
 func Max(values []interface{}) interface{} {
