@@ -4,6 +4,7 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"os"
+	"time"
 )
 
 var Logger *zap.Logger
@@ -27,7 +28,7 @@ func InitLogger() error {
 		prodConfig.Level.SetLevel(zapcore.ErrorLevel)
 
 		prodConfig.OutputPaths = []string{
-			"./logs/production.log",
+			"./logs/prod_" + time.Now().Format("2006_01_02") + ".log",
 		}
 
 		Logger = zap.Must(prodConfig.Build())
@@ -42,7 +43,7 @@ func InitLogger() error {
 
 		devConfig.OutputPaths = []string{
 			"stdout",
-			"./logs/development.log",
+			"./logs/dev_" + time.Now().Format("2006_01_02") + ".log",
 		}
 
 		Logger = zap.Must(devConfig.Build())
