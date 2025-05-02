@@ -4,8 +4,8 @@ import (
 	. "datastore/query"
 	. "datastore/utils"
 	"encoding/binary"
-	"encoding/json"
 	zmq "github.com/pebbe/zmq4"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	"sync"
 )
@@ -56,7 +56,7 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 		binary.LittleEndian.PutUint64(queryId[:], result.QueryId)
 
-		resultBytes, err := json.Marshal(result)
+		resultBytes, err := msgpack.Marshal(result)
 
 		if err != nil {
 

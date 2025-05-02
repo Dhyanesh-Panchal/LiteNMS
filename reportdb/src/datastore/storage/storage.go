@@ -234,6 +234,42 @@ func (storage *Storage) Get(key uint32) ([]byte, error) {
 
 }
 
+func (storage *Storage) GetAll() (map[uint32][]byte, error) {
+
+	data := make(map[uint32][]byte)
+
+	// Get data for all keys from all partitions
+
+	for partitionIndex := range storage.partitionCount {
+
+		file, err := storage.openFilesPool.GetFileMapping(partitionIndex, storage.storagePath)
+
+		if err != nil {
+
+			return nil, err
+
+		}
+
+		index, err := storage.indexPool.Get(partitionIndex, storage.storagePath)
+
+		if err != nil {
+
+			return nil, err
+
+		}
+
+		for key, blocks := range index.ObjectIndex {
+
+			data[key] = file.ReadBlocks(blocks, storage.blockSize)
+
+		}
+
+	}
+
+	return data, nil
+
+}
+
 func (storage *Storage) CloseStorage() {
 
 	storage.openFilesPool.Close()

@@ -29,7 +29,17 @@ func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation st
 
 			var completionWg sync.WaitGroup
 
-			for range min(len(daysData)-dayIndex, VerticalDayAggregators) {
+			for range min(VerticalDayAggregators, len(daysData)-dayIndex) {
+
+				if daysData[dayIndex] == nil {
+
+					// Day Not present
+
+					dayIndex++
+
+					continue
+
+				}
 
 				completionWg.Add(1)
 
@@ -103,6 +113,12 @@ func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string,
 
 	// Batching
 	for _, day := range daysData {
+
+		if day == nil {
+
+			continue
+
+		}
 
 		for objectId, points := range day {
 

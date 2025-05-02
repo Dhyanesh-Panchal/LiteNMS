@@ -3,9 +3,9 @@ package server
 import (
 	. "datastore/query"
 	. "datastore/utils"
-	"encoding/json"
 	"errors"
 	zmq "github.com/pebbe/zmq4"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	"sync"
 )
@@ -109,7 +109,7 @@ func queryListener(context *zmq.Context, queryReceiveChannel chan<- Query, query
 
 			var query Query
 
-			if err = json.Unmarshal(queryBytes, &query); err != nil {
+			if err = msgpack.Unmarshal(queryBytes, &query); err != nil {
 
 				Logger.Error("error unmarshalling query ", zap.Error(err))
 

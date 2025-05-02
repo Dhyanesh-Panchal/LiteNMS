@@ -17,7 +17,7 @@ func QueryParser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Res
 
 	readerRequestChannel := make(chan ReaderRequest, 10) // TODO: Shift channel size to config
 
-	readerResponseChannel := make(chan map[string]interface{}, 10)
+	readerResponseChannel := make(chan ReaderResponse, 10)
 
 	var readersWaitGroup sync.WaitGroup
 
@@ -32,6 +32,8 @@ func QueryParser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Res
 	// Listen for query
 
 	for query := range queryReceiveChannel {
+
+		Logger.Info("Query received: ", zap.Any("query", query))
 
 		benchmarkTime := time.Now()
 
@@ -90,7 +92,11 @@ func QueryParser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Res
 
 			case response := <-readerResponseChannel:
 
-				daysData[response["request_index"].(int)] = response["data"].(map[uint32][]DataPoint)
+				if response.Error == nil {
+
+					daysData[response.RequestIndex] = response.Data
+
+				}
 
 			}
 

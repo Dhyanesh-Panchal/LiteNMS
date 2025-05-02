@@ -24,7 +24,7 @@ func TestReader(t *testing.T) {
 
 	readersWaitGroup.Add(1)
 
-	go Reader(readerRequestChannel, parserWaitChannels, storagePool, &readersWaitGroup)
+	go Reader(readerRequestChannel, parserWaitChannels[0], storagePool, &readersWaitGroup)
 
 	from := uint32(1744781400)
 

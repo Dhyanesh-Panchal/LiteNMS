@@ -24,21 +24,21 @@ type ReaderRequest struct {
 	TimeoutContext context.Context
 }
 
-func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel chan map[string]interface{}, storagePool *StoragePool, readersWaitGroup *sync.WaitGroup) {
+type ReaderResponse struct {
+	RequestIndex int
+
+	Data map[uint32][]DataPoint
+
+	Error error
+}
+
+func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel chan ReaderResponse, storagePool *StoragePool, readersWaitGroup *sync.WaitGroup) {
 
 	defer readersWaitGroup.Done()
 
 	for request := range readerRequestChannel {
 
 		storageEngine, err := storagePool.GetStorage(request.StorageKey, false)
-
-		finalDataPoints := make(map[uint32][]DataPoint)
-
-		for _, objectId := range request.ObjectIds {
-
-			finalDataPoints[objectId] = make([]DataPoint, 0)
-
-		}
 
 		if err != nil {
 
@@ -49,29 +49,45 @@ func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel cha
 			}
 
 			// send response with empty data
-			readerResponseChannel <- map[string]interface{}{
+			readerResponseChannel <- ReaderResponse{
 
-				"request_index": request.RequestIndex,
+				request.RequestIndex,
 
-				"data": map[uint32][]DataPoint{},
+				nil,
 
-				"error": err,
+				err,
 			}
 
 			continue
 
 		}
 
-		readSingleDay(storageEngine, request.StorageKey, request.ObjectIds, finalDataPoints, request.From, request.To)
+		data, err := readSingleDay(storageEngine, request.StorageKey, request.ObjectIds, request.From, request.To)
 
-		// respond to the QueryParser
-		readerResponseChannel <- map[string]interface{}{
+		if err != nil {
 
-			"request_index": request.RequestIndex,
+			readerResponseChannel <- ReaderResponse{
 
-			"data": finalDataPoints,
+				request.RequestIndex,
 
-			"error": nil,
+				nil,
+
+				err,
+			}
+
+		} else {
+
+			// respond to the QueryParser with day's data
+
+			readerResponseChannel <- ReaderResponse{
+
+				request.RequestIndex,
+
+				data,
+
+				nil,
+			}
+
 		}
 
 	}
@@ -82,41 +98,92 @@ func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel cha
 
 }
 
-func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds []uint32, finalDataPoints map[uint32][]DataPoint, from uint32, to uint32) {
+func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds []uint32, from uint32, to uint32) (map[uint32][]DataPoint, error) {
 
-	for _, objectId := range objectIds {
+	finalDataPoints := make(map[uint32][]DataPoint)
 
-		data, err := storageEngine.Get(objectId)
+	if len(objectIds) == 0 {
 
-		if err != nil {
+		// No objectIds mentioned, hence get data for all
 
-			Logger.Info("Error getting dataPoint ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
-
-			continue
-
-		}
-
-		dataPoints, err := DeserializeBatch(data, CounterConfig[storageKey.CounterId][DataType].(string))
+		data, err := storageEngine.GetAll()
 
 		if err != nil {
 
-			Logger.Info("Error deserializing dataPoint for objectId: ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
+			Logger.Info("Error getting data for all objects for", zap.Any("storageKey", storageKey), zap.Error(err))
 
-			continue
+			return nil, err
 
 		}
 
-		// Append dataPoints if they lie between from and to
+		for objectId, objectData := range data {
 
-		for _, dataPoint := range dataPoints {
+			dataPoints, err := DeserializeBatch(objectData, CounterConfig[storageKey.CounterId][DataType].(string))
 
-			if dataPoint.Timestamp >= from && dataPoint.Timestamp <= to {
+			if err != nil {
 
-				finalDataPoints[objectId] = append(finalDataPoints[objectId], dataPoint)
+				Logger.Info("Error deserializing dataPoint for objectId: ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
+
+				continue
+
+			}
+
+			// Append dataPoints if they lie between from and to
+
+			for _, dataPoint := range dataPoints {
+
+				if dataPoint.Timestamp >= from && dataPoint.Timestamp <= to {
+
+					finalDataPoints[objectId] = append(finalDataPoints[objectId], dataPoint)
+
+				}
 
 			}
 
 		}
 
+		return finalDataPoints, nil
+
+	} else {
+
+		for _, objectId := range objectIds {
+
+			data, err := storageEngine.Get(objectId)
+
+			if err != nil {
+
+				Logger.Info("Error getting dataPoint ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
+
+				continue
+
+			}
+
+			dataPoints, err := DeserializeBatch(data, CounterConfig[storageKey.CounterId][DataType].(string))
+
+			if err != nil {
+
+				Logger.Info("Error deserializing dataPoint for objectId: ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
+
+				continue
+
+			}
+
+			// Append dataPoints if they lie between from and to
+
+			for _, dataPoint := range dataPoints {
+
+				if dataPoint.Timestamp >= from && dataPoint.Timestamp <= to {
+
+					finalDataPoints[objectId] = append(finalDataPoints[objectId], dataPoint)
+
+				}
+
+			}
+
+		}
+
+		return finalDataPoints, nil
+
 	}
+
 }
