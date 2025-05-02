@@ -10,13 +10,13 @@ import (
 )
 
 type PolledDataPoint struct {
-	Timestamp uint32 `json:"timestamp"`
+	Timestamp uint32 `json:"timestamp" msgpack:"timestamp"`
 
-	CounterId uint16 `json:"counter_id"`
+	CounterId uint16 `json:"counter_id" msgpack:"counter_id"`
 
-	ObjectId uint32 `json:"object_id"`
+	ObjectId uint32 `json:"object_id" msgpack:"object_id"`
 
-	Value interface{} `json:"value"`
+	Value interface{} `json:"value" msgpack:"value"`
 }
 
 type PollJob struct {

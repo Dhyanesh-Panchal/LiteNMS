@@ -2,8 +2,8 @@ package server
 
 import (
 	"errors"
-	"github.com/goccy/go-json"
 	zmq "github.com/pebbe/zmq4"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	. "poller/containers"
 	. "poller/utils"
@@ -107,7 +107,7 @@ func provisionListener(deviceList *DeviceList, provisionListenerShutdown chan st
 
 			var provisionUpdateIps map[string][]string
 
-			err = json.Unmarshal(responseBytes, &provisionUpdateIps)
+			err = msgpack.Unmarshal(responseBytes, &provisionUpdateIps)
 
 			if err != nil {
 
