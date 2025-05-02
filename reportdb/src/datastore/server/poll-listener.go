@@ -3,9 +3,9 @@ package server
 import (
 	. "datastore/containers"
 	. "datastore/utils"
+	"encoding/json"
 	"errors"
 	zmq "github.com/pebbe/zmq4"
-	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	"log"
 	"sync"
@@ -109,7 +109,7 @@ func pollListener(context *zmq.Context, dataWriteChannel chan<- []PolledDataPoin
 
 			var dataPoints []PolledDataPoint
 
-			if err := msgpack.Unmarshal(dataBytes, &dataPoints); err != nil {
+			if err := json.Unmarshal(dataBytes, &dataPoints); err != nil {
 
 				Logger.Error("error unmarshalling poll data", zap.Error(err))
 
