@@ -1,6 +1,6 @@
 package models
 
-type UserQuery struct {
+type UserQueryRequest struct {
 	QueryId               uint64   `json:"query_id"`
 	From                  uint32   `json:"from"`
 	To                    uint32   `json:"to"`

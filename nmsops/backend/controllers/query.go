@@ -24,7 +24,7 @@ func NewQueryController(report *ReportDBClient) *QueryController {
 }
 
 func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
-	var req UserQuery
+	var req UserQueryRequest
 
 	// Bind JSON from request body
 
@@ -55,16 +55,6 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid time range, from must be less than or equal to to"})
 
 		return
-	}
-
-	// Validate ObjectIDs aren't empty
-
-	if len(req.ObjectIds) == 0 {
-
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "objectIDs must contain at least one value"})
-
-		return
-
 	}
 
 	// Validate Aggregators

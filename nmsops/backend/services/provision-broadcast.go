@@ -1,8 +1,8 @@
 package services
 
 import (
-	"github.com/goccy/go-json"
 	zmq "github.com/pebbe/zmq4"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	. "nms-backend/utils"
 )
@@ -55,7 +55,7 @@ func InitProvisioningPublisher() (*ProvisioningPublisher, error) {
 
 func (publisher *ProvisioningPublisher) SendUpdate(objectIds []string, topic string) error {
 
-	dataBytes, err := json.Marshal(map[string][]string{
+	dataBytes, err := msgpack.Marshal(map[string][]string{
 
 		"updateProvisionIps": objectIds,
 	})

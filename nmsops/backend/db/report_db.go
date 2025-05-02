@@ -2,9 +2,9 @@ package db
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"errors"
 	zmq "github.com/pebbe/zmq4"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	. "nms-backend/utils"
 	"sync"
@@ -18,27 +18,35 @@ var (
 )
 
 type Query struct {
-	QueryId               uint64   `json:"query_id"`
-	From                  uint32   `json:"from"`
-	To                    uint32   `json:"to"`
-	ObjectIds             []uint32 `json:"object_ids"`
-	CounterId             uint16   `json:"counter_id"`
-	VerticalAggregation   string   `json:"vertical_aggregation"`
-	HorizontalAggregation string   `json:"horizontal_aggregation"`
-	Interval              uint32   `json:"interval"`
+	QueryId uint64 `json:"query_id" msgpack:"query_id"`
+
+	From uint32 `json:"from" msgpack:"from"`
+
+	To uint32 `json:"to" msgpack:"to"`
+
+	ObjectIds []uint32 `json:"object_ids" msgpack:"object_ids"`
+
+	CounterId uint16 `json:"counter_id" msgpack:"counter_id"`
+
+	VerticalAggregation string `json:"vertical_aggregation" msgpack:"vertical_aggregation"`
+
+	HorizontalAggregation string `json:"horizontal_aggregation" msgpack:"horizontal_aggregation"`
+
+	Interval uint32 `json:"interval" msgpack:"interval"`
 }
 
 type DataPoint struct {
-	Timestamp uint32      `json:"timestamp"`
-	Value     interface{} `json:"value"`
+	Timestamp uint32 `json:"timestamp" msgpack:"timestamp"`
+
+	Value interface{} `json:"value" msgpack:"value"`
 }
 
 type Result struct {
-	QueryId uint64 `json:"query_id"`
+	QueryId uint64 `json:"query_id" msgpack:"query_id"`
 
-	Data map[uint32][]DataPoint `json:"data"`
+	Data map[uint32][]DataPoint `json:"data" msgpack:"data"`
 
-	Error string `json:"error"`
+	Error string `json:"error" msgpack:"error"`
 }
 
 type ReportDBClient struct {
@@ -226,7 +234,7 @@ func (db *ReportDBClient) Query(from, to, interval uint32, objectIps []string, c
 
 	}
 
-	queryBytes, err := json.Marshal(Query{
+	queryBytes, err := msgpack.Marshal(Query{
 		QueryId:               queryId,
 		From:                  from,
 		To:                    to,
@@ -244,8 +252,6 @@ func (db *ReportDBClient) Query(from, to, interval uint32, objectIps []string, c
 		return nil, err
 
 	}
-
-	Logger.Debug("Query Id assigned", zap.Uint64("queryId", queryId))
 
 	receiverChannel := make(chan []byte)
 
@@ -266,14 +272,12 @@ func (db *ReportDBClient) Query(from, to, interval uint32, objectIps []string, c
 
 	case resultBytes := <-receiverChannel:
 
-		if err = json.Unmarshal(resultBytes, &result); err != nil {
+		if err = msgpack.Unmarshal(resultBytes, &result); err != nil {
 
 			Logger.Error("Error deserializing query result", zap.Error(err))
 
 			return nil, err
 		}
-
-		Logger.Debug("Result received", zap.Uint64("queryId", queryId), zap.Any("result", result))
 
 	}
 
