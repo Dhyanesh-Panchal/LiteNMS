@@ -3,16 +3,52 @@ package utils
 import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"os"
 )
 
 var Logger *zap.Logger
 
-func init() {
+func InitLogger() error {
 
-	logConfig := zap.NewDevelopmentConfig()
+	err := os.MkdirAll("./logs/", os.ModePerm)
 
-	logConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	if err != nil {
 
-	Logger = zap.Must(logConfig.Build()) // New development for current basis
+		return err
+
+	}
+
+	if IsProductionEnvironment {
+
+		prodConfig := zap.NewProductionConfig()
+
+		prodConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+
+		prodConfig.Level.SetLevel(zapcore.ErrorLevel)
+
+		prodConfig.OutputPaths = []string{
+			"./logs/production.log",
+		}
+
+		Logger = zap.Must(prodConfig.Build())
+
+	} else {
+
+		devConfig := zap.NewDevelopmentConfig()
+
+		devConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+
+		devConfig.Level.SetLevel(zapcore.DebugLevel)
+
+		devConfig.OutputPaths = []string{
+			"stdout",
+			"./logs/development.log",
+		}
+
+		Logger = zap.Must(devConfig.Build())
+
+	}
+
+	return nil
 
 }

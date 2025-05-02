@@ -12,21 +12,22 @@ const DataType = "dataType"
 var CounterConfig = map[uint16]map[string]interface{}{}
 
 var (
-	Writers               int
-	DataWriteChannelSize  int
-	Readers               int
-	QueryParsers          int
-	QueryChannelSize      int
-	QueryTimeoutTime      int
-	BlockSize             uint32
-	Partitions            uint32
-	InitialFileSize       int64
-	FileSizeGrowthDelta   int64
-	PollListenerBindPort  string
-	QueryListenerBindPort string
-	QueryResultBindPort   string
-	ProfilingPort         string
-	StorageDirectory      string
+	Writers                 int
+	DataWriteChannelSize    int
+	Readers                 int
+	QueryParsers            int
+	QueryChannelSize        int
+	QueryTimeoutTime        int
+	BlockSize               uint32
+	Partitions              uint32
+	InitialFileSize         int64
+	FileSizeGrowthDelta     int64
+	PollListenerBindPort    string
+	QueryListenerBindPort   string
+	QueryResultBindPort     string
+	ProfilingPort           string
+	StorageDirectory        string
+	IsProductionEnvironment bool
 )
 
 func LoadConfig() error {
@@ -107,6 +108,8 @@ func LoadConfig() error {
 	QueryResultBindPort = generalConfig["QueryResultBindPort"].(string)
 
 	ProfilingPort = generalConfig["ProfilingPort"].(string)
+
+	IsProductionEnvironment = generalConfig["IsProductionEnvironment"].(bool)
 
 	return nil
 

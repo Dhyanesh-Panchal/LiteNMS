@@ -12,5 +12,6 @@
   "PollListenerBindPort": "7000",
   "QueryListenerBindPort": "7001",
   "QueryResultBindPort": "7002",
-  "ProfilingPort": "6060"
+  "ProfilingPort": "6060",
+  "IsProductionEnvironment": false
 }

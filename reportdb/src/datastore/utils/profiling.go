@@ -7,11 +7,17 @@ import (
 )
 
 func InitProfiling() {
-	err := http.ListenAndServe("localhost:"+ProfilingPort, nil)
 
-	if err != nil {
+	if !IsProductionEnvironment {
 
-		Logger.Error("error starting profiling server", zap.Error(err))
+		err := http.ListenAndServe("localhost:"+ProfilingPort, nil)
+
+		if err != nil {
+
+			Logger.Error("error starting profiling server", zap.Error(err))
+
+		}
 
 	}
+
 }

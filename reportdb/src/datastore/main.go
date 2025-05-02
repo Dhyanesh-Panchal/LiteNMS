@@ -6,6 +6,7 @@ import (
 	. "datastore/query"
 	. "datastore/server"
 	. "datastore/utils"
+	"go.uber.org/zap"
 	"sync"
 )
 
@@ -13,11 +14,13 @@ func main() {
 
 	err := LoadConfig()
 
+	InitLogger()
+
 	go InitProfiling()
 
 	if err != nil {
 
-		Logger.Error("error loading config:" + err.Error())
+		Logger.Error("error loading config:", zap.Error(err))
 
 		return
 
