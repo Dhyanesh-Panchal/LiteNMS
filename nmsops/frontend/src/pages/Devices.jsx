@@ -9,17 +9,21 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Switch,
+  Checkbox,
+  Button,
   IconButton,
   Alert,
+  Tooltip,
 } from '@mui/material';
 import { Refresh as RefreshIcon } from '@mui/icons-material';
 import { deviceService } from '../services/api';
 
 function Devices() {
   const [devices, setDevices] = useState([]);
+  const [selectedDevices, setSelectedDevices] = useState(new Set());
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isUpdateMode, setIsUpdateMode] = useState(false);
 
   useEffect(() => {
     loadDevices();
@@ -29,7 +33,18 @@ function Devices() {
     try {
       setLoading(true);
       const response = await deviceService.getAll();
-      setDevices(response.data.devices || []);
+      // Sort devices by IP
+      const sortedDevices = (response.data.devices || []).sort((a, b) => {
+        const ipA = a.ip.split('.').map(Number);
+        const ipB = b.ip.split('.').map(Number);
+        for (let i = 0; i < 4; i++) {
+          if (ipA[i] !== ipB[i]) {
+            return ipA[i] - ipB[i];
+          }
+        }
+        return 0;
+      });
+      setDevices(sortedDevices);
       setError(null);
     } catch (error) {
       console.error('Error loading devices:', error);
@@ -39,22 +54,52 @@ function Devices() {
     }
   };
 
-  const handleProvisionToggle = async (deviceIP) => {
-    try {
-      const device = devices.find(d => d.ip === deviceIP);
-      if (!device) return;
+  const handleCheckboxChange = (deviceIP) => {
+    setSelectedDevices(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(deviceIP)) {
+        newSet.delete(deviceIP);
+      } else {
+        newSet.add(deviceIP);
+      }
+      return newSet;
+    });
+  };
 
-      await deviceService.updateProvisionStatus(deviceIP, !device.is_provisioned);
-      loadDevices();
+  const handleSelectAll = (event) => {
+    if (event.target.checked) {
+      const allIPs = new Set(devices.map(device => device.ip));
+      setSelectedDevices(allIPs);
+    } else {
+      setSelectedDevices(new Set());
+    }
+  };
+
+  const handleUpdateProvision = async () => {
+    try {
+      if (selectedDevices.size === 0) {
+        setError('Please select at least one device');
+        return;
+      }
+
+      const ipsToUpdate = Array.from(selectedDevices);
+      await deviceService.updateProvisionStatus(ipsToUpdate);
+      
+      // Refresh the device list
+      await loadDevices();
+      
+      // Reset update mode and selection
+      setIsUpdateMode(false);
+      setSelectedDevices(new Set());
     } catch (error) {
       console.error('Error updating provision status:', error);
       setError('Failed to update device provision status. Please try again.');
     }
   };
 
-  const formatIP = (ip) => {
-    // Convert uint32 to dotted decimal notation
-    return `${(ip >> 24) & 0xFF}.${(ip >> 16) & 0xFF}.${(ip >> 8) & 0xFF}.${ip & 0xFF}`;
+  const handleCancelUpdate = () => {
+    setIsUpdateMode(false);
+    setSelectedDevices(new Set());
   };
 
   return (
@@ -68,12 +113,43 @@ function Devices() {
         <Typography variant="h4">
           Devices
         </Typography>
-        <IconButton 
-          onClick={loadDevices}
-          disabled={loading}
-        >
-          <RefreshIcon />
-        </IconButton>
+        <Box>
+          {!isUpdateMode ? (
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={() => setIsUpdateMode(true)}
+              sx={{ mr: 2 }}
+            >
+              Update Provision
+            </Button>
+          ) : (
+            <Box>
+              <Button 
+                variant="outlined" 
+                color="error"
+                onClick={handleCancelUpdate}
+                sx={{ mr: 2 }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="contained" 
+                color="primary" 
+                onClick={handleUpdateProvision}
+                disabled={selectedDevices.size === 0}
+              >
+                Update Selected ({selectedDevices.size})
+              </Button>
+            </Box>
+          )}
+          <IconButton 
+            onClick={loadDevices}
+            disabled={loading}
+          >
+            <RefreshIcon />
+          </IconButton>
+        </Box>
       </Box>
 
       {error && (
@@ -86,32 +162,44 @@ function Devices() {
         <Table>
           <TableHead>
             <TableRow>
+              {isUpdateMode && (
+                <TableCell>
+                  <Tooltip title="Select/Deselect all devices">
+                    <Checkbox
+                      checked={selectedDevices.size === devices.length}
+                      indeterminate={selectedDevices.size > 0 && selectedDevices.size < devices.length}
+                      onChange={handleSelectAll}
+                    />
+                  </Tooltip>
+                </TableCell>
+              )}
               <TableCell>IP Address</TableCell>
               <TableCell>Credential Profile ID</TableCell>
               <TableCell>Provisioned</TableCell>
-              <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {devices.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center">
+                <TableCell colSpan={isUpdateMode ? 4 : 3} align="center">
                   No devices found
                 </TableCell>
               </TableRow>
             ) : (
               devices.map((device) => (
                 <TableRow key={device.ip}>
-                  <TableCell>{formatIP(device.ip)}</TableCell>
+                  {isUpdateMode && (
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedDevices.has(device.ip)}
+                        onChange={() => handleCheckboxChange(device.ip)}
+                      />
+                    </TableCell>
+                  )}
+                  <TableCell>{device.ip}</TableCell>
                   <TableCell>{device.credential_id || 'None'}</TableCell>
                   <TableCell>
-                    <Switch
-                      checked={device.is_provisioned}
-                      onChange={() => handleProvisionToggle(device.ip)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {/* We'll add more actions here later */}
+                    {device.is_provisioned ? 'Yes' : 'No'}
                   </TableCell>
                 </TableRow>
               ))

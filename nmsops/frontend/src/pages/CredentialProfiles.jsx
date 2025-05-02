@@ -1,63 +1,74 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Typography,
-  Paper,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Button,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Paper,
+  Typography,
   IconButton,
   Alert,
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { credentialProfileService } from '../services/api';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import axios from 'axios';
 
-function CredentialProfiles() {
+const API_BASE_URL = 'http://localhost:8080/api';
+
+const CredentialProfiles = () => {
   const [profiles, setProfiles] = useState([]);
   const [open, setOpen] = useState(false);
-  const [error, setError] = useState(null);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState(null);
+  const [error, setError] = useState('');
   const [editingProfile, setEditingProfile] = useState(null);
   const [formData, setFormData] = useState({
     hostname: '',
     password: '',
-    port: 22,
+    port: '',
   });
 
   useEffect(() => {
-    console.log('Component mounted, loading profiles...');
     loadProfiles();
   }, []);
 
   const loadProfiles = async () => {
     try {
-      console.log('Fetching profiles...');
-      const response = await credentialProfileService.getAll();
-      console.log('Received response:', response.data);
+      const response = await axios.get(`${API_BASE_URL}/credential-profiles`);
       setProfiles(response.data.profiles || []);
-      setError(null);
-    } catch (error) {
-      console.error('Error loading profiles:', error);
-      setError('Failed to load credential profiles. Please try again later.');
+    } catch (err) {
+      setError('Failed to load credential profiles');
     }
   };
 
   const handleOpen = () => {
     setOpen(true);
+    setError('');
+    setFormData({
+      hostname: '',
+      password: '',
+      port: '',
+    });
   };
 
   const handleClose = () => {
     setOpen(false);
     setEditingProfile(null);
-    setFormData({ hostname: '', password: '', port: 22 });
+    setFormData({
+      hostname: '',
+      password: '',
+      port: '',
+    });
   };
 
   const handleEdit = (profile) => {
@@ -70,46 +81,39 @@ function CredentialProfiles() {
     setOpen(true);
   };
 
-  const handleDelete = async (profileId) => {
-    try {
-      console.log('Deleting profile with ID:', profileId);
-      await credentialProfileService.delete(profileId);
-      loadProfiles();
-    } catch (error) {
-      console.error('Error deleting profile:', error);
-      setError('Failed to delete credential profile. Please try again.');
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
     try {
-      const submitData = {
-        ...formData,
-        port: parseInt(formData.port, 10)
-      };
-      
       if (editingProfile) {
-        console.log('Updating profile:', submitData);
-        await credentialProfileService.update(editingProfile.id, submitData);
+        await axios.put(`${API_BASE_URL}/credential-profiles/${editingProfile.id}`, formData);
       } else {
-        console.log('Creating profile:', submitData);
-        await credentialProfileService.create(submitData);
+        await axios.post(`${API_BASE_URL}/credential-profiles`, formData);
       }
+
       handleClose();
       loadProfiles();
-    } catch (error) {
-      console.error('Error saving profile:', error);
-      setError(`Failed to ${editingProfile ? 'update' : 'create'} credential profile. Please try again.`);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to save profile');
     }
+  };
+
+  const handleViewDetails = (profile) => {
+    setSelectedProfile(profile);
+    setDetailOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setDetailOpen(false);
+    setSelectedProfile(null);
   };
 
   return (
@@ -162,15 +166,15 @@ function CredentialProfiles() {
                   <TableCell>
                     <IconButton 
                       color="primary"
+                      onClick={() => handleViewDetails(profile)}
+                    >
+                      <VisibilityIcon />
+                    </IconButton>
+                    <IconButton 
+                      color="primary"
                       onClick={() => handleEdit(profile)}
                     >
                       <EditIcon />
-                    </IconButton>
-                    <IconButton 
-                      color="error"
-                      onClick={() => handleDelete(profile.id)}
-                    >
-                      <DeleteIcon />
                     </IconButton>
                   </TableCell>
                 </TableRow>
@@ -180,54 +184,92 @@ function CredentialProfiles() {
         </Table>
       </TableContainer>
 
-      <Dialog open={open} onClose={handleClose}>
+      {/* Detail View Dialog */}
+      <Dialog 
+        open={detailOpen} 
+        onClose={handleCloseDetails} 
+        maxWidth="sm" 
+        fullWidth
+      >
         <DialogTitle>
-          {editingProfile ? 'Edit Credential Profile' : 'Add Credential Profile'}
+          Credential Profile Details
         </DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
+        <DialogContent>
+          {selectedProfile && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Hostname
+              </Typography>
+              <Typography>{selectedProfile.hostname}</Typography>
+              
+              <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                Port
+              </Typography>
+              <Typography>{selectedProfile.port}</Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDetails}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create/Edit Dialog */}
+      <Dialog 
+        open={open} 
+        onClose={handleClose} 
+        maxWidth="sm" 
+        fullWidth
+      >
+        <DialogTitle>
+          {editingProfile ? 'Edit Credential Profile' : 'Create Credential Profile'}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
             <TextField
-              autoFocus
-              margin="dense"
-              name="hostname"
-              label="Hostname"
-              type="text"
               fullWidth
+              label="Hostname"
+              name="hostname"
               value={formData.hostname}
               onChange={handleChange}
               required
+              sx={{ mb: 2 }}
             />
             <TextField
-              margin="dense"
-              name="password"
-              label="Password"
-              type="password"
               fullWidth
+              label="Password"
+              name="password"
+              type="password"
               value={formData.password}
               onChange={handleChange}
               required
+              sx={{ mb: 2 }}
             />
             <TextField
-              margin="dense"
-              name="port"
-              label="Port"
-              type="number"
               fullWidth
+              label="Port"
+              name="port"
               value={formData.port}
               onChange={handleChange}
               required
+              sx={{ mb: 2 }}
             />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              {editingProfile ? 'Update' : 'Create'}
-            </Button>
-          </DialogActions>
-        </form>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained" 
+            color="primary"
+            disabled={!formData.hostname || !formData.password || !formData.port}
+          >
+            {editingProfile ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
-}
+};
 
 export default CredentialProfiles; 

@@ -25,10 +25,15 @@ import {
   ListItemText,
   Checkbox,
   OutlinedInput,
+  List,
+  ListItem,
+  Divider,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8080/api';
@@ -48,11 +53,14 @@ const DiscoveryProfiles = () => {
   const [profiles, setProfiles] = useState([]);
   const [credentialProfiles, setCredentialProfiles] = useState([]);
   const [open, setOpen] = useState(false);
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedProfile, setSelectedProfile] = useState(null);
   const [error, setError] = useState('');
   const [editingProfile, setEditingProfile] = useState(null);
   const [formData, setFormData] = useState({
     device_ips: '',
     credential_profile_ids: [],
+    is_cidr: false,
   });
   const [ipError, setIpError] = useState('');
 
@@ -83,6 +91,11 @@ const DiscoveryProfiles = () => {
   const handleOpen = () => {
     setOpen(true);
     setError('');
+    setFormData({
+      device_ips: '',
+      credential_profile_ids: [],
+      is_cidr: false,
+    });
   };
 
   const handleClose = () => {
@@ -91,72 +104,18 @@ const DiscoveryProfiles = () => {
     setFormData({
       device_ips: '',
       credential_profile_ids: [],
+      is_cidr: false,
     });
   };
 
   const handleEdit = (profile) => {
     setEditingProfile(profile);
     setFormData({
-      device_ips: profile.device_ips.map(ip => formatIP(ip)).join(', '),
+      device_ips: profile.device_ips.join(', '),
       credential_profile_ids: profile.credential_profile_ids,
+      is_cidr: false,
     });
     setOpen(true);
-  };
-
-  const handleDelete = async (id) => {
-    console.log('Attempting to delete profile with ID:', id);
-    if (!id) {
-      setError('Invalid profile ID');
-      return;
-    }
-
-    if (window.confirm('Are you sure you want to delete this profile?')) {
-      try {
-        // Try a POST request with a method param instead of DELETE
-        // Some backends, especially simple ones, might not implement DELETE directly
-        const response = await axios.post(`${API_BASE_URL}/discovery-profiles`, {
-          method: 'delete',
-          id: id
-        });
-        
-        console.log('Delete response:', response);
-        if (response.status === 200 || response.status === 204) {
-          loadProfiles();
-        } else {
-          setError('Failed to delete profile: Unexpected response');
-        }
-      } catch (err) {
-        console.error('Delete error details:', {
-          status: err.response?.status,
-          data: err.response?.data,
-          profileId: id
-        });
-        
-        // Try alternative endpoints if the first one failed
-        try {
-          // Try a different endpoint structure
-          const response = await axios.delete(`${API_BASE_URL}/discovery-profile/${id}`);
-          console.log('Delete response from alternate endpoint:', response);
-          if (response.status === 200 || response.status === 204) {
-            loadProfiles();
-            return;
-          }
-        } catch (altErr) {
-          console.error('Alternative delete attempt failed:', altErr.message);
-        }
-        
-        // If we get here, all attempts failed
-        if (err.response) {
-          if (err.response.status === 404) {
-            setError(`The backend does not support deleting profiles. Please contact your backend developer to implement this feature.`);
-          } else {
-            setError(`Failed to delete profile: ${err.response.data?.error || err.message}`);
-          }
-        } else {
-          setError('Failed to delete profile: Network error');
-        }
-      }
-    }
   };
 
   const validateIP = (ip) => {
@@ -175,6 +134,21 @@ const DiscoveryProfiles = () => {
     });
   };
 
+  const validateCIDR = (cidr) => {
+    const cidrRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
+    if (!cidrRegex.test(cidr)) {
+      return false;
+    }
+
+    const [ip, mask] = cidr.split('/');
+    if (!validateIP(ip)) {
+      return false;
+    }
+
+    const maskNum = parseInt(mask, 10);
+    return maskNum >= 0 && maskNum <= 32;
+  };
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData(prev => ({
@@ -183,14 +157,33 @@ const DiscoveryProfiles = () => {
     }));
 
     if (name === 'device_ips') {
-      const ips = value.split(',').map(ip => ip.trim()).filter(ip => ip);
-      const invalidIps = ips.filter(ip => !validateIP(ip));
-      
-      if (invalidIps.length > 0) {
-        setIpError(`Invalid IP addresses: ${invalidIps.join(', ')}`);
+      if (formData.is_cidr) {
+        if (!validateCIDR(value)) {
+          setIpError('Invalid CIDR notation');
+        } else {
+          setIpError('');
+        }
       } else {
-        setIpError('');
+        const ips = value.split(',').map(ip => ip.trim()).filter(ip => ip);
+        const invalidIps = ips.filter(ip => !validateIP(ip));
+        
+        if (invalidIps.length > 0) {
+          setIpError(`Invalid IP addresses: ${invalidIps.join(', ')}`);
+        } else {
+          setIpError('');
+        }
       }
+    }
+  };
+
+  const handleInputTypeChange = (event, newInputType) => {
+    if (newInputType !== null) {
+      setFormData(prev => ({
+        ...prev,
+        is_cidr: newInputType === 'cidr',
+        device_ips: '', // Clear the input when switching types
+      }));
+      setIpError('');
     }
   };
 
@@ -202,26 +195,29 @@ const DiscoveryProfiles = () => {
     }));
   };
 
-  const ipToUint32 = (ip) => {
-    const octets = ip.split('.').map(Number);
-    return ((octets[0] << 24) | (octets[1] << 16) | (octets[2] << 8) | octets[3]) >>> 0;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const ips = formData.device_ips.split(',').map(ip => ip.trim()).filter(ip => ip);
-    const invalidIps = ips.filter(ip => !validateIP(ip));
-    
-    if (invalidIps.length > 0) {
-      setError(`Invalid IP addresses: ${invalidIps.join(', ')}`);
-      return;
+    if (formData.is_cidr) {
+      if (!validateCIDR(formData.device_ips)) {
+        setError('Invalid CIDR notation');
+        return;
+      }
+    } else {
+      const ips = formData.device_ips.split(',').map(ip => ip.trim()).filter(ip => ip);
+      const invalidIps = ips.filter(ip => !validateIP(ip));
+      
+      if (invalidIps.length > 0) {
+        setError(`Invalid IP addresses: ${invalidIps.join(', ')}`);
+        return;
+      }
     }
 
     try {
       const profileData = {
-        device_ips: ips.map(ip => ipToUint32(ip)),
+        device_ips: formData.is_cidr ? formData.device_ips : formData.device_ips.split(',').map(ip => ip.trim()).filter(ip => ip),
         credential_profile_ids: formData.credential_profile_ids,
+        is_cidr: formData.is_cidr,
       };
 
       if (editingProfile) {
@@ -237,9 +233,42 @@ const DiscoveryProfiles = () => {
     }
   };
 
-  const formatIP = (ip) => {
-    // Convert uint32 to dotted decimal
-    return `${(ip >>> 24) & 255}.${(ip >>> 16) & 255}.${(ip >>> 8) & 255}.${ip & 255}`;
+  const handleViewDetails = (profile) => {
+    setSelectedProfile(profile);
+    setDetailOpen(true);
+  };
+
+  const handleCloseDetails = () => {
+    setDetailOpen(false);
+    setSelectedProfile(null);
+  };
+
+  const renderLimitedIPs = (ips) => {
+    const MAX_IPS = 5;
+    if (ips.length <= MAX_IPS) {
+      return ips.map((ip) => (
+        <Chip
+          key={ip}
+          label={ip}
+          sx={{ m: 0.5 }}
+        />
+      ));
+    }
+    return (
+      <>
+        {ips.slice(0, MAX_IPS).map((ip) => (
+          <Chip
+            key={ip}
+            label={ip}
+            sx={{ m: 0.5 }}
+          />
+        ))}
+        <Chip
+          label={`+${ips.length - MAX_IPS} more`}
+          sx={{ m: 0.5 }}
+        />
+      </>
+    );
   };
 
   return (
@@ -285,78 +314,136 @@ const DiscoveryProfiles = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              profiles.map((profile) => {
-                console.log('Rendering profile:', profile);
-                return (
-                  <TableRow key={profile.id}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {profile.device_ips.map((ip) => (
+              profiles.map((profile) => (
+                <TableRow key={profile.id}>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {renderLimitedIPs(profile.device_ips)}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {profile.credential_profile_ids.map((id) => {
+                        const credentialProfile = credentialProfiles.find(cp => cp.id === id);
+                        return credentialProfile ? (
                           <Chip 
-                            key={`${profile.id}-${ip}`} 
-                            label={formatIP(ip)} 
+                            key={`${profile.id}-${id}`}
+                            label={`${credentialProfile.hostname}:${credentialProfile.port}`} 
                             size="small" 
                           />
-                        ))}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {profile.credential_profile_ids.map((id) => {
-                          const credentialProfile = credentialProfiles.find(cp => cp.id === id);
-                          return credentialProfile ? (
-                            <Chip 
-                              key={`${profile.id}-${id}`}
-                              label={`${credentialProfile.hostname}:${credentialProfile.port}`} 
-                              size="small" 
-                            />
-                          ) : null;
-                        })}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <IconButton 
-                        color="primary"
-                        onClick={() => handleEdit(profile)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton 
-                        color="error"
-                        onClick={() => handleDelete(profile.id)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
+                        ) : null;
+                      })}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton 
+                      color="primary"
+                      onClick={() => handleViewDetails(profile)}
+                    >
+                      <VisibilityIcon />
+                    </IconButton>
+                    <IconButton 
+                      color="primary"
+                      onClick={() => handleEdit(profile)}
+                    >
+                      <EditIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))
             )}
           </TableBody>
         </Table>
       </TableContainer>
 
+      {/* Detail View Dialog */}
+      <Dialog 
+        open={detailOpen} 
+        onClose={handleCloseDetails} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle>
+          Discovery Profile Details
+        </DialogTitle>
+        <DialogContent>
+          {selectedProfile && (
+            <Box sx={{ mt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                Device IPs
+              </Typography>
+              <List>
+                {selectedProfile.device_ips.map((ip) => (
+                  <ListItem key={ip}>
+                    <Chip label={ip} />
+                  </ListItem>
+                ))}
+              </List>
+              
+              <Divider sx={{ my: 2 }} />
+              
+              <Typography variant="h6" gutterBottom>
+                Credential Profiles
+              </Typography>
+              <List>
+                {selectedProfile.credential_profile_ids.map((id) => {
+                  const credentialProfile = credentialProfiles.find(cp => cp.id === id);
+                  return credentialProfile ? (
+                    <ListItem key={id}>
+                      <Chip 
+                        label={`${credentialProfile.hostname}:${credentialProfile.port}`}
+                        sx={{ mr: 1 }}
+                      />
+                      <Typography variant="body2" color="text.secondary">
+                        ID: {credentialProfile.id}
+                      </Typography>
+                    </ListItem>
+                  ) : null;
+                })}
+              </List>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDetails}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {editingProfile ? 'Edit Discovery Profile' : 'Add Discovery Profile'}
+          {editingProfile ? 'Edit Discovery Profile' : 'Create Discovery Profile'}
         </DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <ToggleButtonGroup
+              value={formData.is_cidr ? 'cidr' : 'list'}
+              exclusive
+              onChange={handleInputTypeChange}
+              aria-label="IP input type"
+              sx={{ mb: 2 }}
+            >
+              <ToggleButton value="list" aria-label="list of IPs">
+                List of IPs
+              </ToggleButton>
+              <ToggleButton value="cidr" aria-label="CIDR notation">
+                CIDR Notation
+              </ToggleButton>
+            </ToggleButtonGroup>
+
             <TextField
-              autoFocus
-              margin="dense"
-              name="device_ips"
-              label="Device IPs (comma-separated)"
-              type="text"
               fullWidth
+              label={formData.is_cidr ? "CIDR Notation (e.g., 192.168.1.0/24)" : "IP Addresses (comma-separated)"}
+              name="device_ips"
               value={formData.device_ips}
               onChange={handleChange}
-              required
               error={!!ipError}
-              helperText={ipError || "Enter IPs in dotted decimal format (e.g., 192.168.1.1, 10.0.0.1)"}
+              helperText={ipError || (formData.is_cidr 
+                ? "Enter CIDR notation (e.g., 192.168.1.0/24)" 
+                : "Enter comma-separated IP addresses (e.g., 192.168.1.1, 192.168.1.2)")}
               sx={{ mb: 2 }}
             />
-            <FormControl fullWidth>
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
               <InputLabel>Credential Profiles</InputLabel>
               <Select
                 multiple
@@ -371,7 +458,7 @@ const DiscoveryProfiles = () => {
                         <Chip 
                           key={id} 
                           label={`${profile.hostname}:${profile.port}`} 
-                          size="small"
+                          size="small" 
                         />
                       ) : null;
                     })}
@@ -390,14 +477,19 @@ const DiscoveryProfiles = () => {
                 ))}
               </Select>
             </FormControl>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              {editingProfile ? 'Update' : 'Create'}
-            </Button>
-          </DialogActions>
-        </form>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained" 
+            color="primary"
+            disabled={!!ipError || formData.credential_profile_ids.length === 0}
+          >
+            {editingProfile ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

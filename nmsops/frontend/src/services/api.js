@@ -18,8 +18,8 @@ export const credentialProfileService = {
 
 export const deviceService = {
   getAll: () => api.get('/devices'),
-  updateProvisionStatus: (ip, isProvisioned) => 
-    api.put(`/devices/${ip}/provision`, { is_provisioned: isProvisioned }),
+  updateProvisionStatus: (ips) => 
+    api.put('/devices/update-provisioning', { provision_update_ips: ips }),
 };
 
 export const discoveryProfileService = {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -13,6 +13,9 @@ import {
   Card,
   CardContent,
   CardHeader,
+  Switch,
+  FormControlLabel,
+  Button,
 } from '@mui/material';
 import {
   LineChart,
@@ -25,50 +28,58 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import axios from 'axios';
+import RefreshIcon from '@mui/icons-material/Refresh';
 
 const API_BASE_URL = 'http://localhost:8080/api';
+const REFRESH_INTERVAL = 5000; // 5 seconds
 
 // Duration options in seconds
 const DURATION_OPTIONS = [
-  { value: 3600, label: 'Last Hour' },
-  { value: 21600, label: 'Last 6 Hours' },
-  { value: 86400, label: 'Last 24 Hours' },
-  { value: 172800, label: 'Last 2 Days' },
-  { value: 604800, label: 'Last 7 Days' },
+  { value: 3600, label: 'Last Hour', interval: 1 }, // 1 second interval
+  { value: 21600, label: 'Last 6 Hours', interval: 5 }, // 5 seconds interval
+  { value: 86400, label: 'Last 24 Hours', interval: 10 }, // 10 seconds interval
+  { value: 172800, label: 'Last 2 Days', interval: 30 }, // 30 seconds interval
+  { value: 604800, label: 'Last 7 Days', interval: 30 }, // 30 seconds interval
+];
+
+// Aggregation options
+const AGGREGATION_OPTIONS = [
+  { value: 'avg', label: 'Average' },
+  { value: 'min', label: 'Minimum' },
+  { value: 'max', label: 'Maximum' },
+  { value: 'sum', label: 'Sum' },
+  { value: 'count', label: 'Count' },
 ];
 
 const Dashboard = () => {
   const [devices, setDevices] = useState([]);
-  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [selectedDevice, setSelectedDevice] = useState('');
   const [selectedDuration, setSelectedDuration] = useState(3600); // Default to 1 hour
+  const [selectedAggregation, setSelectedAggregation] = useState('avg');
   const [chartData1, setChartData1] = useState([]);
   const [chartData2, setChartData2] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const chartRef1 = useRef(null);
+  const chartRef2 = useRef(null);
 
   // Load devices on component mount
   useEffect(() => {
     loadDevices();
   }, []);
 
-  // Load chart data when device or duration changes
+  // Load chart data when device, duration, or aggregation changes
   useEffect(() => {
     if (selectedDevice) {
       loadChartData();
     }
-  }, [selectedDevice, selectedDuration]);
+  }, [selectedDevice, selectedDuration, selectedAggregation]);
 
   const loadDevices = async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/devices`);
       setDevices(response.data.devices || []);
-      
-      // Auto-select the first device if available
-      if (response.data.devices && response.data.devices.length > 0) {
-        setSelectedDevice(response.data.devices[0].ip);
-      }
-      
       setLoading(false);
     } catch (err) {
       console.error('Error loading devices:', err);
@@ -78,87 +89,69 @@ const Dashboard = () => {
   };
 
   const loadChartData = async () => {
+    if (!selectedDevice) return;
+
     try {
       setLoading(true);
       setError('');
-      
-      // Calculate from timestamp based on duration
-      const toTimestamp = Math.floor(Date.now() / 1000); // Current time in seconds
+
+      // Calculate timestamps based on current time and selected duration
+      const toTimestamp = Math.floor(Date.now() / 1000);
       const fromTimestamp = toTimestamp - selectedDuration;
-      
-      // Prepare request body with the required fields: CounterID and ObjectIDs
-      const baseRequestBody = {
-        From: fromTimestamp,
-        To: toTimestamp,
-        ObjectIDs: [selectedDevice],
+
+      // Get the interval based on selected duration
+      const selectedOption = DURATION_OPTIONS.find(option => option.value === selectedDuration);
+      const interval = selectedOption ? selectedOption.interval : 1;
+
+      // Prepare request body
+      const requestBody = {
+        from: fromTimestamp,
+        to: toTimestamp,
+        object_ids: [selectedDevice],
+        vertical_aggregation: selectedAggregation,
+        horizontal_aggregation: selectedAggregation,
+        interval: interval
       };
-      
-      // Load data for counter ID 1
-      const response1 = await axios.post(`${API_BASE_URL}/histogram`, {
-        ...baseRequestBody,
-        CounterID: 1,
-      });
-      
-      // Load data for counter ID 2
-      const response2 = await axios.post(`${API_BASE_URL}/histogram`, {
-        ...baseRequestBody,
-        CounterID: 2,
-      });
-      
-      console.log('Counter 1 data:', response1.data);
-      console.log('Counter 2 data:', response2.data);
-      
-      // Format data for Recharts
+
+      // Load data for both charts
+      const [response1, response2] = await Promise.all([
+        axios.post(`${API_BASE_URL}/query`, { ...requestBody, counter_id: 1 }),
+        axios.post(`${API_BASE_URL}/query`, { ...requestBody, counter_id: 2 })
+      ]);
+
+      // Format and set chart data
       setChartData1(formatChartData(response1.data));
       setChartData2(formatChartData(response2.data));
-      
       setLoading(false);
     } catch (err) {
       console.error('Error loading chart data:', err);
-      setError(`Failed to load monitoring data: ${err.response?.data?.error || err.message}`);
+      setError('Failed to load monitoring data');
       setLoading(false);
     }
   };
 
   const formatChartData = (data) => {
-    if (!data || !data.data || !data.data[selectedDevice] || data.data[selectedDevice].length === 0) {
-      console.log('No data found for the selected device');
+    if (!data || !Array.isArray(data) || data.length === 0) {
+      console.log('No data found in response');
       return [];
     }
     
-    const devicePoints = data.data[selectedDevice];
-    console.log(`Found ${devicePoints.length} data points`);
-    console.log('Sample data point:', devicePoints[0]);
-    
     // Format the data for Recharts
-    return devicePoints.map(point => {
-      // Convert Unix timestamp to a JavaScript Date for formatting
-      const timestamp = parseInt(point.timestamp, 10) * 1000;
+    return data.map(point => {
+      const timestamp = point.timestamp * 1000; // Convert to milliseconds
       const date = new Date(timestamp);
-      
-      // Format the date as HH:MM:SS
-      const formattedTime = date.toLocaleTimeString();
-      
       return {
-        time: formattedTime,     // For display on X-axis
-        timestamp: timestamp,    // Raw timestamp for sorting
-        value: point.value       // The actual value
+        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        timestamp: timestamp,
+        value: point.value
       };
     })
     // Sort by timestamp to ensure chronological order
     .sort((a, b) => a.timestamp - b.timestamp);
   };
 
-  const handleDeviceChange = (event) => {
-    setSelectedDevice(event.target.value);
-  };
-
-  const handleDurationChange = (event) => {
-    setSelectedDuration(event.target.value);
-  };
-
-  const formatIpAddress = (ip) => {
-    return `${(ip >>> 24) & 255}.${(ip >>> 16) & 255}.${(ip >>> 8) & 255}.${ip & 255}`;
+  const handleRefresh = () => {
+    loadChartData();
   };
 
   return (
@@ -175,30 +168,29 @@ const Dashboard = () => {
       
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={3}>
             <FormControl fullWidth>
               <InputLabel>Device</InputLabel>
               <Select
-                value={selectedDevice || ''}
-                onChange={handleDeviceChange}
+                value={selectedDevice}
+                onChange={(e) => setSelectedDevice(e.target.value)}
                 label="Device"
-                disabled={loading || devices.length === 0}
+                disabled={loading}
               >
                 {devices.map((device) => (
                   <MenuItem key={device.ip} value={device.ip}>
-                    {formatIpAddress(device.ip)}
-                    {device.is_provisioned ? ' (Provisioned)' : ' (Not Provisioned)'}
+                    {device.ip}
                   </MenuItem>
                 ))}
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={3}>
             <FormControl fullWidth>
               <InputLabel>Duration</InputLabel>
               <Select
                 value={selectedDuration}
-                onChange={handleDurationChange}
+                onChange={(e) => setSelectedDuration(e.target.value)}
                 label="Duration"
                 disabled={loading}
               >
@@ -209,6 +201,34 @@ const Dashboard = () => {
                 ))}
               </Select>
             </FormControl>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <FormControl fullWidth>
+              <InputLabel>Aggregation</InputLabel>
+              <Select
+                value={selectedAggregation}
+                onChange={(e) => setSelectedAggregation(e.target.value)}
+                label="Aggregation"
+                disabled={loading}
+              >
+                {AGGREGATION_OPTIONS.map((option) => (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={3}>
+            <Button
+              variant="contained"
+              onClick={handleRefresh}
+              disabled={loading || !selectedDevice}
+              startIcon={<RefreshIcon />}
+              fullWidth
+            >
+              Refresh Charts
+            </Button>
           </Grid>
         </Grid>
       </Paper>
@@ -226,8 +246,10 @@ const Dashboard = () => {
                 {chartData1.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
+                      ref={chartRef1}
                       data={chartData1}
                       margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
+                      syncId="monitoring"
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
@@ -236,9 +258,12 @@ const Dashboard = () => {
                         tick={{ fontSize: 12 }}
                         angle={-45}
                         textAnchor="end"
+                        type="category"
+                        allowDataOverflow={true}
                       />
                       <YAxis 
                         label={{ value: 'KB', angle: -90, position: 'insideLeft' }}
+                        allowDataOverflow={true}
                       />
                       <Tooltip formatter={(value) => [`${value} KB`, 'Disk Usage']} />
                       <Legend />
@@ -250,6 +275,7 @@ const Dashboard = () => {
                         activeDot={{ r: 6 }} 
                         dot={false}
                         strokeWidth={2}
+                        isAnimationActive={false}
                       />
                     </LineChart>
                   </ResponsiveContainer>
@@ -268,8 +294,10 @@ const Dashboard = () => {
                 {chartData2.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
+                      ref={chartRef2}
                       data={chartData2}
                       margin={{ top: 5, right: 30, left: 20, bottom: 25 }}
+                      syncId="monitoring"
                     >
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
@@ -278,9 +306,12 @@ const Dashboard = () => {
                         tick={{ fontSize: 12 }}
                         angle={-45}
                         textAnchor="end"
+                        type="category"
+                        allowDataOverflow={true}
                       />
                       <YAxis 
                         label={{ value: '%', angle: -90, position: 'insideLeft' }}
+                        allowDataOverflow={true}
                       />
                       <Tooltip formatter={(value) => [`${value}%`, 'CPU Usage']} />
                       <Legend />
@@ -292,6 +323,7 @@ const Dashboard = () => {
                         activeDot={{ r: 6 }} 
                         dot={false}
                         strokeWidth={2}
+                        isAnimationActive={false}
                       />
                     </LineChart>
                   </ResponsiveContainer>
