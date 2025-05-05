@@ -234,21 +234,12 @@ func (storage *Storage) Get(key uint32) ([]byte, error) {
 
 }
 
-func (storage *Storage) GetAll() (map[uint32][]byte, error) {
+func (storage *Storage) GetAllKeys() ([]uint32, error) {
 
-	data := make(map[uint32][]byte)
+	keys := make([]uint32, 0)
 
-	// Get data for all keys from all partitions
-
+	// Get all keys from all partitions
 	for partitionIndex := range storage.partitionCount {
-
-		file, err := storage.openFilesPool.GetFileMapping(partitionIndex, storage.storagePath)
-
-		if err != nil {
-
-			return nil, err
-
-		}
 
 		index, err := storage.indexPool.Get(partitionIndex, storage.storagePath)
 
@@ -258,15 +249,15 @@ func (storage *Storage) GetAll() (map[uint32][]byte, error) {
 
 		}
 
-		for key, blocks := range index.ObjectIndex {
+		for key := range index.ObjectIndex {
 
-			data[key] = file.ReadBlocks(blocks, storage.blockSize)
+			keys = append(keys, key)
 
 		}
 
 	}
 
-	return data, nil
+	return keys, nil
 
 }
 

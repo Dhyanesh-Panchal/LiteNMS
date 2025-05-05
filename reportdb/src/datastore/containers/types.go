@@ -30,7 +30,7 @@ func (date Date) Format() string {
 
 }
 
-func UnixToDate(unix uint32) Date {
+func UnixToDate[T uint32 | int64](unix T) Date {
 
 	t := time.Unix(int64(unix), 0)
 

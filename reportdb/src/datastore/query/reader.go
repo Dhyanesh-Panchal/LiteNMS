@@ -8,6 +8,7 @@ import (
 	"errors"
 	"go.uber.org/zap"
 	"sync"
+	"time"
 )
 
 type ReaderRequest struct {
@@ -100,53 +101,33 @@ func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel cha
 
 func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds []uint32, from uint32, to uint32) (map[uint32][]DataPoint, error) {
 
-	finalDataPoints := make(map[uint32][]DataPoint)
-
 	if len(objectIds) == 0 {
 
-		// No objectIds mentioned, hence get data for all
+		// No objectIds mentioned, hence get all objectIds
 
-		data, err := storageEngine.GetAll()
+		var err error
+
+		objectIds, err = storageEngine.GetAllKeys()
 
 		if err != nil {
 
-			Logger.Info("Error getting data for all objects for", zap.Any("storageKey", storageKey), zap.Error(err))
+			Logger.Error("Error getting all storage keys", zap.Error(err))
 
 			return nil, err
 
 		}
 
-		for objectId, objectData := range data {
+	}
 
-			dataPoints, err := DeserializeBatch(objectData, CounterConfig[storageKey.CounterId][DataType].(string))
+	finalDataPoints := make(map[uint32][]DataPoint)
 
-			if err != nil {
+	for _, objectId := range objectIds {
 
-				Logger.Info("Error deserializing dataPoint for objectId: ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
+		var dataPoints []DataPoint
 
-				continue
+		data, hit := DataPointsCache.Get(CreateCacheKey(storageKey, objectId))
 
-			}
-
-			// Append dataPoints if they lie between from and to
-
-			for _, dataPoint := range dataPoints {
-
-				if dataPoint.Timestamp >= from && dataPoint.Timestamp <= to {
-
-					finalDataPoints[objectId] = append(finalDataPoints[objectId], dataPoint)
-
-				}
-
-			}
-
-		}
-
-		return finalDataPoints, nil
-
-	} else {
-
-		for _, objectId := range objectIds {
+		if !hit {
 
 			data, err := storageEngine.Get(objectId)
 
@@ -158,7 +139,7 @@ func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds 
 
 			}
 
-			dataPoints, err := DeserializeBatch(data, CounterConfig[storageKey.CounterId][DataType].(string))
+			dataPoints, err = DeserializeBatch(data, CounterConfig[storageKey.CounterId][DataType].(string))
 
 			if err != nil {
 
@@ -168,22 +149,34 @@ func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds 
 
 			}
 
-			// Append dataPoints if they lie between from and to
+			// Don't set cache for current day
+			if UnixToDate(time.Now().Unix()) != storageKey.Date {
 
-			for _, dataPoint := range dataPoints {
+				DataPointsCache.Set(CreateCacheKey(storageKey, objectId), dataPoints, 0)
 
-				if dataPoint.Timestamp >= from && dataPoint.Timestamp <= to {
+			}
 
-					finalDataPoints[objectId] = append(finalDataPoints[objectId], dataPoint)
+		} else {
 
-				}
+			Logger.Debug("Cache hit for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
+
+			dataPoints = data.([]DataPoint)
+
+		}
+
+		// Append dataPoints if they lie between from and to
+
+		for _, dataPoint := range dataPoints {
+
+			if dataPoint.Timestamp >= from && dataPoint.Timestamp <= to {
+
+				finalDataPoints[objectId] = append(finalDataPoints[objectId], dataPoint)
 
 			}
 
 		}
 
-		return finalDataPoints, nil
-
 	}
 
+	return finalDataPoints, nil
 }
