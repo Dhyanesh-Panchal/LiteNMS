@@ -264,7 +264,7 @@ func (db *ReportDBClient) Query(from, to, interval uint32, objectIps []string, c
 
 	select {
 
-	case <-time.NewTimer(10 * time.Second).C:
+	case <-time.NewTimer(40 * time.Second).C:
 
 		Logger.Error("Query timeout", zap.Uint64("queryId", queryId))
 
