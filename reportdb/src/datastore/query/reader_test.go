@@ -10,13 +10,17 @@ import (
 
 func TestReader(t *testing.T) {
 
-	utils.LoadConfig()
+	err := utils.LoadConfig()
+
+	if err != nil {
+
+		t.Error(err)
+
+	}
 
 	readerRequestChannel := make(chan ReaderRequest, 100)
 
-	parserWaitChannels := make([]chan map[string]interface{}, 1)
-
-	parserWaitChannels[0] = make(chan map[string]interface{}, 10)
+	readerResponseChannel := make(chan ReaderResponse, 10)
 
 	storagePool := NewOpenStoragePool()
 
@@ -24,7 +28,7 @@ func TestReader(t *testing.T) {
 
 	readersWaitGroup.Add(1)
 
-	go Reader(readerRequestChannel, parserWaitChannels[0], storagePool, &readersWaitGroup)
+	go Reader(readerRequestChannel, readerResponseChannel, storagePool, &readersWaitGroup)
 
 	from := uint32(1744781400)
 
@@ -47,7 +51,7 @@ func TestReader(t *testing.T) {
 
 	for index := range 10 {
 
-		data := <-parserWaitChannels[0]
+		data := <-readerResponseChannel
 
 		fmt.Println("\n\n", index)
 

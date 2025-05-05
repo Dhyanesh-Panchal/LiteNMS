@@ -10,9 +10,7 @@ func InitProfiling() {
 
 	if !IsProductionEnvironment {
 
-		err := http.ListenAndServe("localhost:"+ProfilingPort, nil)
-
-		if err != nil {
+		if err := http.ListenAndServe("localhost:"+ProfilingPort, nil); err != nil {
 
 			Logger.Error("error starting profiling server", zap.Error(err))
 

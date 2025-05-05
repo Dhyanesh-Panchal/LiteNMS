@@ -29,9 +29,7 @@ func NewStorage(storagePath string, partitionCount uint32, blockSize uint32, cre
 
 	// Ensure that storage directory exist, if not create the storage dir and files
 
-	err := ensureStorageDirectory(storagePath, partitionCount, blockSize, createIfNotExist)
-
-	if err != nil {
+	if err := ensureStorageDirectory(storagePath, partitionCount, blockSize, createIfNotExist); err != nil {
 
 		return nil, err
 
@@ -52,9 +50,7 @@ func NewStorage(storagePath string, partitionCount uint32, blockSize uint32, cre
 
 func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize uint32, createIfNotExist bool) error {
 
-	_, err := os.Stat(storagePath)
-
-	if os.IsNotExist(err) {
+	if _, err := os.Stat(storagePath); os.IsNotExist(err) {
 
 		if !createIfNotExist {
 
@@ -64,9 +60,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 		Logger.Info("Creating storage", zap.String("storagePath", storagePath))
 
-		err = os.MkdirAll(storagePath, 0755)
-
-		if err != nil {
+		if err = os.MkdirAll(storagePath, 0755); err != nil {
 
 			Logger.Info("Failed to create storage directory:", zap.Error(err))
 
@@ -99,9 +93,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 			}(file)
 
-			err = os.Truncate(file.Name(), InitialFileSize)
-
-			if err != nil {
+			if err = os.Truncate(file.Name(), InitialFileSize); err != nil {
 
 				Logger.Error("error truncating new data partition", zap.Error(err))
 
@@ -111,9 +103,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 			index := NewIndex(blockSize)
 
-			err = index.WriteIndexToFile(storagePath, partitionIndex)
-
-			if err != nil {
+			if err = index.WriteIndexToFile(storagePath, partitionIndex); err != nil {
 
 				Logger.Error("error marshalling index ", zap.Error(err))
 
@@ -131,36 +121,6 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 	return nil
 }
-
-//func writeNewIndex(storagePath string, partitionIndex uint32, blockSize uint32) error {
-//
-//	indexFile, err := os.Create(storagePath + "/index_" + strconv.Itoa(int(partitionIndex)) + ".bin")
-//
-//	if err != nil {
-//
-//		Logger.Error("error creating new index partition", zap.Error(err))
-//
-//		return err
-//
-//	}
-//
-//	defer func(indexFile *os.File) {
-//
-//		err := indexFile.Close()
-//
-//		if err != nil {
-//
-//			Logger.Error("error closing data partition", zap.Error(err))
-//
-//		}
-//
-//	}(indexFile)
-//
-//
-//
-//
-//	return nil
-//}
 
 // -------------- Storage Engine Interface functions -----------------
 
@@ -182,17 +142,13 @@ func (storage *Storage) Put(key uint32, value []byte) error {
 
 	}
 
-	err = DiskWrite(key, value, file, index)
-
-	if err != nil {
+	if err = DiskWrite(key, value, file, index); err != nil {
 
 		return err
 
 	}
 
-	err = index.WriteIndexToFile(storage.storagePath, key%storage.partitionCount)
-
-	if err != nil {
+	if err = index.WriteIndexToFile(storage.storagePath, key%storage.partitionCount); err != nil {
 
 		return err
 

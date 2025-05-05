@@ -24,7 +24,17 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 	}
 
-	defer context.Term()
+	defer func(context *zmq.Context) {
+
+		err := context.Term()
+
+		if err != nil {
+
+			Logger.Error("Error terminating the result publisher zmq context")
+
+		}
+
+	}(context)
 
 	socket, err := context.NewSocket(zmq.PUSH)
 
@@ -36,7 +46,12 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 	}
 
-	defer socket.Close()
+	defer func(socket *zmq.Socket) {
+		err := socket.Close()
+		if err != nil {
+			Logger.Error("Error terminating the result publisher zmq socket")
+		}
+	}(socket)
 
 	err = socket.Bind("tcp://*:" + QueryResultBindPort)
 

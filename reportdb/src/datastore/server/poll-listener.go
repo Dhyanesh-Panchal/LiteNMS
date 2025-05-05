@@ -74,9 +74,7 @@ func pollListener(context *zmq.Context, dataWriteChannel chan<- []PolledDataPoin
 
 		case <-shutDown:
 
-			err := socket.Close()
-
-			if err != nil {
+			if err := socket.Close(); err != nil {
 
 				Logger.Error("error closing poll listener socket ", zap.Error(err))
 

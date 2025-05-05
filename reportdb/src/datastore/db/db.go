@@ -23,9 +23,8 @@ func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-cha
 
 	// Ensure storage directory is created.
 	//err := os.MkdirAll(filepath.Dir(filepath.Dir(CurrentWorkingDirectory))+"/data", 0777)
-	err := os.MkdirAll(StorageDirectory, 0777)
 
-	if err != nil {
+	if err := os.MkdirAll(StorageDirectory, 0777); err != nil {
 
 		Logger.Error("error creating data directory:" + err.Error())
 

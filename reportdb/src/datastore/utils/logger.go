@@ -11,9 +11,7 @@ var Logger *zap.Logger
 
 func InitLogger() error {
 
-	err := os.MkdirAll("./logs/", os.ModePerm)
-
-	if err != nil {
+	if err := os.MkdirAll("./logs/", os.ModePerm); err != nil {
 
 		return err
 

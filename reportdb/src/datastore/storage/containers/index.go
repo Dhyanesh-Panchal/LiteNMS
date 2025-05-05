@@ -127,7 +127,7 @@ func (index *Index) WriteIndexToFile(storagePath string, partitionId uint32) err
 	defer index.mu.Unlock()
 
 	indexBytes, err := msgpack.Marshal(index)
-	
+
 	indexFilePath := storagePath + "/index_" + strconv.Itoa(int(partitionId)) + ".bin"
 
 	err = os.WriteFile(indexFilePath, indexBytes, 0644)
@@ -205,9 +205,7 @@ func (indexPool *IndexPool) Close(storagePath string) {
 	// Sync changes if any
 	for partitionId, index := range indexPool.pool {
 
-		err := index.WriteIndexToFile(storagePath, partitionId)
-
-		if err != nil {
+		if err := index.WriteIndexToFile(storagePath, partitionId); err != nil {
 
 			Logger.Error("error closing index for: ", zap.String("storagePath", storagePath), zap.Uint32("partitionId", partitionId), zap.Error(err))
 

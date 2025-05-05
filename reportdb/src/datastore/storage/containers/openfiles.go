@@ -114,9 +114,7 @@ func (fileMapping *FileMapping) UnmapFile() error {
 
 	defer fileMapping.lock.Unlock()
 
-	err := syscall.Munmap(fileMapping.mapping)
-
-	if err != nil {
+	if err := syscall.Munmap(fileMapping.mapping); err != nil {
 
 		Logger.Error(ErrUnmappingFile.Error())
 
@@ -124,9 +122,7 @@ func (fileMapping *FileMapping) UnmapFile() error {
 
 	}
 
-	err = fileMapping.file.Close()
-
-	if err != nil {
+	if err := fileMapping.file.Close(); err != nil {
 
 		Logger.Error("error closing file", zap.Error(err))
 
@@ -147,9 +143,7 @@ func (fileMapping *FileMapping) WriteAt(data []byte, offset uint64) error {
 	// Check if the file size is sufficient
 	if int(offset)+len(data) > len(fileMapping.mapping) {
 
-		err := truncateFile(fileMapping)
-
-		if err != nil {
+		if err := truncateFile(fileMapping); err != nil {
 
 			return err
 
@@ -237,9 +231,7 @@ func (pool *OpenFilesPool) DeleteFileMapping(partitionId uint32) error {
 
 	mapping := pool.pool[partitionId]
 
-	err := mapping.UnmapFile()
-
-	if err != nil {
+	if err := mapping.UnmapFile(); err != nil {
 
 		return err
 
@@ -257,17 +249,13 @@ func (pool *OpenFilesPool) Close() {
 
 	for _, fileMapping := range pool.pool {
 
-		err := syscall.Munmap(fileMapping.mapping)
-
-		if err != nil {
+		if err := syscall.Munmap(fileMapping.mapping); err != nil {
 
 			Logger.Error("error unmapping file", zap.String("fileName", fileMapping.file.Name()), zap.Error(err))
 
 		}
 
-		err = fileMapping.file.Close()
-
-		if err != nil {
+		if err := fileMapping.file.Close(); err != nil {
 
 			Logger.Error("error closing file", zap.String("fileName", fileMapping.file.Name()), zap.Error(err))
 

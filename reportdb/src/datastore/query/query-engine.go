@@ -37,9 +37,7 @@ func InitQueryEngine(queryReceiveChannel <-chan Query, queryResultChannel chan<-
 
 	defer shutdownWaitGroup.Done()
 
-	err := InitDataPointsCache()
-
-	if err != nil {
+	if err := InitDataPointsCache(); err != nil {
 
 		Logger.Error("Error initializing data points cache", zap.Error(err))
 
@@ -53,7 +51,7 @@ func InitQueryEngine(queryReceiveChannel <-chan Query, queryResultChannel chan<-
 
 	for range QueryParsers {
 
-		go QueryParser(queryReceiveChannel, queryResultChannel, storagePool, &parsersWaitGroup)
+		go Parser(queryReceiveChannel, queryResultChannel, storagePool, &parsersWaitGroup)
 
 	}
 

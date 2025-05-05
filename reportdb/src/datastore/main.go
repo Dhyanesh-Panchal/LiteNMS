@@ -6,25 +6,30 @@ import (
 	. "datastore/query"
 	. "datastore/server"
 	. "datastore/utils"
-	"go.uber.org/zap"
+	"log"
 	"sync"
 )
 
 func main() {
 
-	err := LoadConfig()
+	if err := LoadConfig(); err != nil {
 
-	InitLogger()
-
-	go InitProfiling()
-
-	if err != nil {
-
-		Logger.Error("error loading config:", zap.Error(err))
+		log.Fatal("error loading config:", err)
 
 		return
 
 	}
+
+	if err := InitLogger(); err != nil {
+
+		log.Fatal("error initializing logger", err)
+
+		return
+
+	}
+
+	go InitProfiling()
+
 	globalShutdown := InitShutdownHandler(4)
 
 	var globalShutdownWaitGroup sync.WaitGroup

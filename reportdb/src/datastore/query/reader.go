@@ -78,7 +78,7 @@ func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel cha
 
 		} else {
 
-			// respond to the QueryParser with day's data
+			// respond to the Parser with day's data
 
 			readerResponseChannel <- ReaderResponse{
 
@@ -158,7 +158,7 @@ func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds 
 
 		} else {
 
-			Logger.Debug("Cache hit for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
+			//Logger.Debug("Cache hit for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
 
 			dataPoints = data.([]DataPoint)
 

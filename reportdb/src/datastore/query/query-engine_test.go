@@ -10,7 +10,7 @@ import (
 
 func TestQueryEngine(t *testing.T) {
 
-	utils.LoadConfig()
+	_ = utils.LoadConfig()
 
 	queryReceiveChannel := make(chan Query, 10)
 

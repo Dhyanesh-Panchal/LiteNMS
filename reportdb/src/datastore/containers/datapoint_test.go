@@ -16,7 +16,9 @@ func TestDeserializeBatch(t *testing.T) {
 		},
 	}
 
-	serialData, _ := SerializeBatch(data, "int64")
+	serialData := make([]byte, 0)
+
+	_ = SerializeBatch(data, &serialData, "int64")
 
 	fmt.Println(serialData)
 

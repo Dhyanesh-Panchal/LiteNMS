@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func QueryParser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, storagePool *StoragePool, parsersWaitGroup *sync.WaitGroup) {
+func Parser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, storagePool *StoragePool, parsersWaitGroup *sync.WaitGroup) {
 
 	defer parsersWaitGroup.Done()
 
@@ -161,7 +161,7 @@ func QueryParser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Res
 
 		default:
 
-			Logger.Info("Query result successful in ", zap.Any("ProcessingTime", time.Since(benchmarkTime)), zap.Uint64("queryId", query.QueryId), zap.Any("data-points", normalizedDataPoints))
+			Logger.Info("Query result successful in ", zap.Any("ProcessingTime", time.Since(benchmarkTime)), zap.Uint64("queryId", query.QueryId))
 
 			queryResultChannel <- Result{
 

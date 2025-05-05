@@ -24,9 +24,8 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 		Logger.Info("writer received data", zap.Any("dataBatch", dataBatch))
 
 		// Serialize the Data
-		err := SerializeBatch(dataBatch.Values, &dataBytesContainer, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string))
 
-		if err != nil {
+		if err := SerializeBatch(dataBatch.Values, &dataBytesContainer, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string)); err != nil {
 
 			Logger.Error("error serializing the batch", zap.Error(err))
 
@@ -50,7 +49,7 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 		// reslice the dataBytesContainer
 		dataBytesContainer = dataBytesContainer[:0]
-		
+
 	}
 
 	Logger.Info("Writer exiting.")

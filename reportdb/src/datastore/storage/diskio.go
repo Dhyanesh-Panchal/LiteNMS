@@ -39,10 +39,10 @@ func DiskWrite(key uint32, data []byte, file *FileMapping, index *Index) error {
 
 		writeOffset := objectBlocks[len(objectBlocks)-1].Offset + uint64(index.BlockSize-remainingBlockCapacity)
 
-		err := file.WriteAt(data[:writableDataBytes], writeOffset)
+		if err := file.WriteAt(data[:writableDataBytes], writeOffset); err != nil {
 
-		if err != nil {
 			return err
+			
 		}
 
 		// Update the Index Metadata
