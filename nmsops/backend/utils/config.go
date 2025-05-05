@@ -7,11 +7,18 @@ import (
 )
 
 var (
-	ConfigDBUser     string
-	ConfigDBPassword string
-	ConfigDBName     string
-	ConfigDBHost     string
-	ConfigDBPort     string
+	ConfigDBUser            string
+	ConfigDBPassword        string
+	ConfigDBName            string
+	ConfigDBHost            string
+	ConfigDBPort            string
+	ReportDBHost            string
+	ReportDBQueryPort       string
+	ReportDBQueryResultPort string
+	ProvisionPublisherPort  string
+	PollReceiverPort        string
+	PollSenderPort          string
+	QuerySendChannelSize    int
 )
 
 func LoadConfig() error {
@@ -50,6 +57,20 @@ func LoadConfig() error {
 	ConfigDBHost = generalConfig["ConfigDBHost"].(string)
 
 	ConfigDBPort = generalConfig["ConfigDBPort"].(string)
+
+	ReportDBHost = generalConfig["ReportDBHost"].(string)
+
+	ReportDBQueryPort = generalConfig["ReportDBQueryPort"].(string)
+
+	ReportDBQueryResultPort = generalConfig["ReportDBQueryResultPort"].(string)
+
+	ProvisionPublisherPort = generalConfig["ProvisionPublisherPort"].(string)
+
+	PollReceiverPort = generalConfig["PollReceiverPort"].(string)
+
+	PollSenderPort = generalConfig["PollSenderPort"].(string)
+
+	QuerySendChannelSize = int(generalConfig["QuerySendChannelSize"].(float64))
 
 	return nil
 

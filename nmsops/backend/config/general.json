@@ -3,5 +3,12 @@
   "ConfigDBPassword": "litenms",
   "ConfigDBName": "config_db",
   "ConfigDBHost": "localhost",
-  "ConfigDBPort": "5432"
+  "ConfigDBPort": "5432",
+  "ReportDBHost":  "localhost",
+  "ReportDBQueryPort":  "7001",
+  "ReportDBQueryResultPort":  "7002",
+  "ProvisionPublisherPort":  "7005",
+  "PollReceiverPort": "7006",
+  "PollSenderPort": "7000",
+  "QuerySendChannelSize": 100
 }

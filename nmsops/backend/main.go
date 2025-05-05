@@ -62,6 +62,12 @@ func main() {
 
 	defer provisioningPublisher.Close()
 
+	// polled data router
+
+	context := InitPollRouter()
+
+	defer context.Term()
+
 	router := gin.Default()
 
 	// Configure CORS

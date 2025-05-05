@@ -1,5 +1,5 @@
 {
-  "PollSenderPort": "7000",
+  "PollSenderPort": "7006",
   "BackendHost": "localhost",
   "ProvisionListenerPort": "7005",
   "PollWorkers": 50,

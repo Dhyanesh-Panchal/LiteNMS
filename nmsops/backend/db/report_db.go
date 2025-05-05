@@ -13,8 +13,7 @@ import (
 )
 
 var (
-	ErrCreatingSocket = errors.New("error creating socket")
-	ErrQueryTimedOut  = errors.New("query timed out")
+	ErrQueryTimedOut = errors.New("query timed out")
 )
 
 type Query struct {
@@ -105,7 +104,7 @@ func InitReportDBClient() (*ReportDBClient, error) {
 
 	receiverWaitChannels := make(map[uint64]chan []byte)
 
-	querySendChannel := make(chan []byte, 100)
+	querySendChannel := make(chan []byte, QuerySendChannelSize)
 
 	shutdownChannel := make(chan struct{})
 
@@ -139,7 +138,7 @@ func querySendRoutine(context *zmq.Context, queryChannel chan []byte) {
 
 	defer socket.Close()
 
-	err = socket.Connect("tcp://localhost:7001")
+	err = socket.Connect("tcp://" + ReportDBHost + ":" + ReportDBQueryPort)
 
 	for query := range queryChannel {
 
@@ -167,7 +166,7 @@ func resultReceiveRoutine(context *zmq.Context, dbClient *ReportDBClient, shutdo
 		return
 	}
 
-	err = socket.Connect("tcp://localhost:7002")
+	err = socket.Connect("tcp://" + ReportDBHost + ":" + ReportDBQueryResultPort)
 
 	if err != nil {
 

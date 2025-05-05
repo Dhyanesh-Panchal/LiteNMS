@@ -34,7 +34,7 @@ func InitProvisioningPublisher() (*ProvisioningPublisher, error) {
 
 	}
 
-	err = socket.Bind("tcp://*:7005")
+	err = socket.Bind("tcp://*:" + ProvisionPublisherPort)
 
 	if err != nil {
 
