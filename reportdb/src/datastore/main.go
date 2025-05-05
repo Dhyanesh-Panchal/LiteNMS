@@ -48,7 +48,7 @@ func main() {
 
 	go InitQueryListener(queryReceiveChannel, globalShutdown, &globalShutdownWaitGroup)
 
-	go InitQueryResultPublisher(queryResultChannel, &globalShutdownWaitGroup)
+	go InitQueryResultSender(queryResultChannel, &globalShutdownWaitGroup)
 
 	<-globalShutdown
 

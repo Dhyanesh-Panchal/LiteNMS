@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWaitGroup *sync.WaitGroup) {
+func InitQueryResultSender(queryResultChannel <-chan Result, globalShutdownWaitGroup *sync.WaitGroup) {
 
 	defer globalShutdownWaitGroup.Done()
 
@@ -18,7 +18,7 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 	if err != nil {
 
-		Logger.Error("error initializing query result publisher context", zap.Error(err))
+		Logger.Error("error initializing query result sender context", zap.Error(err))
 
 		return
 
@@ -30,7 +30,7 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 		if err != nil {
 
-			Logger.Error("Error terminating the result publisher zmq context")
+			Logger.Error("Error terminating the result sender zmq context")
 
 		}
 
@@ -40,7 +40,7 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 	if err != nil {
 
-		Logger.Error("error initializing query result publisher socket", zap.Error(err))
+		Logger.Error("error initializing query result sender socket", zap.Error(err))
 
 		return
 
@@ -49,7 +49,7 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 	defer func(socket *zmq.Socket) {
 		err := socket.Close()
 		if err != nil {
-			Logger.Error("Error terminating the result publisher zmq socket")
+			Logger.Error("Error terminating the result sender zmq socket")
 		}
 	}(socket)
 
@@ -57,7 +57,7 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 	if err != nil {
 
-		Logger.Error("error binding query result publisher socket", zap.Error(err))
+		Logger.Error("error binding query result sender socket", zap.Error(err))
 
 		return
 
@@ -93,6 +93,6 @@ func InitQueryResultPublisher(queryResultChannel <-chan Result, globalShutdownWa
 
 	}
 
-	Logger.Info("Query result publisher shutting down")
+	Logger.Info("Query result sender shutting down")
 
 }
