@@ -4,11 +4,9 @@ import (
 	"database/sql"
 	"github.com/lib/pq"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/ssh"
 	. "poller/utils"
 	"strconv"
 	"sync"
-	"time"
 )
 
 const (
@@ -26,9 +24,7 @@ const (
 )
 
 type DeviceList struct {
-	deviceConfig map[string]*ssh.ClientConfig
-
-	devicePort map[string]string
+	deviceConfig map[string][3]string
 
 	db *sql.DB
 
@@ -65,9 +61,7 @@ func NewDeviceList() (*DeviceList, error) {
 
 	// Create ssh clients for deviceConfig and save it to map
 
-	devices := make(map[string]*ssh.ClientConfig)
-
-	ports := make(map[string]string)
+	devices := make(map[string][3]string)
 
 	for rows.Next() {
 
@@ -83,27 +77,13 @@ func NewDeviceList() (*DeviceList, error) {
 
 		}
 
-		devices[ip] = &ssh.ClientConfig{
-
-			User: hostname,
-
-			Auth: []ssh.AuthMethod{
-
-				ssh.Password(password),
-			},
-
-			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		}
-
-		ports[ip] = strconv.Itoa(port)
+		devices[ip] = [3]string{hostname, password, strconv.Itoa(port)}
 
 	}
 
 	return &DeviceList{
 
 		deviceConfig: devices,
-
-		devicePort: ports,
 
 		db: db,
 	}, nil
@@ -146,21 +126,7 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []string) {
 
 			// New Device provisioned
 
-			list.deviceConfig[ip] = &ssh.ClientConfig{
-
-				User: hostname,
-
-				Auth: []ssh.AuthMethod{
-
-					ssh.Password(password),
-				},
-
-				HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-
-				Timeout: DeviceSSHClientTimeout * time.Second,
-			}
-
-			list.devicePort[ip] = strconv.Itoa(port)
+			list.deviceConfig[ip] = [3]string{hostname, password, strconv.Itoa(port)}
 
 		} else {
 
@@ -176,13 +142,13 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []string) {
 
 }
 
-func (list *DeviceList) GetDevices() (map[string]*ssh.ClientConfig, map[string]string) {
+func (list *DeviceList) GetDevices() map[string][3]string {
 
 	list.lock.RLock()
 
 	defer list.lock.RUnlock()
 
-	return list.deviceConfig, list.devicePort
+	return list.deviceConfig
 
 }
 

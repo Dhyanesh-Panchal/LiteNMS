@@ -41,40 +41,44 @@ func InitSender(pollResultChannel chan PolledDataPoint, globalShutdownWaitGroup 
 
 	}
 
-	dataPoints := make([]PolledDataPoint, PollDataBatchSize)
+	dataPointsGroup := make([]PolledDataPoint, PollDataBatchSize)
 
 	size := 0
 
 	for dataPoint := range pollResultChannel {
 
-		dataPoints[size] = dataPoint
+		dataPointsGroup = append(dataPointsGroup, dataPoint)
 
 		size = (size + 1) % PollDataBatchSize
 
 		if size == 0 {
 
-			dataBytes, _ := json.Marshal(dataPoints)
+			dataBytes, _ := json.Marshal(dataPointsGroup)
 
 			_, err = socket.SendBytes(dataBytes, 0)
 
 			if err != nil {
 
-				Logger.Error("error sending dataPoints ", zap.Any("dataPoint", dataPoints), zap.Error(err))
+				Logger.Error("error sending dataPointsGroup ", zap.Any("dataPoint", dataPointsGroup), zap.Error(err))
 
 			}
+
+			Logger.Info("Sent dataPointsGroup", zap.Any("dataPoint", dataPointsGroup))
+
+			dataPointsGroup = dataPointsGroup[:0]
 
 		}
 
 	}
 
-	// Send remaining dataPoints
-	dataBytes, _ := json.Marshal(dataPoints)
+	// Send remaining dataPointsGroup
+	dataBytes, _ := json.Marshal(dataPointsGroup)
 
 	_, err = socket.SendBytes(dataBytes, 0)
 
 	if err != nil {
 
-		Logger.Error("error sending dataPoints ", zap.Any("dataPoint", dataPoints), zap.Error(err))
+		Logger.Error("error sending dataPointsGroup ", zap.Any("dataPoint", dataPointsGroup), zap.Error(err))
 
 	}
 

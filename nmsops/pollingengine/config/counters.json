@@ -1,11 +1,11 @@
 {
   "1": {
     "dataType": "int64",
-    "pollingInterval": 3
+    "pollingInterval": 2
   },
   "2": {
     "dataType": "float64",
-    "pollingInterval": 2
+    "pollingInterval": 1
   },
   "3": {
     "dataType": "string",

@@ -22,6 +22,7 @@ var (
 	ConfigDBHost           string
 	ConfigDBPort           string
 	ConfigDBName           string
+	CommandDelimiter       string
 )
 
 func LoadConfig() error {
@@ -92,6 +93,8 @@ func LoadConfig() error {
 	ConfigDBPort = generalConfig["ConfigDBPort"].(string)
 
 	ConfigDBName = generalConfig["ConfigDBName"].(string)
+
+	CommandDelimiter = generalConfig["CommandDelimiter"].(string)
 
 	return nil
 

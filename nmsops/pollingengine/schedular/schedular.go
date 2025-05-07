@@ -2,7 +2,6 @@ package schedular
 
 import (
 	"context"
-	"go.uber.org/zap"
 	. "poller/containers"
 	. "poller/poller"
 	. "poller/utils"
@@ -16,52 +15,68 @@ func InitPollScheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, gl
 
 	schedularContext, cancel := context.WithCancel(context.Background())
 
-	var counterSchedularWaitGroup sync.WaitGroup
+	var schedularWaitGroup sync.WaitGroup
 
-	for counterId, _ := range CounterConfig {
+	schedularWaitGroup.Add(1)
 
-		counterSchedularWaitGroup.Add(1)
-
-		go counterScheduler(counterId, pollJobChannel, deviceList, schedularContext, &counterSchedularWaitGroup)
-
-	}
+	go scheduler(pollJobChannel, deviceList, schedularContext, &schedularWaitGroup)
 
 	<-globalShutdownChannel
 
 	cancel()
 
-	counterSchedularWaitGroup.Wait()
-
-	close(pollJobChannel)
-
-	Logger.Debug("Poll Job channel closed")
-
+	schedularWaitGroup.Wait()
+	
+	Logger.Debug("Scheduler Exiting")
 }
 
-func counterScheduler(counterId uint16, pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularContext context.Context, counterSchedularWaitGroup *sync.WaitGroup) {
+func scheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularContext context.Context, schedularWaitGroup *sync.WaitGroup) {
 
-	defer counterSchedularWaitGroup.Done()
+	defer schedularWaitGroup.Done()
 
-	pollTicker := time.NewTicker(time.Duration(CounterConfig[counterId]["pollingInterval"].(float64)) * time.Second)
+	// initialize poll Intervals for the counter
+
+	counterPollIntervals := map[uint16]uint32{}
+
+	for counterId, _ := range CounterConfig {
+
+		counterPollIntervals[counterId] = uint32(CounterConfig[counterId]["pollingInterval"].(float64))
+
+	}
+
+	pollTicker := time.NewTicker(time.Second)
 
 	for {
 
 		select {
 		case tick := <-pollTicker.C:
 
-			devicesConfig, devicesPort := deviceList.GetDevices()
+			devicesCredential := deviceList.GetDevices()
 
 			timestamp := uint32(tick.UTC().Unix())
 
-			for deviceId, _ := range devicesConfig {
+			var qualifiedCounterIds []uint16
+
+			// determine qualified counterIds for corresponding tick
+			for counterId, _ := range CounterConfig {
+
+				if timestamp%counterPollIntervals[counterId] == 0 {
+
+					qualifiedCounterIds = append(qualifiedCounterIds, counterId)
+
+				}
+
+			}
+
+			for deviceId, config := range devicesCredential {
 
 				pollJobChannel <- PollJob{
-
-					Timestamp:    timestamp,
-					DeviceIP:     deviceId,
-					DeviceConfig: devicesConfig[deviceId],
-					DevicePort:   devicesPort[deviceId],
-					CounterId:    counterId,
+					Timestamp:  timestamp,
+					DeviceIP:   deviceId,
+					Hostname:   config[0],
+					Password:   config[1],
+					Port:       config[2],
+					CounterIds: qualifiedCounterIds,
 				}
 
 			}
@@ -69,10 +84,11 @@ func counterScheduler(counterId uint16, pollJobChannel chan<- PollJob, deviceLis
 		case <-schedularContext.Done():
 			pollTicker.Stop()
 
-			Logger.Info("Shutting down counter scheduler", zap.Uint16("counterId", counterId))
+			Logger.Info("Shutting down scheduler")
 
 			return
 		}
+
 	}
 
 }

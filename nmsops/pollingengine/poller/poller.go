@@ -24,11 +24,13 @@ type PollJob struct {
 
 	DeviceIP string
 
-	DeviceConfig *ssh.ClientConfig
+	Hostname string
 
-	DevicePort string
+	Password string
 
-	CounterId uint16
+	Port string
+
+	CounterIds []uint16
 }
 
 var CounterCommand = map[uint16]string{
@@ -37,67 +39,151 @@ var CounterCommand = map[uint16]string{
 	3: "whoami",
 }
 
-func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPoint, shutdownWaitGroup *sync.WaitGroup) {
+func InitPollers(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPoint, globalShutdownChannel <-chan struct{}, globalShutdownWaitGroup *sync.WaitGroup) {
 
-	defer shutdownWaitGroup.Done()
+	defer globalShutdownWaitGroup.Done()
 
-	for job := range pollJobChannel {
+	pollerShutdownChannel := make(chan struct{}, PollWorkers)
 
-		resp, err := poll(job.DeviceConfig, job.DeviceIP, job.DevicePort, CounterCommand[job.CounterId])
+	var pollerShutdownWaitGroup sync.WaitGroup
 
-		if err != nil {
+	pollerShutdownWaitGroup.Add(PollWorkers)
 
-			continue
+	for range PollWorkers {
 
-		}
-
-		var value interface{}
-
-		switch CounterConfig[job.CounterId]["dataType"] {
-
-		case "int", "int32", "int64", "uint", "uint32", "uint64":
-			value, _ = strconv.Atoi(resp)
-
-		case "float32", "float64":
-			value, _ = strconv.ParseFloat(resp, 64)
-
-		case "string":
-			value = resp
-
-		}
-
-		//value := resp
-
-		dataPoint := PolledDataPoint{
-
-			Timestamp: job.Timestamp,
-
-			ObjectId: ConvertIpToNumeric(job.DeviceIP),
-
-			CounterId: job.CounterId,
-
-			Value: value,
-		}
-
-		pollResultChannel <- dataPoint
-
-		Logger.Info("Poll success for", zap.String("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
+		go Poller(pollJobChannel, pollResultChannel, pollerShutdownChannel, &pollerShutdownWaitGroup)
 
 	}
 
-	Logger.Info("Poller exiting")
+	<-globalShutdownChannel
+
+	for range PollWorkers {
+
+		pollerShutdownChannel <- struct{}{}
+
+	}
+
+	pollerShutdownWaitGroup.Wait()
+
+	Logger.Debug("All Pollers exited")
+
+	close(pollResultChannel)
 
 }
 
-func poll(config *ssh.ClientConfig, deviceIp, port, cmd string) (string, error) {
+func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPoint, pollerShutdownChannel chan struct{}, pollerShutdownWaitGroup *sync.WaitGroup) {
 
-	client, err := ssh.Dial("tcp", deviceIp+":"+port, config)
+	defer pollerShutdownWaitGroup.Done()
+
+	for {
+
+		select {
+
+		case <-pollerShutdownChannel:
+
+			Logger.Info("Poller Exiting")
+
+			return
+
+		case job := <-pollJobChannel:
+
+			// prepare the command
+
+			var command string
+
+			for _, counterId := range job.CounterIds {
+
+				command += CounterCommand[counterId] + ";echo " + CommandDelimiter + ";"
+
+			}
+
+			// Poll
+			resp, err := poll(job.DeviceIP, job.Hostname, job.Password, job.Port, command)
+
+			if err != nil {
+
+				continue
+
+			}
+
+			for index, counterId := range job.CounterIds {
+
+				var value interface{}
+
+				switch CounterConfig[counterId]["dataType"] {
+
+				case "int", "int32", "int64", "uint", "uint32", "uint64":
+
+					value, err = strconv.Atoi(resp[index])
+
+					if err != nil {
+
+						Logger.Error("Error converting string to int", zap.String("value", resp[index]), zap.Uint16("counterId", counterId), zap.Error(err))
+
+						continue
+
+					}
+
+				case "float32", "float64":
+
+					value, err = strconv.ParseFloat(resp[index], 64)
+
+					if err != nil {
+
+						Logger.Error("Error converting string to float", zap.String("value", resp[index]), zap.Uint16("counterId", counterId), zap.Error(err))
+
+						continue
+
+					}
+
+				case "string":
+
+					value = resp[index]
+
+				}
+
+				dataPoint := PolledDataPoint{
+
+					Timestamp: job.Timestamp,
+
+					ObjectId: ConvertIpToNumeric(job.DeviceIP),
+
+					CounterId: counterId,
+
+					Value: value,
+				}
+
+				pollResultChannel <- dataPoint
+
+				Logger.Info("Poll success for", zap.String("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
+			}
+
+		}
+	}
+
+}
+
+func poll(deviceIp, hostname, password, port, cmd string) ([]string, error) {
+
+	config := ssh.ClientConfig{
+
+		User: hostname,
+
+		Auth: []ssh.AuthMethod{
+
+			ssh.Password(password),
+		},
+
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+
+	client, err := ssh.Dial("tcp", deviceIp+":"+port, &config)
 
 	if err != nil {
 
 		Logger.Info("Error dialing ssh connection", zap.String("Device IP", deviceIp), zap.String("port", port), zap.Error(err))
 
-		return "", err
+		return nil, err
 
 	}
 
@@ -109,7 +195,7 @@ func poll(config *ssh.ClientConfig, deviceIp, port, cmd string) (string, error) 
 
 		Logger.Error("Failed to create session:", zap.Error(err))
 
-		return "", err
+		return nil, err
 
 	}
 
@@ -121,9 +207,9 @@ func poll(config *ssh.ClientConfig, deviceIp, port, cmd string) (string, error) 
 
 		Logger.Error("Failed to execute command:", zap.Error(err))
 
-		return "", err
+		return nil, err
 	}
 
-	return strings.TrimRight(string(resp), "\n"), nil
+	return strings.Split(string(resp), "\n"+CommandDelimiter+"\n"), nil
 
 }

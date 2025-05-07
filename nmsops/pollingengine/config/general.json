@@ -10,5 +10,6 @@
   "ConfigDBPassword": "litenms",
   "ConfigDBName": "config_db",
   "ConfigDBHost": "localhost",
-  "ConfigDBPort": "5432"
+  "ConfigDBPort": "5432",
+  "CommandDelimiter": "---"
 }

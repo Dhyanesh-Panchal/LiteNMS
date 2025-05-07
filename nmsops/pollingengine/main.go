@@ -10,6 +10,8 @@ import (
 	"sync"
 )
 
+const globalShutdownSignalCount = 4
+
 func main() {
 	err := LoadConfig()
 
@@ -19,7 +21,7 @@ func main() {
 
 	}
 
-	globalShutdownChannel := InitShutdownHandler(3)
+	globalShutdownChannel := InitShutdownHandler(globalShutdownSignalCount)
 
 	pollResultChannel := make(chan PolledDataPoint, PollChannelSize)
 
@@ -38,23 +40,13 @@ func main() {
 
 	// server components
 
-	globalShutdownWaitGroup.Add(3)
+	globalShutdownWaitGroup.Add(globalShutdownSignalCount - 1)
 
 	go InitSender(pollResultChannel, &globalShutdownWaitGroup)
 
 	go InitProvisionListener(deviceList, globalShutdownChannel, &globalShutdownWaitGroup)
 
-	// Pollers
-
-	var pollerShutdownWaitGroup sync.WaitGroup
-
-	pollerShutdownWaitGroup.Add(PollWorkers)
-
-	for range PollWorkers {
-
-		go Poller(pollJobChannel, pollResultChannel, &pollerShutdownWaitGroup)
-
-	}
+	go InitPollers(pollJobChannel, pollResultChannel, globalShutdownChannel, &globalShutdownWaitGroup)
 
 	// Schedular
 
@@ -63,12 +55,6 @@ func main() {
 	<-globalShutdownChannel
 
 	Logger.Info("Global shutdown called")
-
-	pollerShutdownWaitGroup.Wait()
-
-	Logger.Debug("All Pollers exited")
-
-	close(pollResultChannel)
 
 	globalShutdownWaitGroup.Wait()
 
