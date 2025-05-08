@@ -3,7 +3,6 @@ package schedular
 import (
 	"context"
 	. "poller/containers"
-	. "poller/poller"
 	. "poller/utils"
 	"sync"
 	"time"
@@ -26,7 +25,9 @@ func InitPollScheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, gl
 	cancel()
 
 	schedularWaitGroup.Wait()
-	
+
+	close(pollJobChannel)
+
 	Logger.Debug("Scheduler Exiting")
 }
 
@@ -51,8 +52,6 @@ func scheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularC
 		select {
 		case tick := <-pollTicker.C:
 
-			devicesCredential := deviceList.GetDevices()
-
 			timestamp := uint32(tick.UTC().Unix())
 
 			var qualifiedCounterIds []uint16
@@ -68,16 +67,11 @@ func scheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularC
 
 			}
 
-			for deviceId, config := range devicesCredential {
+			jobs := deviceList.PreparePollJobs(timestamp, qualifiedCounterIds)
 
-				pollJobChannel <- PollJob{
-					Timestamp:  timestamp,
-					DeviceIP:   deviceId,
-					Hostname:   config[0],
-					Password:   config[1],
-					Port:       config[2],
-					CounterIds: qualifiedCounterIds,
-				}
+			for _, job := range jobs {
+
+				pollJobChannel <- job
 
 			}
 

@@ -23,6 +23,20 @@ const (
 `
 )
 
+type PollJob struct {
+	Timestamp uint32
+
+	DeviceIP string
+
+	Hostname string
+
+	Password string
+
+	Port string
+
+	CounterIds []uint16
+}
+
 type DeviceList struct {
 	deviceConfig map[string][3]string
 
@@ -102,6 +116,8 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []string) {
 
 		Logger.Error("Failed to query deviceConfig", zap.Error(err))
 
+		return
+
 	}
 
 	defer rows.Close()
@@ -142,13 +158,28 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []string) {
 
 }
 
-func (list *DeviceList) GetDevices() map[string][3]string {
+func (list *DeviceList) PreparePollJobs(timestamp uint32, qualifiedCounterIds []uint16) []PollJob {
 
 	list.lock.RLock()
 
 	defer list.lock.RUnlock()
 
-	return list.deviceConfig
+	var pollJobs []PollJob
+
+	for ip, config := range list.deviceConfig {
+
+		pollJobs = append(pollJobs, PollJob{
+			Timestamp:  timestamp,
+			DeviceIP:   ip,
+			Hostname:   config[0],
+			Password:   config[1],
+			Port:       config[2],
+			CounterIds: qualifiedCounterIds,
+		})
+
+	}
+
+	return pollJobs
 
 }
 

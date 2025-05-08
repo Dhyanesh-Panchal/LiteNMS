@@ -1,6 +1,7 @@
 package poller
 
 import (
+	"poller/containers"
 	"poller/utils"
 	"sync"
 	"testing"
@@ -18,7 +19,7 @@ func TestPoller(t *testing.T) {
 
 	pollResultChannel := make(chan PolledDataPoint, 10)
 
-	pollJobChannel := make(chan PollJob, 10)
+	pollJobChannel := make(chan containers.PollJob, 10)
 
 	wg := sync.WaitGroup{}
 
@@ -29,7 +30,7 @@ func TestPoller(t *testing.T) {
 	deviceIp := "172.16.8.71"
 	port := "22"
 
-	pollJob := PollJob{
+	pollJob := containers.PollJob{
 		Timestamp: 1687000000,
 
 		DeviceIP: deviceIp,
@@ -46,7 +47,7 @@ func TestPoller(t *testing.T) {
 	for range 10 {
 
 		pollJobChannel <- pollJob
-		
+
 	}
 
 	resp := <-pollResultChannel

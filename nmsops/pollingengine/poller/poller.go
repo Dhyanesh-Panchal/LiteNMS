@@ -3,6 +3,7 @@ package poller
 import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
+	"poller/containers"
 	. "poller/utils"
 	"strconv"
 	"strings"
@@ -19,27 +20,13 @@ type PolledDataPoint struct {
 	Value interface{} `json:"value" msgpack:"value"`
 }
 
-type PollJob struct {
-	Timestamp uint32
-
-	DeviceIP string
-
-	Hostname string
-
-	Password string
-
-	Port string
-
-	CounterIds []uint16
-}
-
 var CounterCommand = map[uint16]string{
 	1: "free -m | awk 'NR==2 {print $3}'",
 	2: "top -bn 1 | awk 'NR==3 {print $2}'",
 	3: "whoami",
 }
 
-func InitPollers(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPoint, globalShutdownChannel <-chan struct{}, globalShutdownWaitGroup *sync.WaitGroup) {
+func InitPollers(pollJobChannel <-chan containers.PollJob, pollResultChannel chan<- PolledDataPoint, globalShutdownChannel <-chan struct{}, globalShutdownWaitGroup *sync.WaitGroup) {
 
 	defer globalShutdownWaitGroup.Done()
 
@@ -71,7 +58,7 @@ func InitPollers(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledD
 
 }
 
-func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPoint, pollerShutdownChannel chan struct{}, pollerShutdownWaitGroup *sync.WaitGroup) {
+func Poller(pollJobChannel <-chan containers.PollJob, pollResultChannel chan<- PolledDataPoint, pollerShutdownChannel chan struct{}, pollerShutdownWaitGroup *sync.WaitGroup) {
 
 	defer pollerShutdownWaitGroup.Done()
 
