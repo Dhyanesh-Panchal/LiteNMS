@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"go.uber.org/zap"
+	"net/http"
 	. "nms-backend/db"
 	. "nms-backend/router"
 	. "nms-backend/services"
@@ -13,6 +15,7 @@ import (
 )
 
 func main() {
+
 	// Initialize configuration
 	err := LoadConfig()
 
@@ -24,6 +27,8 @@ func main() {
 
 	}
 
+	shutdownChannel := InitShutdownHandler(1)
+
 	// Initialize the reportDb client
 	reportDB, err := InitReportDBClient()
 
@@ -33,8 +38,6 @@ func main() {
 
 		return
 	}
-
-	defer reportDB.Shutdown()
 
 	// Initialize configDb client
 	configDB, err := InitConfigDBClient(GetConfigDBConnectionString())
@@ -47,8 +50,6 @@ func main() {
 
 	}
 
-	defer configDB.Close()
-
 	// Initialize the provisioning publisher
 	provisioningPublisher, err := InitProvisioningPublisher()
 
@@ -60,14 +61,10 @@ func main() {
 
 	}
 
-	defer provisioningPublisher.Close()
-
 	// polled data router
+	pollDataRouter := InitPollDataRouter()
 
-	context := InitPollRouter()
-
-	defer context.Term()
-
+	// Initialize router & server
 	router := gin.Default()
 
 	// Configure CORS
@@ -88,11 +85,48 @@ func main() {
 
 	SetupRoutes(router, reportDB, configDB, provisioningPublisher)
 
-	Logger.Info("Server started at port 8080")
+	server := &http.Server{
 
-	if err := router.Run(":8080"); err != nil {
+		Addr: ":" + ServerPort,
 
-		Logger.Error("Server exited with error:", zap.Error(err))
+		Handler: router,
+	}
+
+	// Start the server in a separate routine
+
+	go func() {
+
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+
+			Logger.Error("error starting server:", zap.Error(err))
+
+		}
+
+	}()
+
+	// Wait for shutdown signal
+
+	<-shutdownChannel
+
+	pollDataRouter.Close()
+
+	provisioningPublisher.Close()
+
+	reportDB.Close()
+
+	configDB.Close()
+
+	// Close server
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+
+		Logger.Error("error shutting down server:", zap.Error(err))
 
 	}
+
+	Logger.Info("Server stopped")
+
 }

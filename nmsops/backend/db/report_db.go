@@ -13,7 +13,8 @@ import (
 )
 
 var (
-	ErrQueryTimedOut = errors.New("query timed out")
+	ErrQueryTimedOut  = errors.New("query timed out")
+	ErrServerShutdown = errors.New("server got shutdown")
 )
 
 type Query struct {
@@ -92,6 +93,20 @@ func (db *ReportDBClient) GetReceiverChannel(queryId uint64) chan []byte {
 
 }
 
+func (db *ReportDBClient) CloseReceivers() {
+
+	db.lock.Lock()
+
+	defer db.lock.Unlock()
+
+	for _, channel := range db.receiverWaitChannels {
+
+		close(channel)
+
+	}
+
+}
+
 func InitReportDBClient() (*ReportDBClient, error) {
 
 	context, err := zmq.NewContext()
@@ -106,7 +121,7 @@ func InitReportDBClient() (*ReportDBClient, error) {
 
 	querySendChannel := make(chan []byte, QuerySendChannelSize)
 
-	shutdownChannel := make(chan struct{})
+	shutdownChannel := make(chan struct{}, 1)
 
 	client := ReportDBClient{
 		context:              context,
@@ -135,6 +150,8 @@ func querySendRoutine(context *zmq.Context, queryChannel chan []byte) {
 		return
 
 	}
+
+	socket.SetLinger(0)
 
 	defer socket.Close()
 
@@ -183,6 +200,8 @@ func resultReceiveRoutine(context *zmq.Context, dbClient *ReportDBClient, shutdo
 
 			// Acknowledge
 			shutdown <- struct{}{}
+
+			Logger.Info("Result receiver routine closed")
 
 			return
 
@@ -271,6 +290,14 @@ func (db *ReportDBClient) Query(from, to, interval uint32, objectIps []string, c
 
 	case resultBytes := <-receiverChannel:
 
+		if len(resultBytes) == 0 {
+
+			// Empty result due to closing of receiver channel
+
+			return nil, ErrServerShutdown
+
+		}
+
 		if err = msgpack.Unmarshal(resultBytes, &result); err != nil {
 
 			Logger.Error("Error deserializing query result", zap.Error(err))
@@ -310,20 +337,23 @@ func parseResponse(data map[uint32][]DataPoint) interface{} {
 
 }
 
-func (db *ReportDBClient) Shutdown() {
+func (db *ReportDBClient) Close() {
 
 	close(db.queryChannel)
 
 	db.shutdownChannel <- struct{}{}
 
-	db.context.Term()
+	err := db.context.Term()
+
+	if err != nil {
+
+		Logger.Error("Error terminating context", zap.Error(err))
+
+		return
+	}
 
 	<-db.shutdownChannel
 
-	for _, channel := range db.receiverWaitChannels {
-
-		close(channel)
-
-	}
+	db.CloseReceivers()
 
 }

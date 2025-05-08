@@ -1,4 +1,5 @@
 {
+  "ServerPort": "8080",
   "ConfigDBUser": "nms_backend",
   "ConfigDBPassword": "litenms",
   "ConfigDBName": "config_db",

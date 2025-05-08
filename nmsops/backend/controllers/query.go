@@ -95,9 +95,9 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 
 	if err != nil {
 
-		Logger.Error("Error querying database", zap.Error(err))
+		Logger.Warn("Error querying database", zap.Error(err))
 
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Database error: %v", err)})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Error: %v", err)})
 
 		return
 

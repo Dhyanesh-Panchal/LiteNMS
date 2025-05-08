@@ -1,12 +1,18 @@
 package services
 
 import (
+	"errors"
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
 	. "nms-backend/utils"
 )
 
-func InitPollRouter() *zmq.Context {
+type PollDataRouter struct {
+	context  *zmq.Context
+	shutdown chan struct{}
+}
+
+func InitPollDataRouter() *PollDataRouter {
 
 	context, err := zmq.NewContext()
 
@@ -20,13 +26,20 @@ func InitPollRouter() *zmq.Context {
 
 	// TODO: Handle shutdown
 
-	go routerSchedule(context)
+	pollDataRouter := PollDataRouter{
 
-	return context
+		context: context,
+
+		shutdown: make(chan struct{}, 1),
+	}
+
+	go pollDataRouter.routerSchedule(context)
+
+	return &pollDataRouter
 
 }
 
-func routerSchedule(context *zmq.Context) {
+func (pollDataRouter *PollDataRouter) routerSchedule(context *zmq.Context) {
 
 	// Receiver socket listening for poll data from polling-engine
 
@@ -39,8 +52,6 @@ func routerSchedule(context *zmq.Context) {
 		return
 
 	}
-
-	defer receiver.Close()
 
 	if err = receiver.Bind("tcp://*:" + PollReceiverPort); err != nil {
 
@@ -62,7 +73,7 @@ func routerSchedule(context *zmq.Context) {
 
 	}
 
-	defer sender.Close()
+	sender.SetLinger(0)
 
 	if err = sender.Connect("tcp://" + ReportDBHost + ":" + PollSenderPort); err != nil {
 
@@ -74,26 +85,73 @@ func routerSchedule(context *zmq.Context) {
 
 	for {
 
-		polledData, err := receiver.RecvBytes(0)
+		select {
 
-		if err != nil {
+		case <-pollDataRouter.shutdown:
 
-			Logger.Error("Failed to receive polled Data", zap.Error(err))
+			sender.Close()
 
-			continue
+			receiver.Close()
 
-		}
+			Logger.Info("Poll data router sockets closed.")
 
-		_, err = sender.SendBytes(polledData, 0)
+			// acknowledge
+			pollDataRouter.shutdown <- struct{}{}
 
-		if err != nil {
+			return
 
-			Logger.Error("Failed to send polled Data", zap.Error(err))
+		default:
 
-			continue
+			polledData, err := receiver.RecvBytes(0)
 
+			if err != nil {
+
+				if errors.Is(zmq.AsErrno(err), zmq.ETERM) {
+
+					Logger.Info("Poll data router's ZMQ-Context terminated, closing the sockets")
+
+				} else {
+
+					Logger.Error("Failed to receive polled Data", zap.Error(err))
+
+				}
+
+				continue
+
+			}
+
+			_, err = sender.SendBytes(polledData, 0)
+
+			if err != nil {
+
+				Logger.Error("Failed to send polled Data", zap.Error(err))
+
+				continue
+
+			}
 		}
 
 	}
+
+}
+
+func (pollDataRouter *PollDataRouter) Close() error {
+
+	pollDataRouter.shutdown <- struct{}{}
+
+	err := pollDataRouter.context.Term()
+
+	if err != nil {
+
+		Logger.Error("Failed to terminate poll data router context", zap.Error(err))
+
+		return err
+	}
+
+	// Wait for sockets to close
+
+	<-pollDataRouter.shutdown
+
+	return nil
 
 }

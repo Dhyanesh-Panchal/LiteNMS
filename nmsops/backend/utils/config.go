@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	ServerPort              string
 	ConfigDBUser            string
 	ConfigDBPassword        string
 	ConfigDBName            string
@@ -48,6 +49,8 @@ func LoadConfig() error {
 	}
 
 	// Set General Config Variables
+	ServerPort = generalConfig["ServerPort"].(string)
+
 	ConfigDBUser = generalConfig["ConfigDBUser"].(string)
 
 	ConfigDBPassword = generalConfig["ConfigDBPassword"].(string)
