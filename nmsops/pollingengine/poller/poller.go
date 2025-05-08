@@ -72,9 +72,18 @@ func Poller(pollJobChannel <-chan containers.PollJob, pollResultChannel chan<- P
 
 			return
 
-		case job := <-pollJobChannel:
-
+		default:
 			// prepare the command
+
+			job := <-pollJobChannel
+
+			if job.Timestamp == 0 {
+				
+				// Channel closed
+
+				continue
+
+			}
 
 			var command string
 

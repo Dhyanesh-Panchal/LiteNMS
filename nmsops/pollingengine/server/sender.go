@@ -41,7 +41,7 @@ func InitSender(pollResultChannel chan PolledDataPoint, globalShutdownWaitGroup 
 
 	}
 
-	dataPointsGroup := make([]PolledDataPoint, PollDataBatchSize)
+	dataPointsGroup := make([]PolledDataPoint, 0, PollDataBatchSize)
 
 	size := 0
 
