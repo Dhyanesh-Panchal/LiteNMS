@@ -227,8 +227,6 @@ func resultReceiveRoutine(context *zmq.Context, dbClient *ReportDBClient, shutdo
 
 			queryId := binary.LittleEndian.Uint64(resultBytes[:8])
 
-			Logger.Debug("Received query Result", zap.Uint64("query_id", queryId))
-
 			receiverChannel := dbClient.GetReceiverChannel(queryId)
 
 			receiverChannel <- resultBytes[8:]
@@ -242,7 +240,7 @@ func resultReceiveRoutine(context *zmq.Context, dbClient *ReportDBClient, shutdo
 
 func (db *ReportDBClient) Query(from, to, interval uint32, objectIps []string, counterId uint16, verticalAggregation, horizontalAggregation string) (interface{}, error) {
 
-	queryId := atomic.SwapUint64(&db.queryId, db.queryId+1)
+	queryId := atomic.AddUint64(&db.queryId, 1)
 
 	objectIds := make([]uint32, len(objectIps))
 
