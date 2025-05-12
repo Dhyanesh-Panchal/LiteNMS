@@ -3,6 +3,7 @@ package utils
 import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
 	"time"
 )
@@ -19,32 +20,90 @@ func InitLogger() error {
 
 	if IsProductionEnvironment {
 
-		prodConfig := zap.NewProductionConfig()
+		encoderConfig := zap.NewProductionEncoderConfig()
 
-		prodConfig.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
-		prodConfig.Level.SetLevel(zapcore.ErrorLevel)
+		rotatingLogger := &lumberjack.Logger{
 
-		prodConfig.OutputPaths = []string{
-			"./logs/prod_" + time.Now().Format("2006_01_02") + ".log",
+			Filename: "./logs/prod_" + time.Now().Format("2006_01_02") + ".log",
+
+			MaxSize: 5, // megabytes
+
+			MaxBackups: 3,
+
+			MaxAge: 5, // days
+
+			Compress: true,
 		}
 
-		Logger = zap.Must(prodConfig.Build())
+		// log level to error for production
+		levelEnabler := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+
+			return lvl >= zapcore.ErrorLevel
+
+		})
+
+		core := zapcore.NewCore(
+
+			zapcore.NewJSONEncoder(encoderConfig),
+
+			zapcore.AddSync(rotatingLogger),
+
+			levelEnabler,
+		)
+
+		Logger = zap.New(core, zap.AddCaller())
 
 	} else {
 
-		devConfig := zap.NewDevelopmentConfig()
+		encoderConfig := zap.NewDevelopmentEncoderConfig()
 
-		devConfig.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
+		encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
-		devConfig.Level.SetLevel(zapcore.DebugLevel)
+		// log level to debug for development
+		levelEnabler := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 
-		devConfig.OutputPaths = []string{
-			"stdout",
-			"./logs/dev_" + time.Now().Format("2006_01_02") + ".log",
+			return lvl >= zapcore.DebugLevel
+
+		})
+
+		rotatingLogger := &lumberjack.Logger{
+
+			Filename: "./logs/dev_" + time.Now().Format("2006_01_02") + ".log",
+
+			MaxSize: 5, // megabytes
+
+			MaxBackups: 3,
+
+			MaxAge: 5, // days
+
+			Compress: false,
 		}
 
-		Logger = zap.Must(devConfig.Build())
+		// Core for logging in console
+		consoleCore := zapcore.NewCore(
+
+			zapcore.NewConsoleEncoder(encoderConfig),
+
+			zapcore.AddSync(os.Stderr),
+
+			levelEnabler,
+		)
+
+		// Core for logging in file
+		fileCore := zapcore.NewCore(
+
+			zapcore.NewJSONEncoder(encoderConfig),
+
+			zapcore.AddSync(rotatingLogger),
+
+			levelEnabler,
+		)
+
+		core := zapcore.NewTee(consoleCore, fileCore)
+
+		Logger = zap.New(core, zap.AddCaller())
 
 	}
 
