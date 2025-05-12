@@ -28,11 +28,11 @@ func InitLogger() error {
 
 			Filename: "./logs/prod_" + time.Now().Format("2006_01_02") + ".log",
 
-			MaxSize: 5, // megabytes
+			MaxSize: MaxLogFileSizeInMB, // In MB
 
 			MaxBackups: 3,
 
-			MaxAge: 5, // days
+			MaxAge: LogFileRetentionInDays, // In days
 
 			Compress: true,
 		}
@@ -72,11 +72,11 @@ func InitLogger() error {
 
 			Filename: "./logs/dev_" + time.Now().Format("2006_01_02") + ".log",
 
-			MaxSize: 5, // megabytes
+			MaxSize: MaxLogFileSizeInMB,
 
 			MaxBackups: 3,
 
-			MaxAge: 5, // days
+			MaxAge: LogFileRetentionInDays,
 
 			Compress: false,
 		}

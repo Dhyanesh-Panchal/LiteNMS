@@ -2,9 +2,10 @@ package utils
 
 import (
 	"encoding/json"
+	"github.com/bytedance/gopkg/util/gctuner"
 	"go.uber.org/zap"
 	"os"
-	"runtime/debug"
+	"syscall"
 )
 
 const DataType = "dataType"
@@ -28,11 +29,11 @@ var (
 	ProfilingPort           string
 	StorageDirectory        string
 	IsProductionEnvironment bool
+	MaxLogFileSizeInMB      int
+	LogFileRetentionInDays  int
 )
 
 func LoadConfig() error {
-
-	debug.SetGCPercent(300)
 
 	currentWorkingDirectory, _ := os.Getwd()
 
@@ -40,7 +41,7 @@ func LoadConfig() error {
 
 	configFilesDir := currentWorkingDirectory + "/config"
 
-	countersConfigData, err := os.ReadFile(configFilesDir + "/counters.json")
+	countersConfigBytes, err := os.ReadFile(configFilesDir + "/counters.json")
 
 	if err != nil {
 
@@ -50,7 +51,7 @@ func LoadConfig() error {
 
 	}
 
-	if err = json.Unmarshal(countersConfigData, &CounterConfig); err != nil {
+	if err = json.Unmarshal(countersConfigBytes, &CounterConfig); err != nil {
 
 		Logger.Info("Unable to unmarshal counter config data: ", zap.Error(err))
 
@@ -58,7 +59,7 @@ func LoadConfig() error {
 
 	}
 
-	generalConfigData, err := os.ReadFile(configFilesDir + "/general.json")
+	generalConfigBytes, err := os.ReadFile(configFilesDir + "/general.json")
 
 	if err != nil {
 
@@ -70,7 +71,7 @@ func LoadConfig() error {
 
 	var generalConfig map[string]interface{}
 
-	if err = json.Unmarshal(generalConfigData, &generalConfig); err != nil {
+	if err = json.Unmarshal(generalConfigBytes, &generalConfig); err != nil {
 
 		Logger.Info("Unable to unmarshal general config data: ", zap.Error(err))
 
@@ -111,6 +112,27 @@ func LoadConfig() error {
 
 	IsProductionEnvironment = generalConfig["IsProductionEnvironment"].(bool)
 
+	MaxLogFileSizeInMB = int(generalConfig["MaxLogFileSizeInMB"].(float64))
+
+	LogFileRetentionInDays = int(generalConfig["LogFileRetentionInDays"].(float64))
+
+	//Get system memory and set GC tuning
+	memoryThreshold := (sysTotalMemory() * uint64(generalConfig["MemoryFraction"].(float64))) / 100
+
+	gctuner.Tuning(memoryThreshold)
+
 	return nil
 
+}
+
+func sysTotalMemory() uint64 {
+	in := &syscall.Sysinfo_t{}
+	err := syscall.Sysinfo(in)
+	if err != nil {
+		return 0
+	}
+	// If this is a 32-bit system, then these fields are
+	// uint32 instead of uint64.
+	// So we always convert to uint64 to match signature.
+	return uint64(in.Totalram) * uint64(in.Unit)
 }

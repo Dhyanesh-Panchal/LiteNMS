@@ -10,6 +10,7 @@ require (
 )
 
 require (
+	github.com/bytedance/gopkg v0.1.2 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
