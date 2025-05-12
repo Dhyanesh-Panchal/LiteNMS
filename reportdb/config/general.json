@@ -13,5 +13,8 @@
   "QueryListenerBindPort": "7001",
   "QueryResultBindPort": "7002",
   "ProfilingPort": "6060",
-  "IsProductionEnvironment": false
+  "IsProductionEnvironment": false,
+  "MaxLogFileSizeInMB": 10,
+  "LogFileRetentionInDays": 10,
+  "MemoryFraction": 60
 }
