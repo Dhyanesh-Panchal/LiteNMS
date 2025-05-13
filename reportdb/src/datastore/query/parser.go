@@ -77,6 +77,7 @@ func Parser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, 
 			}:
 
 				requestIndex++
+				
 			}
 
 		}
@@ -106,9 +107,9 @@ func Parser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, 
 
 		// Vertical aggregation
 
-		if query.VerticalAggregation != "none" && dataType != "string" {
+		if query.ObjectWiseAggregation != "none" && dataType != "string" {
 
-			GroupByVerticalAggregator(daysData, query.VerticalAggregation, queryTimeoutContext)
+			ObjectWiseAggregator(daysData, query.ObjectWiseAggregation, queryTimeoutContext)
 
 		}
 
@@ -116,9 +117,9 @@ func Parser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, 
 
 		normalizedDataPoints := make(map[uint32][]DataPoint)
 
-		if query.HorizontalAggregation != "none" && dataType != "string" {
+		if query.TimestampAggregation != "none" && dataType != "string" {
 
-			HorizontalAggregator(daysData, query.HorizontalAggregation, query.Interval, query.From, normalizedDataPoints, queryTimeoutContext)
+			TimestampAggregator(daysData, query.TimestampAggregation, query.Interval, query.From, normalizedDataPoints, queryTimeoutContext)
 
 		} else {
 

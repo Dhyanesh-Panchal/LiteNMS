@@ -18,9 +18,9 @@ type Query struct {
 
 	CounterId uint16 `json:"counter_id" msgpack:"counter_id"`
 
-	VerticalAggregation string `json:"vertical_aggregation" msgpack:"vertical_aggregation"`
+	ObjectWiseAggregation string `json:"object_wise_aggregation" msgpack:"object_wise_aggregation"`
 
-	HorizontalAggregation string `json:"horizontal_aggregation" msgpack:"horizontal_aggregation"`
+	TimestampAggregation string `json:"timestamp_aggregation" msgpack:"timestamp_aggregation"`
 
 	Interval uint32 `json:"interval" msgpack:"interval"`
 }

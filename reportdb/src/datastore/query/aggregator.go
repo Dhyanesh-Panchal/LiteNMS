@@ -11,11 +11,11 @@ import (
 )
 
 const (
-	dataTypeNotSupported   = "datatype not supported for aggregation"
-	VerticalDayAggregators = 10
+	dataTypeNotSupported = "datatype not supported for aggregation"
+	SingleDayAggregators = 10
 )
 
-func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation string, queryTimeoutContext context.Context) {
+func ObjectWiseAggregator(daysData []map[uint32][]DataPoint, aggregation string, queryTimeoutContext context.Context) {
 
 	for dayIndex := 0; dayIndex < len(daysData); {
 
@@ -29,7 +29,7 @@ func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation st
 
 			var completionWg sync.WaitGroup
 
-			for range min(VerticalDayAggregators, len(daysData)-dayIndex) {
+			for range min(SingleDayAggregators, len(daysData)-dayIndex) {
 
 				if daysData[dayIndex] == nil {
 
@@ -43,7 +43,7 @@ func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation st
 
 				completionWg.Add(1)
 
-				go verticalAggregateSingleDay(daysData[dayIndex], aggregation, &completionWg)
+				go objectWiseSingleDayAggregator(daysData[dayIndex], aggregation, &completionWg)
 
 				dayIndex++
 
@@ -57,7 +57,7 @@ func GroupByVerticalAggregator(daysData []map[uint32][]DataPoint, aggregation st
 
 }
 
-func verticalAggregateSingleDay(day map[uint32][]DataPoint, aggregation string, completionWg *sync.WaitGroup) {
+func objectWiseSingleDayAggregator(day map[uint32][]DataPoint, aggregation string, completionWg *sync.WaitGroup) {
 
 	defer completionWg.Done()
 
@@ -107,7 +107,7 @@ func verticalAggregateSingleDay(day map[uint32][]DataPoint, aggregation string, 
 
 }
 
-func HorizontalAggregator(daysData []map[uint32][]DataPoint, aggregation string, interval uint32, from uint32, finalData map[uint32][]DataPoint, queryTimeoutContext context.Context) {
+func TimestampAggregator(daysData []map[uint32][]DataPoint, aggregation string, interval uint32, from uint32, finalData map[uint32][]DataPoint, queryTimeoutContext context.Context) {
 
 	objectWiseTimeIndexedBatchedData := make(map[uint32]map[uint32][]interface{})
 

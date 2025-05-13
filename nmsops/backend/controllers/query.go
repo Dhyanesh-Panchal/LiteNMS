@@ -59,7 +59,7 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 
 	// Validate Aggregators
 
-	switch req.VerticalAggregation {
+	switch req.ObjectWiseAggregation {
 
 	case "avg", "sum", "min", "max", "count", "none":
 
@@ -71,7 +71,7 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 
 	}
 
-	switch req.HorizontalAggregation {
+	switch req.TimestampAggregation {
 
 	case "avg", "sum", "min", "max", "count", "none":
 
@@ -91,7 +91,7 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 
 	}
 
-	response, err := queryController.ReportDB.Query(req.From, req.To, req.Interval, req.ObjectIds, req.CounterId, req.VerticalAggregation, req.HorizontalAggregation)
+	response, err := queryController.ReportDB.Query(req.From, req.To, req.Interval, req.ObjectIds, req.CounterId, req.ObjectWiseAggregation, req.TimestampAggregation)
 
 	if err != nil {
 

@@ -6,7 +6,7 @@ type UserQueryRequest struct {
 	To                    uint32   `json:"to"`
 	ObjectIds             []string `json:"object_ids"`
 	CounterId             uint16   `json:"counter_id"`
-	VerticalAggregation   string   `json:"vertical_aggregation"`
-	HorizontalAggregation string   `json:"horizontal_aggregation"`
+	ObjectWiseAggregation string   `json:"object_wise_aggregation"`
+	TimestampAggregation  string   `json:"timestamp_aggregation"`
 	Interval              uint32   `json:"interval"`
 }

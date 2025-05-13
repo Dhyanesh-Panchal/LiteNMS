@@ -32,8 +32,8 @@ func TestQueryEngine(t *testing.T) {
 		From:                  1746505800,
 		To:                    1746541800,
 		ObjectIds:             []uint32{2886731847},
-		VerticalAggregation:   "none",
-		HorizontalAggregation: "none",
+		ObjectWiseAggregation: "none",
+		TimestampAggregation:  "none",
 		Interval:              0,
 	}
 
@@ -69,8 +69,8 @@ func TestQueryEngine2(t *testing.T) {
 		From:                  1746515997,
 		To:                    1746541800,
 		ObjectIds:             []uint32{2886731920},
-		VerticalAggregation:   "none",
-		HorizontalAggregation: "none",
+		ObjectWiseAggregation: "none",
+		TimestampAggregation:  "none",
 		Interval:              0,
 	}
 

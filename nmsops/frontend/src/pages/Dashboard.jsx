@@ -108,8 +108,8 @@ const Dashboard = () => {
         from: fromTimestamp,
         to: toTimestamp,
         object_ids: [selectedDevice],
-        vertical_aggregation: selectedAggregation,
-        horizontal_aggregation: selectedAggregation,
+        object_wise_aggregation: selectedAggregation,
+        timestamp_aggregation: selectedAggregation,
         interval: interval
       };
 
