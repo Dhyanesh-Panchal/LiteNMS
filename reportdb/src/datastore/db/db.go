@@ -5,6 +5,7 @@ import (
 	. "datastore/query"
 	. "datastore/utils"
 	. "datastore/writer"
+	"go.uber.org/zap"
 	"os"
 	"sync"
 )
@@ -32,7 +33,15 @@ func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-cha
 
 	}
 
+	// Initialize Containers
+
 	storagePool := InitStoragePool()
+
+	if err := InitDataPointsCache(); err != nil {
+
+		Logger.Error("Error initializing data points cache", zap.Error(err))
+
+	}
 
 	var dbShutdownWaitGroup sync.WaitGroup
 

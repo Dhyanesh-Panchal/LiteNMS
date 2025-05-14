@@ -1,7 +1,6 @@
-package query
+package containers
 
 import (
-	"datastore/containers"
 	"github.com/dgraph-io/ristretto"
 	"strconv"
 )
@@ -30,7 +29,7 @@ func InitDataPointsCache() error {
 
 }
 
-func CreateCacheKey(storageKey containers.StoragePoolKey, objectId uint32) string {
+func CreateCacheKey(storageKey StoragePoolKey, objectId uint32) string {
 
 	return storageKey.Date.Format() + strconv.Itoa(int(storageKey.CounterId)) + strconv.Itoa(int(objectId))
 

@@ -3,7 +3,6 @@ package query
 import (
 	. "datastore/containers"
 	. "datastore/utils"
-	"go.uber.org/zap"
 	"sync"
 )
 
@@ -36,12 +35,6 @@ type Result struct {
 func InitQueryEngine(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, storagePool *StoragePool, shutdownWaitGroup *sync.WaitGroup) {
 
 	defer shutdownWaitGroup.Done()
-
-	if err := InitDataPointsCache(); err != nil {
-
-		Logger.Error("Error initializing data points cache", zap.Error(err))
-
-	}
 
 	// Spawn Query Parsers
 

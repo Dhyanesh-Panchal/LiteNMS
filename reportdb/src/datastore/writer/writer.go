@@ -47,6 +47,9 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 		}
 
+		// Clear the cache for this object
+		DataPointsCache.Del(CreateCacheKey(dataBatch.StorageKey, dataBatch.ObjectId))
+
 		// reslice the dataBytesContainer
 		dataBytesContainer = dataBytesContainer[:0]
 

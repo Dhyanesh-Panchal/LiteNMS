@@ -8,7 +8,6 @@ import (
 	"errors"
 	"go.uber.org/zap"
 	"sync"
-	"time"
 )
 
 type ReaderRequest struct {
@@ -149,16 +148,15 @@ func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds 
 
 			}
 
-			// Don't set cache for current day
-			if UnixToDate(time.Now().Unix()) != storageKey.Date {
+			if success := DataPointsCache.Set(CreateCacheKey(storageKey, objectId), dataPoints, 0); !success {
 
-				DataPointsCache.Set(CreateCacheKey(storageKey, objectId), dataPoints, 0)
+				Logger.Info("Fail to set cache for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
 
 			}
 
 		} else {
 
-			//Logger.Debug("Cache hit for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
+			Logger.Debug("Cache hit for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
 
 			dataPoints = data.([]DataPoint)
 
