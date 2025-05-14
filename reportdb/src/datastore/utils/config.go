@@ -13,24 +13,29 @@ const DataType = "dataType"
 var CounterConfig = map[uint16]map[string]interface{}{}
 
 var (
-	Writers                 int
-	DataWriteChannelSize    int
-	Readers                 int
-	QueryParsers            int
-	QueryChannelSize        int
-	QueryTimeoutTime        int
-	BlockSize               uint32
-	Partitions              uint32
-	InitialFileSize         int64
-	FileSizeGrowthDelta     int64
-	PollListenerBindPort    string
-	QueryListenerBindPort   string
-	QueryResultBindPort     string
-	ProfilingPort           string
-	StorageDirectory        string
-	IsProductionEnvironment bool
-	MaxLogFileSizeInMB      int
-	LogFileRetentionInDays  int
+	Writers                        int
+	DataWriteChannelSize           int
+	Readers                        int
+	ReaderRequestChannelSize       int
+	ReaderResponseChannelSize      int
+	QueryParsers                   int
+	QueryChannelSize               int
+	QueryTimeoutTime               int
+	Partitions                     uint32
+	BlockSize                      uint32
+	FileSizeGrowthDelta            int64
+	InitialFileSize                int64
+	StorageCleanupScheduleInterval int
+	MaxCacheKeys                   int64
+	MaxCacheSizeInMB               int
+	PollListenerBindPort           string
+	QueryListenerBindPort          string
+	QueryResultBindPort            string
+	ProfilingPort                  string
+	StorageDirectory               string
+	IsProductionEnvironment        bool
+	MaxLogFileSizeInMB             int
+	LogFileRetentionInDays         int
 )
 
 func LoadConfig() (err error) {
@@ -98,6 +103,10 @@ func LoadConfig() (err error) {
 
 	Readers = int(generalConfig["Readers"].(float64))
 
+	ReaderRequestChannelSize = int(generalConfig["ReaderRequestChannelSize"].(float64))
+
+	ReaderResponseChannelSize = int(generalConfig["ReaderResponseChannelSize"].(float64))
+
 	QueryParsers = int(generalConfig["QueryParsers"].(float64))
 
 	QueryChannelSize = int(generalConfig["QueryChannelSize"].(float64))
@@ -113,6 +122,12 @@ func LoadConfig() (err error) {
 	InitialFileSize = int64(generalConfig["InitialFileSize"].(float64)) * pageSize
 
 	FileSizeGrowthDelta = int64(generalConfig["FileSizeGrowthDelta"].(float64)) * pageSize
+
+	StorageCleanupScheduleInterval = int(generalConfig["StorageCleanupScheduleInterval"].(float64))
+
+	MaxCacheKeys = int64(generalConfig["MaxCacheKeys"].(float64))
+
+	MaxCacheSizeInMB = int(generalConfig["MaxCacheSizeInMB"].(float64))
 
 	PollListenerBindPort = generalConfig["PollListenerBindPort"].(string)
 

@@ -15,9 +15,9 @@ func Parser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, 
 
 	// Initialize Readers
 
-	readerRequestChannel := make(chan ReaderRequest, 10) // TODO: Shift channel size to config
+	readerRequestChannel := make(chan ReaderRequest, ReaderRequestChannelSize)
 
-	readerResponseChannel := make(chan ReaderResponse, 10)
+	readerResponseChannel := make(chan ReaderResponse, ReaderResponseChannelSize)
 
 	var readersWaitGroup sync.WaitGroup
 
@@ -77,7 +77,7 @@ func Parser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, 
 			}:
 
 				requestIndex++
-				
+
 			}
 
 		}

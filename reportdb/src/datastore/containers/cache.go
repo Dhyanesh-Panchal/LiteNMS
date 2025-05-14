@@ -1,6 +1,7 @@
 package containers
 
 import (
+	. "datastore/utils"
 	"github.com/dgraph-io/ristretto"
 	"strconv"
 )
@@ -10,7 +11,7 @@ var DataPointsCache *ristretto.Cache
 func InitDataPointsCache() error {
 
 	config := ristretto.Config{
-		NumCounters: 1500,
+		NumCounters: MaxCacheKeys,
 		MaxCost:     500 * 1024 * 1024, // TODO: shift the cache size to config
 		BufferItems: 64,
 	}
