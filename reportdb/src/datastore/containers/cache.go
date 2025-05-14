@@ -12,7 +12,7 @@ func InitDataPointsCache() error {
 
 	config := ristretto.Config{
 		NumCounters: MaxCacheKeys,
-		MaxCost:     500 * 1024 * 1024, // TODO: shift the cache size to config
+		MaxCost:     MaxCacheSizeInMB * 1024 * 1024, // TODO: shift the cache size to config
 		BufferItems: 64,
 	}
 

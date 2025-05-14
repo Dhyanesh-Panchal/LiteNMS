@@ -32,7 +32,7 @@ func InitStoragePool() *StoragePool {
 
 		accessCount: make(map[StoragePoolKey]int),
 
-		cleanupTicker: time.NewTicker(time.Second * time.Duration(StorageCleanupScheduleInterval)),
+		cleanupTicker: time.NewTicker(time.Second * time.Duration(StorageCleanupInterval)),
 	}
 
 	go storagePoolCleanup(storagePool)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/bytedance/gopkg/util/gctuner"
 	"go.uber.org/zap"
+	"log"
 	"os"
 	"syscall"
 )
@@ -13,29 +14,29 @@ const DataType = "dataType"
 var CounterConfig = map[uint16]map[string]interface{}{}
 
 var (
-	Writers                        int
-	DataWriteChannelSize           int
-	Readers                        int
-	ReaderRequestChannelSize       int
-	ReaderResponseChannelSize      int
-	QueryParsers                   int
-	QueryChannelSize               int
-	QueryTimeoutTime               int
-	Partitions                     uint32
-	BlockSize                      uint32
-	FileSizeGrowthDelta            int64
-	InitialFileSize                int64
-	StorageCleanupScheduleInterval int
-	MaxCacheKeys                   int64
-	MaxCacheSizeInMB               int
-	PollListenerBindPort           string
-	QueryListenerBindPort          string
-	QueryResultBindPort            string
-	ProfilingPort                  string
-	StorageDirectory               string
-	IsProductionEnvironment        bool
-	MaxLogFileSizeInMB             int
-	LogFileRetentionInDays         int
+	Writers                   int
+	DataWriteChannelSize      int
+	Readers                   int
+	ReaderRequestChannelSize  int
+	ReaderResponseChannelSize int
+	QueryParsers              int
+	QueryChannelSize          int
+	QueryTimeoutTime          int
+	Partitions                uint32
+	BlockSize                 uint32
+	FileSizeGrowthDelta       int64
+	InitialFileSize           int64
+	StorageCleanupInterval    int
+	MaxCacheKeys              int64
+	MaxCacheSizeInMB          int64
+	PollListenerBindPort      string
+	QueryListenerBindPort     string
+	QueryResultBindPort       string
+	ProfilingPort             string
+	StorageDirectory          string
+	IsProductionEnvironment   bool
+	MaxLogFileSizeInMB        int
+	LogFileRetentionInDays    int
 )
 
 func LoadConfig() (err error) {
@@ -44,7 +45,7 @@ func LoadConfig() (err error) {
 
 		if r := recover(); r != nil {
 
-			Logger.Error("Panic while Loading Config: ", zap.Error(r.(error)))
+			log.Printf("Panic while Loading Config: ", r)
 
 			err = r.(error)
 
@@ -123,11 +124,11 @@ func LoadConfig() (err error) {
 
 	FileSizeGrowthDelta = int64(generalConfig["FileSizeGrowthDelta"].(float64)) * pageSize
 
-	StorageCleanupScheduleInterval = int(generalConfig["StorageCleanupScheduleInterval"].(float64))
+	StorageCleanupInterval = int(generalConfig["StorageCleanupInterval"].(float64))
 
 	MaxCacheKeys = int64(generalConfig["MaxCacheKeys"].(float64))
 
-	MaxCacheSizeInMB = int(generalConfig["MaxCacheSizeInMB"].(float64))
+	MaxCacheSizeInMB = int64(generalConfig["MaxCacheSizeInMB"].(float64))
 
 	PollListenerBindPort = generalConfig["PollListenerBindPort"].(string)
 
