@@ -22,7 +22,7 @@ func TestReader(t *testing.T) {
 
 	readerResponseChannel := make(chan ReaderResponse, 10)
 
-	storagePool := NewOpenStoragePool()
+	storagePool := InitStoragePool()
 
 	var readersWaitGroup sync.WaitGroup
 
@@ -30,9 +30,9 @@ func TestReader(t *testing.T) {
 
 	go Reader(readerRequestChannel, readerResponseChannel, storagePool, &readersWaitGroup)
 
-	from := uint32(1744781400)
+	from := uint32(1747107000)
 
-	to := uint32(1744805400)
+	to := uint32(1747146600)
 
 	for requestIndex := range 10 {
 		request := ReaderRequest{
@@ -41,9 +41,10 @@ func TestReader(t *testing.T) {
 				Date:      UnixToDate(from),
 				CounterId: 2,
 			},
-			From:      from,
-			To:        to,
-			ObjectIds: []uint32{169093219, 169093224, 2130706433},
+			From: from,
+			To:   to,
+			//ObjectIds: []uint32{169093219, 169093224, 2130706433},
+			ObjectIds: []uint32{2886731972},
 		}
 
 		readerRequestChannel <- request

@@ -103,7 +103,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 			index := NewIndex(blockSize)
 
-			if err = index.WriteIndexToFile(storagePath, partitionIndex); err != nil {
+			if err = index.SyncFile(storagePath, partitionIndex); err != nil {
 
 				Logger.Error("error marshalling index ", zap.Error(err))
 
@@ -148,7 +148,7 @@ func (storage *Storage) Put(key uint32, value []byte) error {
 
 	}
 
-	if err = index.WriteIndexToFile(storage.storagePath, key%storage.partitionCount); err != nil {
+	if err = index.SyncFile(storage.storagePath, key%storage.partitionCount); err != nil {
 
 		return err
 
@@ -217,7 +217,7 @@ func (storage *Storage) GetAllKeys() ([]uint32, error) {
 
 }
 
-func (storage *Storage) CloseStorage() {
+func (storage *Storage) ClearStorage() {
 
 	storage.openFilesPool.Close()
 

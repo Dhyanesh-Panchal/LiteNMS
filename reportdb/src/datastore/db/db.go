@@ -32,7 +32,7 @@ func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-cha
 
 	}
 
-	storagePool := NewOpenStoragePool()
+	storagePool := InitStoragePool()
 
 	var dbShutdownWaitGroup sync.WaitGroup
 

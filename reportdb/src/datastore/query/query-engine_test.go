@@ -18,7 +18,7 @@ func TestQueryEngine(t *testing.T) {
 
 	queryResultChannel := make(chan Result, 10)
 
-	storagePool := containers.NewOpenStoragePool()
+	storagePool := containers.InitStoragePool()
 
 	var shutdownWaitGroup sync.WaitGroup
 
@@ -55,7 +55,7 @@ func TestQueryEngine2(t *testing.T) {
 
 	queryResultChannel := make(chan Result, 10)
 
-	storagePool := containers.NewOpenStoragePool()
+	storagePool := containers.InitStoragePool()
 
 	var shutdownWaitGroup sync.WaitGroup
 
@@ -66,9 +66,9 @@ func TestQueryEngine2(t *testing.T) {
 	query := Query{
 		QueryId:               1,
 		CounterId:             2,
-		From:                  1746515997,
-		To:                    1746541800,
-		ObjectIds:             []uint32{2886731920},
+		From:                  1747107000,
+		To:                    1747146600,
+		ObjectIds:             []uint32{2886731972},
 		ObjectWiseAggregation: "none",
 		TimestampAggregation:  "none",
 		Interval:              0,
@@ -78,6 +78,8 @@ func TestQueryEngine2(t *testing.T) {
 
 	result := <-queryResultChannel
 
-	fmt.Println(len(result.Data[2886731920]))
+	fmt.Println(len(result.Data[2886731972]))
+
+	fmt.Println(result.Data[2886731972])
 
 }

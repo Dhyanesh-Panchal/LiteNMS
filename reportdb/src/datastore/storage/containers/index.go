@@ -120,7 +120,7 @@ func (index *Index) UpdateObjectBlockCapacity(objectId uint32, newBlockCapacity 
 
 }
 
-func (index *Index) WriteIndexToFile(storagePath string, partitionId uint32) error {
+func (index *Index) SyncFile(storagePath string, partitionId uint32) error {
 
 	index.mu.Lock()
 
@@ -205,11 +205,13 @@ func (indexPool *IndexPool) Close(storagePath string) {
 	// Sync changes if any
 	for partitionId, index := range indexPool.pool {
 
-		if err := index.WriteIndexToFile(storagePath, partitionId); err != nil {
+		if err := index.SyncFile(storagePath, partitionId); err != nil {
 
 			Logger.Error("error closing index for: ", zap.String("storagePath", storagePath), zap.Uint32("partitionId", partitionId), zap.Error(err))
 
 		}
 	}
+
+	clear(indexPool.pool)
 
 }
