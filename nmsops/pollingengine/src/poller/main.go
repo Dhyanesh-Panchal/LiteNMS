@@ -38,18 +38,17 @@ func main() {
 
 	globalShutdownWaitGroup := sync.WaitGroup{}
 
-	// server components
-
 	globalShutdownWaitGroup.Add(globalShutdownSignalCount - 1)
 
+	// server components
 	go InitSender(pollResultChannel, &globalShutdownWaitGroup)
 
 	go InitProvisionListener(deviceList, globalShutdownChannel, &globalShutdownWaitGroup)
 
+	// Pollers
 	go InitPollers(pollJobChannel, pollResultChannel, globalShutdownChannel, &globalShutdownWaitGroup)
 
 	// Schedular
-
 	go InitPollScheduler(pollJobChannel, deviceList, globalShutdownChannel, &globalShutdownWaitGroup)
 
 	<-globalShutdownChannel

@@ -1,9 +1,10 @@
 package poller
 
 import (
+	"context"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
-	"poller/containers"
+	. "poller/containers"
 	. "poller/utils"
 	"strconv"
 	"strings"
@@ -26,11 +27,11 @@ var CounterCommand = map[uint16]string{
 	3: "whoami",
 }
 
-func InitPollers(pollJobChannel <-chan containers.PollJob, pollResultChannel chan<- PolledDataPoint, globalShutdownChannel <-chan struct{}, globalShutdownWaitGroup *sync.WaitGroup) {
+func InitPollers(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPoint, globalShutdownChannel <-chan struct{}, globalShutdownWaitGroup *sync.WaitGroup) {
 
 	defer globalShutdownWaitGroup.Done()
 
-	pollerShutdownChannel := make(chan struct{}, PollWorkers)
+	pollerShutdownContext, cancel := context.WithCancel(context.Background())
 
 	var pollerShutdownWaitGroup sync.WaitGroup
 
@@ -38,17 +39,13 @@ func InitPollers(pollJobChannel <-chan containers.PollJob, pollResultChannel cha
 
 	for range PollWorkers {
 
-		go Poller(pollJobChannel, pollResultChannel, pollerShutdownChannel, &pollerShutdownWaitGroup)
+		go Poller(pollJobChannel, pollResultChannel, pollerShutdownContext, &pollerShutdownWaitGroup)
 
 	}
 
 	<-globalShutdownChannel
 
-	for range PollWorkers {
-
-		pollerShutdownChannel <- struct{}{}
-
-	}
+	cancel()
 
 	pollerShutdownWaitGroup.Wait()
 
@@ -58,7 +55,7 @@ func InitPollers(pollJobChannel <-chan containers.PollJob, pollResultChannel cha
 
 }
 
-func Poller(pollJobChannel <-chan containers.PollJob, pollResultChannel chan<- PolledDataPoint, pollerShutdownChannel chan struct{}, pollerShutdownWaitGroup *sync.WaitGroup) {
+func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPoint, pollerShutdownContext context.Context, pollerShutdownWaitGroup *sync.WaitGroup) {
 
 	defer pollerShutdownWaitGroup.Done()
 
@@ -66,25 +63,24 @@ func Poller(pollJobChannel <-chan containers.PollJob, pollResultChannel chan<- P
 
 		select {
 
-		case <-pollerShutdownChannel:
+		case <-pollerShutdownContext.Done():
 
-			Logger.Info("Poller Exiting")
+			Logger.Debug("Poller Exiting")
 
 			return
 
 		default:
-			// prepare the command
-
 			job := <-pollJobChannel
 
 			if job.Timestamp == 0 {
-				
+
 				// Channel closed
 
 				continue
 
 			}
 
+			// Prepare the command
 			var command string
 
 			for _, counterId := range job.CounterIds {
@@ -114,7 +110,7 @@ func Poller(pollJobChannel <-chan containers.PollJob, pollResultChannel chan<- P
 
 					if err != nil {
 
-						Logger.Error("Error converting string to int", zap.String("value", resp[index]), zap.Uint16("counterId", counterId), zap.Error(err))
+						Logger.Error("error converting string to int", zap.String("value", resp[index]), zap.Uint16("counterId", counterId), zap.Error(err))
 
 						continue
 
@@ -126,7 +122,7 @@ func Poller(pollJobChannel <-chan containers.PollJob, pollResultChannel chan<- P
 
 					if err != nil {
 
-						Logger.Error("Error converting string to float", zap.String("value", resp[index]), zap.Uint16("counterId", counterId), zap.Error(err))
+						Logger.Error("error converting string to float", zap.String("value", resp[index]), zap.Uint16("counterId", counterId), zap.Error(err))
 
 						continue
 
@@ -151,7 +147,7 @@ func Poller(pollJobChannel <-chan containers.PollJob, pollResultChannel chan<- P
 
 				pollResultChannel <- dataPoint
 
-				Logger.Info("Poll success for", zap.String("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
+				Logger.Info("poll success for", zap.String("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
 			}
 
 		}
@@ -177,31 +173,45 @@ func poll(deviceIp, hostname, password, port, cmd string) ([]string, error) {
 
 	if err != nil {
 
-		Logger.Info("Error dialing ssh connection", zap.String("Device IP", deviceIp), zap.String("port", port), zap.Error(err))
+		Logger.Info("error dialing ssh connection", zap.String("Device IP", deviceIp), zap.String("port", port), zap.Error(err))
 
 		return nil, err
 
 	}
 
-	defer client.Close()
+	defer func(client *ssh.Client) {
+
+		err := client.Close()
+
+		if err != nil {
+
+			Logger.Warn("error closing the ssh client", zap.String("Device IP", deviceIp), zap.String("port", port), zap.Error(err))
+
+		}
+
+	}(client)
 
 	session, err := client.NewSession()
 
 	if err != nil {
 
-		Logger.Error("Failed to create session:", zap.Error(err))
+		Logger.Error("failed to create session:", zap.Error(err))
 
 		return nil, err
 
 	}
 
-	defer session.Close()
+	defer func(session *ssh.Session) {
+
+		_ = session.Close()
+
+	}(session)
 
 	resp, err := session.CombinedOutput(cmd)
 
 	if err != nil {
 
-		Logger.Error("Failed to execute command:", zap.Error(err))
+		Logger.Error("failed to execute command:", zap.Error(err))
 
 		return nil, err
 	}

@@ -1,6 +1,6 @@
 {
   "1": {
-    "dataType": "int64",
+    "dataType": "uint64",
     "pollingInterval": 2
   },
   "2": {

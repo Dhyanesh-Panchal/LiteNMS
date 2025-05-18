@@ -29,8 +29,8 @@ func NewDeviceController(db *ConfigDBClient, provisioningPublisher *Provisioning
 
 }
 
-// GetAllDevices handles the GET request to fetch all devices
-func (deviceController *DeviceController) GetAllDevices(ctx *gin.Context) {
+// GetAll handles the GET request to fetch all devices
+func (deviceController *DeviceController) GetAll(ctx *gin.Context) {
 
 	// Query the database for all devices
 	query := `SELECT ip, credential_id, is_provisioned FROM device`

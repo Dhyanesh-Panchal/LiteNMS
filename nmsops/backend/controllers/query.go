@@ -38,6 +38,8 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 
 	}
 
+	// ------------------- Validate Request Body --------------------
+
 	// Validate required fields
 
 	if req.From == 0 || req.To == 0 || req.CounterId == 0 {
@@ -90,6 +92,8 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 		return
 
 	}
+
+	// ------------------- Query ReportDB --------------------
 
 	response, err := queryController.ReportDB.Query(req.From, req.To, req.Interval, req.ObjectIds, req.CounterId, req.ObjectWiseAggregation, req.TimestampAggregation)
 

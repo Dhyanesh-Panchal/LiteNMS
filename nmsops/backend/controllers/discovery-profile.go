@@ -27,8 +27,8 @@ func NewDiscoveryProfileController(db *ConfigDBClient) *DiscoveryProfileControll
 	return &DiscoveryProfileController{db: db}
 }
 
-// GetDiscoveryProfiles handles GET request to fetch all discovery profiles
-func (discoveryProfileController *DiscoveryProfileController) GetDiscoveryProfiles(ctx *gin.Context) {
+// GetAll handles GET request to fetch all discovery profiles
+func (discoveryProfileController *DiscoveryProfileController) GetAll(ctx *gin.Context) {
 	query := `SELECT discovery_profile_id, device_ips, credential_profiles FROM discovery_profile`
 
 	rows, err := discoveryProfileController.db.Query(query)
@@ -87,8 +87,8 @@ func parseNextDiscoveryProfileRow(rows *sql.Rows) (DiscoveryProfile, error) {
 	return profile, nil
 }
 
-// CreateDiscoveryProfile handles POST request to create a new discovery profile
-func (discoveryProfileController *DiscoveryProfileController) CreateDiscoveryProfile(ctx *gin.Context) {
+// Create handles POST request to create a new discovery profile
+func (discoveryProfileController *DiscoveryProfileController) Create(ctx *gin.Context) {
 
 	defer func() {
 
@@ -173,8 +173,8 @@ func (discoveryProfileController *DiscoveryProfileController) CreateDiscoveryPro
 	})
 }
 
-// UpdateDiscoveryProfile handles PUT request to update an existing discovery profile
-func (discoveryProfileController *DiscoveryProfileController) UpdateDiscoveryProfile(ctx *gin.Context) {
+// Update handles PUT request to update an existing discovery profile
+func (discoveryProfileController *DiscoveryProfileController) Update(ctx *gin.Context) {
 
 	profileID, err := strconv.Atoi(ctx.Param("id"))
 
@@ -367,7 +367,7 @@ func (discoveryProfileController *DiscoveryProfileController) RunDiscovery(ctx *
 
 	// Run Discovery
 
-	discoveredDevices := RunDiscovery(profile.DeviceIPs, credentials)
+	discoveredDevices := Discover(profile.DeviceIPs, credentials)
 
 	err = InsertDiscoveredDevices(discoveryProfileController.db, discoveredDevices)
 

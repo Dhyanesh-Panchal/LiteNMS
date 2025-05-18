@@ -21,7 +21,17 @@ func InitSender(pollResultChannel chan PolledDataPoint, globalShutdownWaitGroup 
 
 	}
 
-	defer context.Term()
+	defer func(context *zmq.Context) {
+
+		err := context.Term()
+
+		if err != nil {
+
+			Logger.Error("Error terminating the sender zmq context")
+
+		}
+
+	}(context)
 
 	socket, err := context.NewSocket(zmq.PUSH)
 
@@ -31,11 +41,24 @@ func InitSender(pollResultChannel chan PolledDataPoint, globalShutdownWaitGroup 
 
 	}
 
-	defer socket.Close()
+	defer func(socket *zmq.Socket) {
 
-	err = socket.Connect("tcp://" + BackendHost + ":" + PollSenderPort)
+		if err := socket.Close(); err != nil {
 
-	if err != nil {
+			Logger.Error("Error terminating the sender zmq socket")
+
+		}
+
+	}(socket)
+
+	// Set linger to 0 to avoid blocking on close
+	if err = socket.SetLinger(0); err != nil {
+
+		Logger.Error("Failed to set linger", zap.Error(err))
+
+	}
+
+	if err = socket.Connect("tcp://" + BackendHost + ":" + PollSenderPort); err != nil {
 
 		Logger.Fatal("Could not connect sender socket", zap.String("Host", BackendHost), zap.String("Port", PollSenderPort), zap.Error(err))
 
@@ -59,11 +82,11 @@ func InitSender(pollResultChannel chan PolledDataPoint, globalShutdownWaitGroup 
 
 			if err != nil {
 
-				Logger.Error("error sending dataPointsGroup ", zap.Any("dataPoint", dataPointsGroup), zap.Error(err))
+				Logger.Error("error sending dataPoints", zap.Any("dataPoint", dataPointsGroup), zap.Error(err))
 
 			}
 
-			Logger.Info("Sent dataPointsGroup", zap.Any("dataPoint", dataPointsGroup))
+			Logger.Info("Sent dataPoints", zap.Any("dataPoint", dataPointsGroup))
 
 			dataPointsGroup = dataPointsGroup[:0]
 

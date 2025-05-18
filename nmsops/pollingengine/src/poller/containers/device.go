@@ -51,30 +51,37 @@ func NewDeviceList() (*DeviceList, error) {
 
 	if err != nil {
 
+		Logger.Error("unable to connect to configDB", zap.Error(err))
+
 		return nil, err
 
 	}
 
-	if err != nil {
-
-		Logger.Error("Unable to connect to configDB", zap.Error(err))
-
-	}
-
-	// Get the provisioned deviceConfig from the configDB
+	// Get the all provisioned deviceConfig from the configDB
 
 	rows, err := db.Query(allDevicesQuery)
 
 	if err != nil {
 
-		Logger.Error("Failed to query deviceConfig", zap.Error(err))
+		Logger.Error("failed to query deviceConfig", zap.Error(err))
+
+		return nil, err
 
 	}
 
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
 
-	// Create ssh clients for deviceConfig and save it to map
+		err := rows.Close()
 
+		if err != nil {
+
+			Logger.Error("failed to close rows stream", zap.Error(err))
+
+		}
+
+	}(rows)
+
+	// device config as map of ip to [hostname, password, port]
 	devices := make(map[string][3]string)
 
 	for rows.Next() {
@@ -120,7 +127,17 @@ func (list *DeviceList) UpdateProvisionedDeviceList(statusUpdateIps []string) {
 
 	}
 
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+
+		err := rows.Close()
+
+		if err != nil {
+
+			Logger.Error("Failed to close rows", zap.Error(err))
+
+		}
+
+	}(rows)
 
 	for rows.Next() {
 

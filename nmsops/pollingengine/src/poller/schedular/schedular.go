@@ -1,7 +1,6 @@
 package schedular
 
 import (
-	"context"
 	. "poller/containers"
 	. "poller/utils"
 	"sync"
@@ -12,40 +11,46 @@ func InitPollScheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, gl
 
 	defer globalShutdownWaitGroup.Done()
 
-	schedularContext, cancel := context.WithCancel(context.Background())
+	schedularShutdownChannel := make(chan struct{}, 1)
 
-	var schedularWaitGroup sync.WaitGroup
-
-	schedularWaitGroup.Add(1)
-
-	go scheduler(pollJobChannel, deviceList, schedularContext, &schedularWaitGroup)
+	go scheduler(pollJobChannel, deviceList, schedularShutdownChannel)
 
 	<-globalShutdownChannel
 
-	cancel()
+	schedularShutdownChannel <- struct{}{}
 
-	schedularWaitGroup.Wait()
+	// Wait for scheduler to exit
+	<-schedularShutdownChannel
 
 	close(pollJobChannel)
 
 	Logger.Debug("Scheduler Exiting")
 }
 
-func scheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularContext context.Context, schedularWaitGroup *sync.WaitGroup) {
-
-	defer schedularWaitGroup.Done()
+func scheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularShutdownChannel chan struct{}) {
 
 	// initialize poll Intervals for the counter
-
 	counterPollIntervals := map[uint16]uint32{}
+
+	var baseTickInterval uint32
 
 	for counterId, _ := range CounterConfig {
 
 		counterPollIntervals[counterId] = uint32(CounterConfig[counterId]["pollingInterval"].(float64))
 
+		if baseTickInterval == 0 {
+			// initial baseTick
+			baseTickInterval = counterPollIntervals[counterId]
+
+		} else {
+
+			baseTickInterval = gcd(baseTickInterval, counterPollIntervals[counterId])
+
+		}
+
 	}
 
-	pollTicker := time.NewTicker(time.Second)
+	pollTicker := time.NewTicker(time.Second * time.Duration(baseTickInterval))
 
 	for {
 
@@ -67,6 +72,12 @@ func scheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularC
 
 			}
 
+			if len(qualifiedCounterIds) == 0 {
+
+				continue
+
+			}
+
 			jobs := deviceList.PreparePollJobs(timestamp, qualifiedCounterIds)
 
 			for _, job := range jobs {
@@ -75,14 +86,28 @@ func scheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularC
 
 			}
 
-		case <-schedularContext.Done():
+		case <-schedularShutdownChannel:
 			pollTicker.Stop()
 
-			Logger.Info("Shutting down scheduler")
+			// Acknowledge shutdown
+			schedularShutdownChannel <- struct{}{}
 
 			return
 		}
 
 	}
+
+}
+
+// Helper function to find GCD of two numbers using Euclidean algorithm
+func gcd(a, b uint32) uint32 {
+
+	for b != 0 {
+
+		a, b = b, a%b
+
+	}
+
+	return a
 
 }

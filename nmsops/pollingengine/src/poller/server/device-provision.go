@@ -40,6 +40,8 @@ func InitProvisionListener(deviceList *DeviceList, globalShutdown <-chan struct{
 
 		Logger.Error("error terminating query listener context", zap.Error(err))
 
+		return
+
 	}
 
 	// Wait for socket to close.
@@ -65,7 +67,12 @@ func provisionListener(deviceList *DeviceList, provisionListenerShutdown chan st
 
 	}
 
-	socket.SetSubscribe("")
+	if err = socket.SetSubscribe(""); err != nil {
+
+		Logger.Fatal("Error setting subscribe", zap.Error(err))
+
+		return
+	}
 
 	for {
 

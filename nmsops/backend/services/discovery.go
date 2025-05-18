@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func RunDiscovery(discoveryIps []string, credentialProfiles []CredentialProfile) []Device {
+func Discover(discoveryIps []string, credentialProfiles []CredentialProfile) []Device {
 
 	var discoveredDevices []Device
 
