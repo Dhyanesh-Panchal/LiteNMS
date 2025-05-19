@@ -16,15 +16,11 @@ func main() {
 
 		log.Fatal("error loading config:", err)
 
-		return
-
 	}
 
 	if err := InitLogger(); err != nil {
 
 		log.Fatal("error initializing logger", err)
-
-		return
 
 	}
 

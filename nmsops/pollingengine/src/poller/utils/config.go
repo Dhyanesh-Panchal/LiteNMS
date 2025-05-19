@@ -3,29 +3,43 @@ package utils
 import (
 	"encoding/json"
 	"go.uber.org/zap"
+	"log"
 	"os"
-	"time"
 )
 
 var CounterConfig = map[uint16]map[string]interface{}{}
 
 var (
-	PollSenderPort         string
-	BackendHost            string
-	ProvisionListenerPort  string
-	PollWorkers            int
-	PollChannelSize        int
-	PollDataBatchSize      int
-	DeviceSSHClientTimeout time.Duration
-	ConfigDBUser           string
-	ConfigDBPassword       string
-	ConfigDBHost           string
-	ConfigDBPort           string
-	ConfigDBName           string
-	CommandDelimiter       string
+	PollSenderPort          string
+	BackendHost             string
+	ProvisionListenerPort   string
+	PollWorkers             int
+	PollChannelSize         int
+	PollDataBatchSize       int
+	ConfigDBUser            string
+	ConfigDBPassword        string
+	ConfigDBHost            string
+	ConfigDBPort            string
+	ConfigDBName            string
+	CommandDelimiter        string
+	MaxLogFileSizeInMB      int
+	LogFileRetentionInDays  int
+	IsProductionEnvironment bool
 )
 
-func LoadConfig() error {
+func LoadConfig() (err error) {
+
+	defer func() {
+
+		if r := recover(); r != nil {
+
+			log.Println("Panic while Loading Config: ", r)
+
+			err = r.(error)
+
+		}
+
+	}()
 
 	currentWorkingDirectory, _ := os.Getwd()
 
@@ -35,7 +49,7 @@ func LoadConfig() error {
 
 	if err != nil {
 
-		Logger.Info("Unable to read counter file: ", zap.Error(err))
+		log.Println("Unable to read counter file: ", zap.Error(err))
 
 		return err
 
@@ -43,7 +57,7 @@ func LoadConfig() error {
 
 	if err = json.Unmarshal(countersConfigData, &CounterConfig); err != nil {
 
-		Logger.Info("Unable to unmarshal counter config data: ", zap.Error(err))
+		log.Println("Unable to unmarshal counter config data: ", zap.Error(err))
 
 		return err
 
@@ -53,7 +67,7 @@ func LoadConfig() error {
 
 	if err != nil {
 
-		Logger.Info("Unable to read general config file: ", zap.Error(err))
+		log.Println("Unable to read general config file: ", zap.Error(err))
 
 		return err
 
@@ -63,7 +77,7 @@ func LoadConfig() error {
 
 	if err = json.Unmarshal(generalConfigData, &generalConfig); err != nil {
 
-		Logger.Info("Unable to unmarshal general config data: ", zap.Error(err))
+		log.Println("Unable to unmarshal general config data: ", zap.Error(err))
 
 		return err
 
@@ -81,9 +95,7 @@ func LoadConfig() error {
 	PollChannelSize = int(generalConfig["PollChannelSize"].(float64))
 
 	PollDataBatchSize = int(generalConfig["PollDataBatchSize"].(float64))
-
-	DeviceSSHClientTimeout = time.Duration(generalConfig["DeviceSSHClientTimeout"].(float64))
-
+	
 	ConfigDBUser = generalConfig["ConfigDBUser"].(string)
 
 	ConfigDBPassword = generalConfig["ConfigDBPassword"].(string)
@@ -95,6 +107,12 @@ func LoadConfig() error {
 	ConfigDBName = generalConfig["ConfigDBName"].(string)
 
 	CommandDelimiter = generalConfig["CommandDelimiter"].(string)
+
+	MaxLogFileSizeInMB = int(generalConfig["MaxLogFileSizeInMB"].(float64))
+
+	LogFileRetentionInDays = int(generalConfig["LogFileRetentionInDays"].(float64))
+
+	IsProductionEnvironment = generalConfig["IsProductionEnvironment"].(bool)
 
 	return nil
 

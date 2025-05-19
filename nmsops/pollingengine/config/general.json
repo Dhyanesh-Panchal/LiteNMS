@@ -5,11 +5,13 @@
   "PollWorkers": 50,
   "PollChannelSize": 1000,
   "PollDataBatchSize": 10,
-  "DeviceSSHClientTimeout": 5,
   "ConfigDBUser": "nms_backend",
   "ConfigDBPassword": "litenms",
   "ConfigDBName": "config_db",
   "ConfigDBHost": "localhost",
   "ConfigDBPort": "5432",
-  "CommandDelimiter": "---"
+  "CommandDelimiter": "---",
+  "MaxLogFileSizeInMB": 10,
+  "LogFileRetentionInDays": 7,
+  "IsProductionEnvironment": false
 }

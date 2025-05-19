@@ -2,6 +2,7 @@ package main
 
 import (
 	"go.uber.org/zap"
+	"log"
 	. "poller/containers"
 	. "poller/poller"
 	. "poller/schedular"
@@ -13,11 +14,16 @@ import (
 const globalShutdownSignalCount = 4
 
 func main() {
-	err := LoadConfig()
 
-	if err != nil {
+	if err := LoadConfig(); err != nil {
 
-		Logger.Error("Error loading config.", zap.Error(err))
+		log.Fatal("Error loading config.", err)
+
+	}
+
+	if err := InitLogger(); err != nil {
+
+		log.Fatal("Error initializing logger", err)
 
 	}
 

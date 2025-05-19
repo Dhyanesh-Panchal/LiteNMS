@@ -45,7 +45,7 @@ func LoadConfig() (err error) {
 
 		if r := recover(); r != nil {
 
-			log.Printf("Panic while Loading Config: ", r)
+			log.Println("Panic while Loading Config: ", r)
 
 			err = r.(error)
 
