@@ -1,0 +1,19 @@
+{
+  "ServerPort": "8080",
+  "ConfigDBUser": "nms_backend",
+  "ConfigDBPassword": "litenms",
+  "ConfigDBName": "config_db",
+  "ConfigDBHost": "localhost",
+  "ConfigDBPort": "5432",
+  "ReportDBHost":  "localhost",
+  "ReportDBQueryPort":  "7001",
+  "ReportDBQueryResultPort":  "7002",
+  "ProvisionPublisherPort":  "7005",
+  "PollReceiverPort": "7006",
+  "PollSenderPort": "7000",
+  "PollDataChannelSize": 1000,
+  "QuerySendChannelSize": 100,
+  "MaxLogFileSizeInMB": 10,
+  "LogFileRetentionInDays": 7,
+  "IsProductionEnvironment": false
+}

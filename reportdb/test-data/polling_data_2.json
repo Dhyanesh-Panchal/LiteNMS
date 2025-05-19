@@ -1,0 +1,1624 @@
+{
+  "polling_data": [
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067250,
+      "value": 1548.873251
+    },
+    {
+      "counter_id": 3,
+      "object_id": 10,
+      "timestamp": 1704067210,
+      "value": "status_10_1704067210"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067250,
+      "value": 1390.487654
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067250,
+      "value": 210
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067210,
+      "value": 1325.372784
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067240,
+      "value": 1964.396337
+    },
+    {
+      "counter_id": 3,
+      "object_id": 1,
+      "timestamp": 1704067215,
+      "value": "status_1_1704067215"
+    },
+    {
+      "counter_id": 3,
+      "object_id": 1,
+      "timestamp": 1704067210,
+      "value": "status_1_1704067210"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067230,
+      "value": 1249.085967
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067205,
+      "value": 451
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067235,
+      "value": 1069.379801
+    },
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067210,
+      "value": 1450.778342
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067220,
+      "value": 504
+    },
+    {
+      "counter_id": 3,
+      "object_id": 5,
+      "timestamp": 1704067215,
+      "value": "status_5_1704067215"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067250,
+      "value": 510
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067200,
+      "value": 1316.903916
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067250,
+      "value": 1943.289915
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067225,
+      "value": 505
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067210,
+      "value": 452
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067235,
+      "value": 107
+    },
+    {
+      "counter_id": 3,
+      "object_id": 9,
+      "timestamp": 1704067210,
+      "value": "status_9_1704067210"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067250,
+      "value": 310
+    },
+    {
+      "counter_id": 3,
+      "object_id": 6,
+      "timestamp": 1704067210,
+      "value": "status_6_1704067210"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067230,
+      "value": 1762.305376
+    },
+    {
+      "counter_id": 3,
+      "object_id": 9,
+      "timestamp": 1704067230,
+      "value": "state_9_1704067230"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067200,
+      "value": 100
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067240,
+      "value": 558
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067245,
+      "value": 109
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067220,
+      "value": 1755.0973
+    },
+    {
+      "counter_id": 3,
+      "object_id": 6,
+      "timestamp": 1704067225,
+      "value": "state_6_1704067225"
+    },
+    {
+      "counter_id": 3,
+      "object_id": 8,
+      "timestamp": 1704067210,
+      "value": "status_8_1704067210"
+    },
+    {
+      "counter_id": 3,
+      "object_id": 10,
+      "timestamp": 1704067230,
+      "value": "state_10_1704067230"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067220,
+      "value": 304
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067250,
+      "value": 410
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067210,
+      "value": 1219.613612
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067205,
+      "value": 551
+    },
+    {
+      "counter_id": 3,
+      "object_id": 4,
+      "timestamp": 1704067220,
+      "value": "state_4_1704067220"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067250,
+      "value": 1069.407009
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067230,
+      "value": 1417.950509
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067215,
+      "value": 103
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067210,
+      "value": 302
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067240,
+      "value": 308
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067240,
+      "value": 1339.74854
+    },
+    {
+      "counter_id": 3,
+      "object_id": 8,
+      "timestamp": 1704067215,
+      "value": "status_8_1704067215"
+    },
+    {
+      "counter_id": 3,
+      "object_id": 4,
+      "timestamp": 1704067230,
+      "value": "state_4_1704067230"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067225,
+      "value": 1797.844073
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067230,
+      "value": 356
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067240,
+      "value": 458
+    },
+    {
+      "counter_id": 3,
+      "object_id": 10,
+      "timestamp": 1704067215,
+      "value": "status_10_1704067215"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067250,
+      "value": 1903.223371
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067250,
+      "value": 460
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067200,
+      "value": 550
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067240,
+      "value": 258
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067240,
+      "value": 408
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067230,
+      "value": 1490.780762
+    },
+    {
+      "counter_id": 3,
+      "object_id": 1,
+      "timestamp": 1704067225,
+      "value": "state_1_1704067225"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067230,
+      "value": 1226.30935
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067220,
+      "value": 1143.665699
+    },
+    {
+      "counter_id": 3,
+      "object_id": 3,
+      "timestamp": 1704067215,
+      "value": "status_3_1704067215"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067245,
+      "value": 1004.952802
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067230,
+      "value": 156
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067200,
+      "value": 350
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067240,
+      "value": 1547.62168
+    },
+    {
+      "counter_id": 3,
+      "object_id": 6,
+      "timestamp": 1704067215,
+      "value": "status_6_1704067215"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067240,
+      "value": 1108.460257
+    },
+    {
+      "counter_id": 3,
+      "object_id": 7,
+      "timestamp": 1704067225,
+      "value": "state_7_1704067225"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067215,
+      "value": 1887.420572
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067205,
+      "value": 1556.796806
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067205,
+      "value": 1367.068888
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067235,
+      "value": 257
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067245,
+      "value": 259
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067245,
+      "value": 1700.908554
+    },
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067200,
+      "value": 1887.648425
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067210,
+      "value": 1652.376172
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067235,
+      "value": 357
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067210,
+      "value": 352
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067215,
+      "value": 503
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067230,
+      "value": 256
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067200,
+      "value": -150
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067200,
+      "value": 1924.295713
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067200,
+      "value": -500
+    },
+    {
+      "counter_id": 3,
+      "object_id": 10,
+      "timestamp": 1704067220,
+      "value": "state_10_1704067220"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067225,
+      "value": 1794.722644
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067210,
+      "value": 202
+    },
+    {
+      "counter_id": 3,
+      "object_id": 8,
+      "timestamp": 1704067220,
+      "value": "state_8_1704067220"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067245,
+      "value": 459
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067215,
+      "value": 353
+    },
+    {
+      "counter_id": 3,
+      "object_id": 6,
+      "timestamp": 1704067220,
+      "value": "state_6_1704067220"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067215,
+      "value": 303
+    },
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067235,
+      "value": 1396.544464
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067235,
+      "value": 207
+    },
+    {
+      "counter_id": 3,
+      "object_id": 7,
+      "timestamp": 1704067220,
+      "value": "state_7_1704067220"
+    },
+    {
+      "counter_id": 3,
+      "object_id": 4,
+      "timestamp": 1704067215,
+      "value": "status_4_1704067215"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067225,
+      "value": 555
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067250,
+      "value": 110
+    },
+    {
+      "counter_id": 3,
+      "object_id": 9,
+      "timestamp": 1704067215,
+      "value": "status_9_1704067215"
+    },
+    {
+      "counter_id": 3,
+      "object_id": 9,
+      "timestamp": 1704067220,
+      "value": "state_9_1704067220"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067220,
+      "value": 354
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067225,
+      "value": 205
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067245,
+      "value": 209
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067240,
+      "value": 358
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067215,
+      "value": 1975.702938
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067215,
+      "value": 153
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067200,
+      "value": 250
+    },
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067205,
+      "value": 1356.347653
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067245,
+      "value": 1015.197037
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067245,
+      "value": 159
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067200,
+      "value": 450
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067205,
+      "value": 301
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067205,
+      "value": 401
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067205,
+      "value": 1995.649896
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067220,
+      "value": 1616.829383
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067210,
+      "value": 1082.758436
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067235,
+      "value": 1861.835141
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067225,
+      "value": 1884.582484
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067210,
+      "value": 502
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067230,
+      "value": 306
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067220,
+      "value": 554
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067245,
+      "value": 309
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067250,
+      "value": 1352.302499
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067235,
+      "value": 1788.998511
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067245,
+      "value": 1636.225371
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067220,
+      "value": 1998.236093
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067245,
+      "value": 409
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067225,
+      "value": 355
+    },
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067220,
+      "value": 1005.131053
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067235,
+      "value": 1303.07349
+    },
+    {
+      "counter_id": 3,
+      "object_id": 1,
+      "timestamp": 1704067220,
+      "value": "state_1_1704067220"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067220,
+      "value": 1720.609987
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067215,
+      "value": 1227.732229
+    },
+    {
+      "counter_id": 3,
+      "object_id": 4,
+      "timestamp": 1704067210,
+      "value": "status_4_1704067210"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067225,
+      "value": 1875.596435
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067230,
+      "value": 1547.744145
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067210,
+      "value": 1314.604185
+    },
+    {
+      "counter_id": 3,
+      "object_id": 8,
+      "timestamp": 1704067225,
+      "value": "state_8_1704067225"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067230,
+      "value": 1127.193711
+    },
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067245,
+      "value": 1330.913641
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067250,
+      "value": 1687.500715
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067205,
+      "value": 501
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067245,
+      "value": 1034.711204
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067230,
+      "value": 406
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067250,
+      "value": 560
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067215,
+      "value": 253
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067235,
+      "value": 1388.011198
+    },
+    {
+      "counter_id": 3,
+      "object_id": 2,
+      "timestamp": 1704067215,
+      "value": "status_2_1704067215"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067215,
+      "value": 403
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067230,
+      "value": 106
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067200,
+      "value": 1224.918848
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067230,
+      "value": 1349.574297
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067210,
+      "value": 1077.289354
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067225,
+      "value": 105
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067250,
+      "value": 1926.891883
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067200,
+      "value": 1146.905049
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067225,
+      "value": 1284.414861
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067235,
+      "value": 1404.351482
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067225,
+      "value": 1711.23371
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067220,
+      "value": 1093.215288
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067230,
+      "value": 1791.884134
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067200,
+      "value": 1448.464783
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067215,
+      "value": 453
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067240,
+      "value": 1477.555917
+    },
+    {
+      "counter_id": 3,
+      "object_id": 6,
+      "timestamp": 1704067230,
+      "value": "state_6_1704067230"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067205,
+      "value": 1676.968033
+    },
+    {
+      "counter_id": 3,
+      "object_id": 9,
+      "timestamp": 1704067225,
+      "value": "state_9_1704067225"
+    },
+    {
+      "counter_id": 3,
+      "object_id": 5,
+      "timestamp": 1704067210,
+      "value": "status_5_1704067210"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067240,
+      "value": 1324.108669
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067220,
+      "value": 1300.965344
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067220,
+      "value": 1167.173587
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067210,
+      "value": 402
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067245,
+      "value": 1013.741866
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067200,
+      "value": 1661.721194
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067225,
+      "value": 1639.985019
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067220,
+      "value": 104
+    },
+    {
+      "counter_id": 3,
+      "object_id": 10,
+      "timestamp": 1704067225,
+      "value": "state_10_1704067225"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067220,
+      "value": 1033.636025
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067210,
+      "value": 552
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067205,
+      "value": 351
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067250,
+      "value": 160
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067225,
+      "value": 455
+    },
+    {
+      "counter_id": 3,
+      "object_id": 8,
+      "timestamp": 1704067230,
+      "value": "state_8_1704067230"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067235,
+      "value": 407
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067220,
+      "value": 154
+    },
+    {
+      "counter_id": 3,
+      "object_id": 1,
+      "timestamp": 1704067230,
+      "value": "state_1_1704067230"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067230,
+      "value": 206
+    },
+    {
+      "counter_id": 3,
+      "object_id": 7,
+      "timestamp": 1704067215,
+      "value": "status_7_1704067215"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067240,
+      "value": 1369.679928
+    },
+    {
+      "counter_id": 3,
+      "object_id": 3,
+      "timestamp": 1704067225,
+      "value": "state_3_1704067225"
+    },
+    {
+      "counter_id": 3,
+      "object_id": 5,
+      "timestamp": 1704067220,
+      "value": "state_5_1704067220"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067220,
+      "value": 204
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067235,
+      "value": 507
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067235,
+      "value": 1107.030647
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067205,
+      "value": 1052.666529
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067200,
+      "value": 1985.44289
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067250,
+      "value": 1205.040163
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067215,
+      "value": 1232.541358
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067240,
+      "value": 1410.697943
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067235,
+      "value": 307
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067240,
+      "value": 1131.386072
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067230,
+      "value": 456
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067230,
+      "value": 506
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067250,
+      "value": 260
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067215,
+      "value": 1855.537448
+    },
+    {
+      "counter_id": 3,
+      "object_id": 2,
+      "timestamp": 1704067220,
+      "value": "state_2_1704067220"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067225,
+      "value": 255
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067210,
+      "value": 1849.835433
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067230,
+      "value": 1856.277261
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067205,
+      "value": 151
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067215,
+      "value": 203
+    },
+    {
+      "counter_id": 3,
+      "object_id": 4,
+      "timestamp": 1704067225,
+      "value": "state_4_1704067225"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067210,
+      "value": 152
+    },
+    {
+      "counter_id": 3,
+      "object_id": 7,
+      "timestamp": 1704067230,
+      "value": "state_7_1704067230"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067225,
+      "value": 1348.495657
+    },
+    {
+      "counter_id": 3,
+      "object_id": 2,
+      "timestamp": 1704067210,
+      "value": "status_2_1704067210"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067230,
+      "value": 556
+    },
+    {
+      "counter_id": 3,
+      "object_id": 3,
+      "timestamp": 1704067210,
+      "value": "status_3_1704067210"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 6,
+      "timestamp": 1704067215,
+      "value": 1142.098652
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067200,
+      "value": 1898.30201
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067220,
+      "value": 454
+    },
+    {
+      "counter_id": 2,
+      "object_id": 2,
+      "timestamp": 1704067245,
+      "value": 1212.242786
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067250,
+      "value": 1400.607435
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067235,
+      "value": 557
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067210,
+      "value": 1755.411293
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067210,
+      "value": 252
+    },
+    {
+      "counter_id": 3,
+      "object_id": 3,
+      "timestamp": 1704067220,
+      "value": "state_3_1704067220"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067205,
+      "value": 1861.437401
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067235,
+      "value": 1538.029634
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067220,
+      "value": 254
+    },
+    {
+      "counter_id": 2,
+      "object_id": 8,
+      "timestamp": 1704067240,
+      "value": 1570.637288
+    },
+    {
+      "counter_id": 3,
+      "object_id": 2,
+      "timestamp": 1704067230,
+      "value": "state_2_1704067230"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067235,
+      "value": 1980.041281
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067205,
+      "value": 201
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067220,
+      "value": 404
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067245,
+      "value": 509
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067225,
+      "value": 155
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067200,
+      "value": 300
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067205,
+      "value": 101
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067250,
+      "value": 360
+    },
+    {
+      "counter_id": 2,
+      "object_id": 4,
+      "timestamp": 1704067210,
+      "value": 1452.443188
+    },
+    {
+      "counter_id": 1,
+      "object_id": 6,
+      "timestamp": 1704067245,
+      "value": 359
+    },
+    {
+      "counter_id": 3,
+      "object_id": 5,
+      "timestamp": 1704067230,
+      "value": "state_5_1704067230"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067210,
+      "value": 102
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067205,
+      "value": 1196.530631
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067215,
+      "value": 1972.232777
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067205,
+      "value": 1557.758844
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067215,
+      "value": 1614.183254
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067245,
+      "value": 559
+    },
+    {
+      "counter_id": 1,
+      "object_id": 8,
+      "timestamp": 1704067235,
+      "value": 457
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067240,
+      "value": 158
+    },
+    {
+      "counter_id": 3,
+      "object_id": 2,
+      "timestamp": 1704067225,
+      "value": "state_2_1704067225"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 9,
+      "timestamp": 1704067240,
+      "value": 508
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067205,
+      "value": 1785.024353
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067215,
+      "value": 1436.981094
+    },
+    {
+      "counter_id": 2,
+      "object_id": 1,
+      "timestamp": 1704067245,
+      "value": 1423.388937
+    },
+    {
+      "counter_id": 1,
+      "object_id": 5,
+      "timestamp": 1704067225,
+      "value": 305
+    },
+    {
+      "counter_id": 2,
+      "object_id": 10,
+      "timestamp": 1704067225,
+      "value": 1540.661632
+    },
+    {
+      "counter_id": 1,
+      "object_id": 4,
+      "timestamp": 1704067205,
+      "value": 251
+    },
+    {
+      "counter_id": 3,
+      "object_id": 5,
+      "timestamp": 1704067225,
+      "value": "state_5_1704067225"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 2,
+      "timestamp": 1704067235,
+      "value": 157
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067225,
+      "value": 405
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067200,
+      "value": 200
+    },
+    {
+      "counter_id": 2,
+      "object_id": 9,
+      "timestamp": 1704067245,
+      "value": 1373.857727
+    },
+    {
+      "counter_id": 1,
+      "object_id": 7,
+      "timestamp": 1704067200,
+      "value": 400
+    },
+    {
+      "counter_id": 3,
+      "object_id": 3,
+      "timestamp": 1704067230,
+      "value": "state_3_1704067230"
+    },
+    {
+      "counter_id": 2,
+      "object_id": 3,
+      "timestamp": 1704067200,
+      "value": 1943.872582
+    },
+    {
+      "counter_id": 3,
+      "object_id": 7,
+      "timestamp": 1704067210,
+      "value": "status_7_1704067210"
+    },
+    {
+      "counter_id": 1,
+      "object_id": 10,
+      "timestamp": 1704067215,
+      "value": 553
+    },
+    {
+      "counter_id": 2,
+      "object_id": 5,
+      "timestamp": 1704067215,
+      "value": 1298.596685
+    },
+    {
+      "counter_id": 1,
+      "object_id": 1,
+      "timestamp": 1704067240,
+      "value": 108
+    },
+    {
+      "counter_id": 1,
+      "object_id": 3,
+      "timestamp": 1704067240,
+      "value": 208
+    },
+    {
+      "counter_id": 2,
+      "object_id": 7,
+      "timestamp": 1704067225,
+      "value": 1540.853028
+    }
+  ]
+}

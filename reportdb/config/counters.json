@@ -1,0 +1,11 @@
+{
+  "1": {
+    "dataType": "uint64"
+  },
+  "2": {
+    "dataType": "float64"
+  },
+  "3": {
+    "dataType": "string"
+  }
+}

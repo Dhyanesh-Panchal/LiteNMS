@@ -1,0 +1,11 @@
+.idea/
+
+data/
+
+data-backup/
+
+test-data/
+
+conversion-scripts/
+
+logs/
