@@ -138,7 +138,7 @@ func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds 
 
 			}
 
-			dataPoints, err = DeserializeBatch(data, CounterConfig[storageKey.CounterId][DataType].(string))
+			dataPoints, err = DeserializeBatch(data, CounterConfig[storageKey.CounterId][DataType])
 
 			if err != nil {
 

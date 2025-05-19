@@ -25,7 +25,7 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 		// Serialize the Data
 
-		if err := SerializeBatch(dataBatch.Values, &dataBytesContainer, CounterConfig[dataBatch.StorageKey.CounterId][DataType].(string)); err != nil {
+		if err := SerializeBatch(dataBatch.Values, &dataBytesContainer, CounterConfig[dataBatch.StorageKey.CounterId][DataType]); err != nil {
 
 			Logger.Error("error serializing the batch", zap.Error(err))
 

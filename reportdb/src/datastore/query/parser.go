@@ -43,7 +43,7 @@ func Parser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, 
 
 		endDate := query.To - (query.To % 86400)
 
-		dataType := CounterConfig[query.CounterId][DataType].(string)
+		dataType := CounterConfig[query.CounterId][DataType]
 
 		// Total number of days will be: (endDate-startDate)/86400+1
 		daysData := make([]map[uint32][]DataPoint, (endDate-startDate)/86400+1)

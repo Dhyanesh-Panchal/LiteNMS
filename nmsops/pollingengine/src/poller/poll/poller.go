@@ -1,4 +1,4 @@
-package poller
+package poll
 
 import (
 	"context"
@@ -90,7 +90,7 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 			}
 
 			// Poll
-			resp, err := poll(job.DeviceIP, job.Hostname, job.Password, job.Port, command)
+			resp, err := pollDevice(job.DeviceIP, job.Hostname, job.Password, job.Port, command)
 
 			if err != nil {
 
@@ -147,7 +147,7 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 
 				pollResultChannel <- dataPoint
 
-				Logger.Info("poll success for", zap.String("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
+				Logger.Info("pollDevice success for", zap.String("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
 			}
 
 		}
@@ -155,7 +155,7 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 
 }
 
-func poll(deviceIp, hostname, password, port, cmd string) ([]string, error) {
+func pollDevice(deviceIp, hostname, password, port, cmd string) ([]string, error) {
 
 	config := ssh.ClientConfig{
 

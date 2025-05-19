@@ -1,4 +1,4 @@
-package poller
+package poll
 
 import (
 	"poller/containers"

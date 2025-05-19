@@ -11,7 +11,7 @@ import (
 
 const DataType = "dataType"
 
-var CounterConfig = map[uint16]map[string]interface{}{}
+var CounterConfig map[uint16]map[string]string
 
 var (
 	Writers                   int
@@ -63,7 +63,7 @@ func LoadConfig() (err error) {
 
 	if err != nil {
 
-		Logger.Info("Unable to read counter file: ", zap.Error(err))
+		log.Println("Unable to read counter file: ", zap.Error(err))
 
 		return err
 
@@ -71,7 +71,7 @@ func LoadConfig() (err error) {
 
 	if err = json.Unmarshal(countersConfigBytes, &CounterConfig); err != nil {
 
-		Logger.Info("Unable to unmarshal counter config data: ", zap.Error(err))
+		log.Println("Unable to unmarshal counter config data: ", zap.Error(err))
 
 		return err
 
@@ -81,7 +81,7 @@ func LoadConfig() (err error) {
 
 	if err != nil {
 
-		Logger.Info("Unable to read general config file: ", zap.Error(err))
+		log.Println("Unable to read general config file: ", zap.Error(err))
 
 		return err
 
@@ -91,7 +91,7 @@ func LoadConfig() (err error) {
 
 	if err = json.Unmarshal(generalConfigBytes, &generalConfig); err != nil {
 
-		Logger.Info("Unable to unmarshal general config data: ", zap.Error(err))
+		log.Println("Unable to unmarshal general config data: ", zap.Error(err))
 
 		return err
 
