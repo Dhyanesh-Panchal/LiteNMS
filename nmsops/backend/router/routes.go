@@ -23,10 +23,8 @@ func SetupRoutes(router *gin.Engine, reportDB *ReportDBClient, configDB *ConfigD
 	api.POST("/credential-profiles", credentialProfileController.Create)
 
 	api.GET("/credential-profiles", credentialProfileController.GetAll)
-	
-	api.PUT("/credential-profiles/:id", credentialProfileController.Update)
 
-	api.DELETE("/credential-profiles/:id", credentialProfileController.Delete)
+	api.PUT("/credential-profiles/:id", credentialProfileController.Update)
 
 	// Discovery Profile endpoints
 	api.POST("/discovery-profiles", discoveryProfileController.Create)
@@ -35,7 +33,7 @@ func SetupRoutes(router *gin.Engine, reportDB *ReportDBClient, configDB *ConfigD
 
 	api.PUT("/discovery-profiles/:id", discoveryProfileController.Update)
 
-	api.GET("/discovery-profiles/:id/run-discovery", discoveryProfileController.RunDiscovery)
+	api.GET("/discovery-profiles/:id", discoveryProfileController.RunDiscovery)
 
 	// Device endpoints
 	api.GET("/devices", deviceController.GetAll)

@@ -1,8 +1,6 @@
 package controllers
 
 import (
-	"database/sql"
-	"errors"
 	"go.uber.org/zap"
 	. "nms-backend/db"
 	. "nms-backend/models"
@@ -11,13 +9,19 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
 )
 
-var (
-	ErrFailToScanDiscoveryProfile = errors.New("fail to scan discovery profile")
-	ErrInvalidRequestBody         = errors.New("invalid request body")
-)
+// discoveryProfileRequest represents the request body for creating and updating a discovery profile
+type discoveryProfileRequest struct {
+	DeviceIPs            interface{} `json:"device_ips" binding:"required"`
+	CredentialProfileIDs []int       `json:"credential_profile_ids" binding:"required"`
+	IsCIDR               bool        `json:"is_cidr"`
+}
+
+// discoveryProfileResponse represents the response for discovery profile endpoints
+type discoveryProfileResponse struct {
+	Profiles []DiscoveryProfile `json:"profiles"`
+}
 
 type DiscoveryProfileController struct {
 	db *ConfigDBClient
@@ -25,66 +29,6 @@ type DiscoveryProfileController struct {
 
 func NewDiscoveryProfileController(db *ConfigDBClient) *DiscoveryProfileController {
 	return &DiscoveryProfileController{db: db}
-}
-
-// GetAll handles GET request to fetch all discovery profiles
-func (discoveryProfileController *DiscoveryProfileController) GetAll(ctx *gin.Context) {
-	query := `SELECT discovery_profile_id, device_ips, credential_profiles FROM discovery_profile`
-
-	rows, err := discoveryProfileController.db.Query(query)
-
-	if err != nil {
-
-		Logger.Error("Error querying discovery profiles:", zap.Error(err))
-
-		ctx.JSON(500, gin.H{"error": "Failed to query discovery profiles"})
-
-		return
-
-	}
-
-	defer rows.Close()
-
-	var profiles []DiscoveryProfile
-
-	for rows.Next() {
-
-		profile, err := parseNextDiscoveryProfileRow(rows)
-
-		if err != nil {
-
-			Logger.Error("Error parsing discovery profile row", zap.Error(err))
-
-			ctx.JSON(500, gin.H{"error": ErrFailToScanDiscoveryProfile.Error()})
-
-		}
-
-		profiles = append(profiles, profile)
-	}
-
-	ctx.JSON(200, DiscoveryProfileResponse{Profiles: profiles})
-}
-
-func parseNextDiscoveryProfileRow(rows *sql.Rows) (DiscoveryProfile, error) {
-	var profile DiscoveryProfile
-
-	var credentialProfiles []int64
-
-	if err := rows.Scan(&profile.ID, pq.Array(&profile.DeviceIPs), pq.Array(&credentialProfiles)); err != nil {
-
-		return profile, errors.New("failed to scan discovery profile")
-
-	}
-
-	profile.CredentialProfileIDs = make([]int, len(credentialProfiles))
-
-	for i := range len(credentialProfiles) {
-
-		profile.CredentialProfileIDs[i] = int(credentialProfiles[i])
-
-	}
-
-	return profile, nil
 }
 
 // Create handles POST request to create a new discovery profile
@@ -102,7 +46,7 @@ func (discoveryProfileController *DiscoveryProfileController) Create(ctx *gin.Co
 
 	}()
 
-	var req DiscoveryProfileRequest
+	var req discoveryProfileRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 
@@ -146,14 +90,7 @@ func (discoveryProfileController *DiscoveryProfileController) Create(ctx *gin.Co
 
 	}
 
-	query := `
-		INSERT INTO discovery_profile (device_ips, credential_profiles)
-		VALUES ($1, $2)
-		RETURNING discovery_profile_id`
-
-	var profileID int
-
-	err := discoveryProfileController.db.QueryRow(query, pq.Array(deviceIps), pq.Array(req.CredentialProfileIDs)).Scan(&profileID)
+	profileID, err := CreateDiscoveryProfile(discoveryProfileController.db, deviceIps, req.CredentialProfileIDs)
 
 	if err != nil {
 
@@ -173,6 +110,24 @@ func (discoveryProfileController *DiscoveryProfileController) Create(ctx *gin.Co
 	})
 }
 
+// GetAll handles GET request to fetch all discovery profiles
+func (discoveryProfileController *DiscoveryProfileController) GetAll(ctx *gin.Context) {
+
+	profiles, err := GetAllDiscoveryProfiles(discoveryProfileController.db)
+
+	if err != nil {
+
+		Logger.Error("Error querying discovery profiles", zap.Error(err))
+
+		ctx.JSON(500, gin.H{"error": "Failed to query discovery profiles"})
+
+		return
+
+	}
+
+	ctx.JSON(200, discoveryProfileResponse{Profiles: profiles})
+}
+
 // Update handles PUT request to update an existing discovery profile
 func (discoveryProfileController *DiscoveryProfileController) Update(ctx *gin.Context) {
 
@@ -188,7 +143,7 @@ func (discoveryProfileController *DiscoveryProfileController) Update(ctx *gin.Co
 
 	}
 
-	var req DiscoveryProfileRequest
+	var req discoveryProfileRequest
 
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 
@@ -232,30 +187,13 @@ func (discoveryProfileController *DiscoveryProfileController) Update(ctx *gin.Co
 
 	}
 
-	query := `
-		UPDATE discovery_profile
-		SET device_ips = $1, credential_profiles = $2
-		WHERE discovery_profile_id = $3`
-
-	result, err := discoveryProfileController.db.Exec(query, pq.Array(deviceIps), pq.Array(req.CredentialProfileIDs), profileID)
+	rowsAffected, err := UpdateDiscoveryProfile(discoveryProfileController.db, profileID, deviceIps, req.CredentialProfileIDs)
 
 	if err != nil {
 
 		Logger.Error("Error updating discovery profile", zap.Error(err))
 
 		ctx.JSON(500, gin.H{"error": "Failed to update discovery profile"})
-
-		return
-
-	}
-
-	rowsAffected, err := result.RowsAffected()
-
-	if err != nil {
-
-		Logger.Error("Error getting rows affected", zap.Error(err))
-
-		ctx.JSON(500, gin.H{"error": "Failed to get rows affected"})
 
 		return
 
@@ -286,87 +224,30 @@ func (discoveryProfileController *DiscoveryProfileController) RunDiscovery(ctx *
 
 	}
 
-	query := `SELECT discovery_profile_id, device_ips, credential_profiles FROM discovery_profile WHERE discovery_profile_id = $1`
-
-	rows, err := discoveryProfileController.db.Query(query, discoveryProfileID)
+	profile, err := GetDiscoveryProfile(discoveryProfileController.db, discoveryProfileID)
 
 	if err != nil {
 
-		Logger.Error("Error querying discovery profiles", zap.Error(err))
+		Logger.Error("Error querying discovery profile", zap.Error(err))
 
-		ctx.JSON(500, gin.H{"error": "Failed to run discovery discoveryProfile"})
-
-	}
-
-	defer rows.Close()
-
-	var profile DiscoveryProfile
-
-	for rows.Next() {
-
-		profile, err = parseNextDiscoveryProfileRow(rows)
-
-		if err != nil {
-
-			Logger.Error("Error parsing discovery profile row", zap.Error(err))
-
-			ctx.JSON(500, gin.H{"error": ErrFailToScanDiscoveryProfile.Error()})
-
-		}
-
-	}
-
-	if err != nil {
-
-		Logger.Error("Error parsing discovery profile row", zap.Error(err))
-
-		ctx.JSON(500, gin.H{"error": "Failed to scan discovery profile"})
+		ctx.JSON(500, gin.H{"error": "Error querying discovery profile"})
 
 		return
 	}
 
-	query = `SELECT credential_profile_id, hostname, password, port FROM credential_profiles WHERE credential_profile_id = ANY($1) `
-
-	rows, err = discoveryProfileController.db.Query(query, pq.Array(profile.CredentialProfileIDs))
+	credentials, err := GetCredentialProfiles(discoveryProfileController.db, profile.CredentialProfileIDs)
 
 	if err != nil {
 
-		Logger.Error("Error querying Credential profiles", zap.Error(err))
+		Logger.Error("Error querying credential profiles", zap.Error(err))
 
-		ctx.JSON(500, gin.H{"error": "Failed to retrieve credential profiles"})
-
-	}
-
-	defer rows.Close()
-
-	var credentials []CredentialProfile
-
-	for rows.Next() {
-
-		var credentialProfile CredentialProfile
-
-		if err := rows.Scan(&credentialProfile.ID, &credentialProfile.Hostname, &credentialProfile.Password, &credentialProfile.Port); err != nil {
-
-			ctx.JSON(500, gin.H{"error": "Failed to scan credential discoveryProfile"})
-
-			return
-
-		}
-
-		credentials = append(credentials, credentialProfile)
-
-	}
-
-	if err := rows.Err(); err != nil {
-
-		ctx.JSON(500, gin.H{"error": "Error iterating over credential profiles"})
+		ctx.JSON(500, gin.H{"error": "Error querying credential profiles"})
 
 		return
 
 	}
 
 	// Run Discovery
-
 	discoveredDevices := Discover(profile.DeviceIPs, credentials)
 
 	err = InsertDiscoveredDevices(discoveryProfileController.db, discoveredDevices)
@@ -376,6 +257,8 @@ func (discoveryProfileController *DiscoveryProfileController) RunDiscovery(ctx *
 		Logger.Error("Error inserting discovered devices", zap.Error(err))
 
 		ctx.JSON(500, gin.H{"error": "Failed to insert discovered devices"})
+
+		return
 
 	}
 

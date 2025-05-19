@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"go.uber.org/zap"
 	"net/http"
 	. "nms-backend/db"
@@ -62,7 +63,7 @@ func main() {
 	}
 
 	// polled data router
-	pollDataRouter := InitPollDataRouter()
+	pollDataListener := InitPollDataListener(reportDB)
 
 	// Initialize router & server
 	router := gin.Default()
@@ -96,7 +97,7 @@ func main() {
 
 	go func() {
 
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 
 			Logger.Error("error starting server:", zap.Error(err))
 
@@ -108,13 +109,28 @@ func main() {
 
 	<-shutdownChannel
 
-	pollDataRouter.Close()
+	if err = pollDataListener.Close(); err != nil {
 
-	provisioningPublisher.Close()
+		Logger.Error("error closing poll data listener:", zap.Error(err))
+
+		return
+	}
+
+	if err = provisioningPublisher.Close(); err != nil {
+
+		Logger.Error("error closing provisioning publisher:", zap.Error(err))
+
+		return
+	}
 
 	reportDB.Close()
 
-	configDB.Close()
+	if err = configDB.Close(); err != nil {
+
+		Logger.Error("error closing config db:", zap.Error(err))
+
+		return
+	}
 
 	// Close server
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

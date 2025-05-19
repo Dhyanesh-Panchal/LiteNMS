@@ -6,9 +6,18 @@ import (
 	"go.uber.org/zap"
 	"net/http"
 	. "nms-backend/db"
-	. "nms-backend/models"
 	. "nms-backend/utils"
 )
+
+type userQueryRequest struct {
+	From                  uint32   `json:"from" binding:"required"`
+	To                    uint32   `json:"to" binding:"required"`
+	ObjectIds             []string `json:"object_ids"`
+	CounterId             uint16   `json:"counter_id" binding:"required"`
+	ObjectWiseAggregation string   `json:"object_wise_aggregation" binding:"required"`
+	TimestampAggregation  string   `json:"timestamp_aggregation" binding:"required"`
+	Interval              uint32   `json:"interval"`
+}
 
 type QueryController struct {
 	ReportDB *ReportDBClient
@@ -24,7 +33,7 @@ func NewQueryController(report *ReportDBClient) *QueryController {
 }
 
 func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
-	var req UserQueryRequest
+	var req userQueryRequest
 
 	// Bind JSON from request body
 
@@ -39,16 +48,6 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 	}
 
 	// ------------------- Validate Request Body --------------------
-
-	// Validate required fields
-
-	if req.From == 0 || req.To == 0 || req.CounterId == 0 {
-
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "from, to, and counterID are required"})
-
-		return
-
-	}
 
 	// Validate the from and to range
 
@@ -80,14 +79,6 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 	default:
 
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid aggregation function. Its must be either 'avg', 'sum', 'min', 'max', 'count' or 'none'"})
-
-		return
-
-	}
-
-	if req.Interval < 0 {
-
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "interval cannot be negative"})
 
 		return
 

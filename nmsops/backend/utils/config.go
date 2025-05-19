@@ -19,6 +19,7 @@ var (
 	ProvisionPublisherPort  string
 	PollReceiverPort        string
 	PollSenderPort          string
+	PollDataChannelSize     int
 	QuerySendChannelSize    int
 )
 
@@ -72,6 +73,8 @@ func LoadConfig() error {
 	PollReceiverPort = generalConfig["PollReceiverPort"].(string)
 
 	PollSenderPort = generalConfig["PollSenderPort"].(string)
+
+	PollDataChannelSize = int(generalConfig["PollDataChannelSize"].(float64))
 
 	QuerySendChannelSize = int(generalConfig["QuerySendChannelSize"].(float64))
 

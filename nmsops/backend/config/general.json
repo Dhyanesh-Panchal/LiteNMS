@@ -11,5 +11,6 @@
   "ProvisionPublisherPort":  "7005",
   "PollReceiverPort": "7006",
   "PollSenderPort": "7000",
+  "PollDataChannelSize": 1000,
   "QuerySendChannelSize": 100
 }

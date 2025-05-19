@@ -12,6 +12,12 @@ import (
 
 func Discover(discoveryIps []string, credentialProfiles []CredentialProfile) []Device {
 
+	defer func() {
+		if err := recover(); err != nil {
+			Logger.Error("Panic occurred in Discover function", zap.Any("error", err))
+		}
+	}()
+
 	var discoveredDevices []Device
 
 	lock := &sync.Mutex{}
@@ -41,6 +47,8 @@ func Discover(discoveryIps []string, credentialProfiles []CredentialProfile) []D
 			if discovered := discoveryStatus[ip]; discovered {
 
 				// device already discovered hence skip
+
+				Logger.Info("Device already discovered", zap.String("ip", ip))
 
 				continue
 
@@ -78,8 +86,6 @@ func Discover(discoveryIps []string, credentialProfiles []CredentialProfile) []D
 
 	}
 
-	Logger.Debug("discovery for", zap.Any("discoveredDevices", discoveredDevices))
-
 	return discoveredDevices
 
 }
@@ -96,7 +102,15 @@ func discoverDevice(ip string, credentialProfile CredentialProfile, config *ssh.
 
 	}
 
-	defer client.Close()
+	defer func(client *ssh.Client) {
+
+		if err := client.Close(); err != nil {
+
+			Logger.Error("Failed to close the client", zap.Error(err))
+
+		}
+
+	}(client)
 
 	session, err := client.NewSession()
 
