@@ -263,6 +263,22 @@ func Max(values []interface{}) interface{} {
 
 		return maxValue
 
+	case reflect.Uint64:
+
+		maxValue := values[0].(uint64)
+
+		for _, value := range values[1:] {
+
+			if maxValue < value.(uint64) {
+
+				maxValue = value.(uint64)
+
+			}
+
+		}
+
+		return maxValue
+
 	default:
 
 		Logger.Error(dataTypeNotSupported, zap.Any("datatype", dataType))
@@ -308,6 +324,21 @@ func Min(values []interface{}) interface{} {
 
 		return minValue
 
+	case reflect.Uint64:
+		minValue := values[0].(uint64)
+
+		for _, value := range values[1:] {
+
+			if minValue > value.(uint64) {
+
+				minValue = value.(uint64)
+
+			}
+
+		}
+
+		return minValue
+
 	default:
 
 		Logger.Error(dataTypeNotSupported, zap.Any("datatype", dataType))
@@ -343,6 +374,17 @@ func Sum(values []interface{}) interface{} {
 
 		return sum
 
+	case reflect.Uint64:
+		var sum uint64 = 0
+
+		for _, value := range values {
+
+			sum += value.(uint64)
+
+		}
+
+		return sum
+
 	default:
 
 		Logger.Error(dataTypeNotSupported, zap.Any("datatype", dataType))
@@ -366,6 +408,9 @@ func Avg(values []interface{}) interface{} {
 	case reflect.Int64:
 
 		return float64(sum.(int64)) / float64(len(values))
+
+	case reflect.Uint64:
+		return float64(sum.(uint64)) / float64(len(values))
 
 	default:
 

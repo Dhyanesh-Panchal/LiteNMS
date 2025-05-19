@@ -1,6 +1,6 @@
 {
   "1": {
-    "dataType": "int64"
+    "dataType": "uint64"
   },
   "2": {
     "dataType": "float64"
