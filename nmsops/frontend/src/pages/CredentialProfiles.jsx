@@ -83,10 +83,26 @@ const CredentialProfiles = () => {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+    if(name == "port") {
+      if(!Number.isInteger(Number(value))) {
+        return;
+      }
+
+      if(value < 0 || value > 65535) {
+        return;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        [name]: Number(value),
+      }));
+    }
+    else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
