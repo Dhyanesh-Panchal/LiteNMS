@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"database/sql"
+	"errors"
 	"go.uber.org/zap"
 	. "nms-backend/db"
 	. "nms-backend/models"
@@ -88,6 +90,40 @@ func (discoveryProfileController *DiscoveryProfileController) Create(ctx *gin.Co
 
 		}
 
+	}
+
+	// Validate Credential Profile IDs
+
+	// Check for duplicate credential profile ids
+
+	uniqueCredentialIDs := make(map[int]bool)
+
+	for _, id := range req.CredentialProfileIDs {
+
+		if uniqueCredentialIDs[id] {
+
+			ctx.JSON(400, gin.H{"error": "Duplicate credential profile ids"})
+
+			return
+
+		}
+
+		uniqueCredentialIDs[id] = true
+
+	}
+
+	// check for existence of credential profile ids
+
+	profiles, err := GetCredentialProfiles(discoveryProfileController.db, req.CredentialProfileIDs)
+
+	if err != nil {
+		ctx.JSON(500, gin.H{"error": "Error verifying credential profiles"})
+		return
+	}
+
+	if len(profiles) != len(uniqueCredentialIDs) {
+		ctx.JSON(400, gin.H{"error": "One or more credential_profile_ids are invalid or do not exist"})
+		return
 	}
 
 	profileID, err := CreateDiscoveryProfile(discoveryProfileController.db, deviceIps, req.CredentialProfileIDs)
@@ -227,6 +263,14 @@ func (discoveryProfileController *DiscoveryProfileController) RunDiscovery(ctx *
 	profile, err := GetDiscoveryProfile(discoveryProfileController.db, discoveryProfileID)
 
 	if err != nil {
+
+		if errors.Is(err, sql.ErrNoRows) {
+
+			ctx.JSON(404, gin.H{"error": "Discovery profile not found"})
+
+			return
+
+		}
 
 		Logger.Error("Error querying discovery profile", zap.Error(err))
 
