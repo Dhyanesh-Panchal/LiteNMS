@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"go.uber.org/zap"
+	"log"
 	"net/http"
 	. "nms-backend/db"
 	. "nms-backend/router"
@@ -22,9 +23,18 @@ func main() {
 
 	if err != nil {
 
-		Logger.Error("error loading config:", zap.Error(err))
+		log.Fatal("error loading config:", zap.Error(err))
 
 		return
+
+	}
+
+	// Initialize logger
+	err = InitLogger()
+
+	if err != nil {
+
+		log.Fatal("error initializing logger:", zap.Error(err))
 
 	}
 

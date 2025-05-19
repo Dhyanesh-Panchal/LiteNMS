@@ -12,5 +12,8 @@
   "PollReceiverPort": "7006",
   "PollSenderPort": "7000",
   "PollDataChannelSize": 1000,
-  "QuerySendChannelSize": 100
+  "QuerySendChannelSize": 100,
+  "MaxLogFileSizeInMB": 10,
+  "LogFileRetentionInDays": 7,
+  "IsProductionEnvironment": false
 }

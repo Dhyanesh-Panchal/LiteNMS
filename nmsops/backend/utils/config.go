@@ -3,6 +3,7 @@ package utils
 import (
 	"encoding/json"
 	"go.uber.org/zap"
+	"log"
 	"os"
 )
 
@@ -21,9 +22,24 @@ var (
 	PollSenderPort          string
 	PollDataChannelSize     int
 	QuerySendChannelSize    int
+	MaxLogFileSizeInMB      int
+	LogFileRetentionInDays  int
+	IsProductionEnvironment bool
 )
 
-func LoadConfig() error {
+func LoadConfig() (err error) {
+
+	defer func() {
+
+		if r := recover(); r != nil {
+
+			log.Println("Panic while Loading Config: ", r)
+
+			err = r.(error)
+
+		}
+
+	}()
 
 	currentWorkingDirectory, _ := os.Getwd()
 
@@ -33,7 +49,7 @@ func LoadConfig() error {
 
 	if err != nil {
 
-		Logger.Info("Unable to read general config file: ", zap.Error(err))
+		log.Println("Unable to read general config file: ", zap.Error(err))
 
 		return err
 
@@ -43,7 +59,7 @@ func LoadConfig() error {
 
 	if err = json.Unmarshal(generalConfigData, &generalConfig); err != nil {
 
-		Logger.Info("Unable to unmarshal general config data: ", zap.Error(err))
+		log.Println("Unable to unmarshal general config data: ", zap.Error(err))
 
 		return err
 
@@ -77,6 +93,12 @@ func LoadConfig() error {
 	PollDataChannelSize = int(generalConfig["PollDataChannelSize"].(float64))
 
 	QuerySendChannelSize = int(generalConfig["QuerySendChannelSize"].(float64))
+
+	MaxLogFileSizeInMB = int(generalConfig["MaxLogFileSizeInMB"].(float64))
+
+	LogFileRetentionInDays = int(generalConfig["LogFileRetentionInDays"].(float64))
+
+	IsProductionEnvironment = generalConfig["IsProductionEnvironment"].(bool)
 
 	return nil
 
