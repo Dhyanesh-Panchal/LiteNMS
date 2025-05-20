@@ -21,7 +21,7 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 	for dataBatch := range writersChannel {
 
-		Logger.Info("writer received data", zap.Any("dataBatch", dataBatch))
+		//Logger.Debug("writer received data", zap.Any("dataBatch", dataBatch))
 
 		// Serialize the Data
 

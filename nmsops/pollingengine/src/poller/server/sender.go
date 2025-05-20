@@ -4,7 +4,7 @@ import (
 	"github.com/goccy/go-json"
 	zmq "github.com/pebbe/zmq4"
 	"go.uber.org/zap"
-	. "poller/poller"
+	. "poller/poll"
 	. "poller/utils"
 	"sync"
 )

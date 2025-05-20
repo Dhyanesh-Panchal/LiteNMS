@@ -11,7 +11,6 @@
   "BlockSize": 1024,
   "FileSizeGrowthDelta": 10,
   "InitialFileSize": 5,
-  "StorageCleanupInterval": 300,
   "MaxCacheKeys": 5000,
   "MaxCacheSizeInMB": 500,
   "PollListenerBindPort": "7000",

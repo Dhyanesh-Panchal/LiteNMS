@@ -211,7 +211,7 @@ func (pool *OpenFilesPool) GetFileMapping(partitionId uint32, storagePath string
 
 		if err != nil {
 
-			Logger.Info("error opening new File for: ", zap.Uint32("partitionId:", partitionId), zap.Error(err))
+			Logger.Error("error opening file mapping for: ", zap.Uint32("partitionId:", partitionId), zap.Error(err))
 
 			return nil, err
 

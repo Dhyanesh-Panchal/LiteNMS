@@ -62,7 +62,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 		if err = os.MkdirAll(storagePath, 0755); err != nil {
 
-			Logger.Info("Failed to create storage directory:", zap.Error(err))
+			Logger.Error("Failed to create storage directory:", zap.Error(err))
 
 			return err
 
@@ -114,7 +114,7 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 	} else if err != nil {
 
-		Logger.Info("Failed to stat storage directory:", zap.Error(err))
+		Logger.Error("Failed to stat storage directory:", zap.Error(err))
 
 		return err
 	}

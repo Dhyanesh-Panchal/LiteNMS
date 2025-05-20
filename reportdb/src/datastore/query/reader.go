@@ -132,7 +132,7 @@ func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds 
 
 			if err != nil {
 
-				Logger.Info("Error getting dataPoint ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
+				Logger.Error("Error getting dataPoint ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
 
 				continue
 
@@ -142,7 +142,7 @@ func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds 
 
 			if err != nil {
 
-				Logger.Info("Error deserializing dataPoint for objectId: ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
+				Logger.Error("Error deserializing dataPoint for objectId: ", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()), zap.Error(err))
 
 				continue
 
@@ -150,13 +150,13 @@ func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds 
 
 			if success := DataPointsCache.Set(CreateCacheKey(storageKey, objectId), dataPoints, 0); !success {
 
-				Logger.Info("Fail to set cache for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
+				Logger.Warn("Fail to set cache for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
 
 			}
 
 		} else {
 
-			Logger.Debug("Cache hit for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
+			// Logger.Debug("Cache hit for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
 
 			dataPoints = data.([]DataPoint)
 

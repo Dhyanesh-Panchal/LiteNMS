@@ -4,6 +4,7 @@ import (
 	. "nms-backend/db"
 	. "nms-backend/models"
 	. "nms-backend/services"
+	. "nms-backend/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -64,6 +65,19 @@ func (deviceController *DeviceController) UpdateProvisionStatus(ctx *gin.Context
 		ctx.JSON(400, gin.H{"error": "Invalid request body"})
 
 		return
+
+	}
+
+	// Validate IP addresses
+	for _, ip := range req.ProvisionUpdateIps {
+
+		if valid := ValidateIpAddress(ip); !valid {
+
+			ctx.JSON(400, gin.H{"error": "Invalid IP address"})
+
+			return
+
+		}
 
 	}
 

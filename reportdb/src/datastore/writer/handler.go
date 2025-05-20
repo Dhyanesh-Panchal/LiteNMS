@@ -44,7 +44,7 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 			if _, ok := CounterConfig[dataPoint.CounterId]; !ok {
 
 				// Invalid counterId, skip
-				Logger.Info("bad counterId, dropping dataPoint.", zap.Any("dataPoint", dataPoint))
+				Logger.Info("bad counterId, dropping dataPoint.", zap.Uint16("counterId", dataPoint.CounterId), zap.Any("dataPoint", dataPoint))
 
 				continue
 

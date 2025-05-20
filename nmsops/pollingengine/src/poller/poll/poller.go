@@ -147,7 +147,7 @@ func Poller(pollJobChannel <-chan PollJob, pollResultChannel chan<- PolledDataPo
 
 				pollResultChannel <- dataPoint
 
-				Logger.Info("pollDevice success for", zap.String("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
+				Logger.Debug("pollDevice success for", zap.String("ObjectId", job.DeviceIP), zap.Any("DataPoint", dataPoint))
 			}
 
 		}
