@@ -22,8 +22,6 @@ func InitPollScheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, gl
 	// Wait for scheduler to exit
 	<-schedularShutdownChannel
 
-	close(pollJobChannel)
-
 	Logger.Debug("Scheduler Exiting")
 }
 
@@ -89,6 +87,8 @@ func scheduler(pollJobChannel chan<- PollJob, deviceList *DeviceList, schedularS
 		case <-schedularShutdownChannel:
 			pollTicker.Stop()
 
+			close(pollJobChannel)
+			
 			// Acknowledge shutdown
 			schedularShutdownChannel <- struct{}{}
 

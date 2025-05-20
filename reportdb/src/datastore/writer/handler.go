@@ -87,4 +87,6 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 
 	writersWaitGroup.Wait()
 
+	Logger.Info("Write Handler Exiting")
+
 }

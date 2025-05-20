@@ -92,9 +92,7 @@ func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel cha
 
 	}
 
-	// channel closed, shutdown is called
-
-	Logger.Info("Reader exiting.")
+	// Logger.Debug("Reader exiting.")
 
 }
 

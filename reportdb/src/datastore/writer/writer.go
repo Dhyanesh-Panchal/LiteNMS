@@ -55,5 +55,5 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 	}
 
-	Logger.Info("Writer exiting.")
+	// Logger.Debug("Writer exiting.")
 }

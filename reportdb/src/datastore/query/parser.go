@@ -183,4 +183,6 @@ func Parser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, 
 
 	readersWaitGroup.Wait()
 
+	Logger.Info("Parser exiting.")
+
 }
