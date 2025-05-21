@@ -143,6 +143,8 @@ func (fileMapping *FileMapping) WriteAt(data []byte, offset uint64) error {
 	// Check if the file size is sufficient
 	if int(offset)+len(data) > len(fileMapping.mapping) {
 
+		Logger.Info("Truncating file", zap.String("fileName", fileMapping.file.Name()), zap.Int("currentSize", len(fileMapping.mapping)), zap.Int("requiredSize", int(offset)+len(data)))
+
 		if err := truncateFile(fileMapping); err != nil {
 
 			return err
@@ -262,5 +264,7 @@ func (pool *OpenFilesPool) Close() {
 		}
 
 	}
+
+	clear(pool.pool)
 
 }

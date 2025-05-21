@@ -195,7 +195,7 @@ func (discoveryProfileController *DiscoveryProfileController) Update(ctx *gin.Co
 
 	if req.IsCIDR {
 
-		if valid := ValidateCIDRIp(req.DeviceIPs.(string)); !valid {
+		if !ValidateCIDRIp(req.DeviceIPs.(string)) {
 
 			ctx.JSON(400, gin.H{"error": ErrInvalidCIDRIp.Error()})
 
@@ -209,7 +209,7 @@ func (discoveryProfileController *DiscoveryProfileController) Update(ctx *gin.Co
 
 		for _, Ip := range req.DeviceIPs.([]interface{}) {
 
-			if valid := ValidateIpAddress(Ip.(string)); !valid {
+			if !ValidateIpAddress(Ip.(string)) {
 
 				ctx.JSON(400, gin.H{"error": ErrInvalidCIDRIp.Error()})
 

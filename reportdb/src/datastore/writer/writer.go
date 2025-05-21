@@ -21,7 +21,7 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 	for dataBatch := range writersChannel {
 
-		//Logger.Debug("writer received data", zap.Any("dataBatch", dataBatch))
+		Logger.Debug("writer received data", zap.Any("dataBatch", dataBatch))
 
 		// Serialize the Data
 
@@ -31,7 +31,7 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 		}
 
-		storageEngine, err := storagePool.GetStorage(dataBatch.StorageKey, true)
+		storageEngine, err := storagePool.Get(dataBatch.StorageKey, true)
 
 		if err != nil {
 
@@ -47,7 +47,7 @@ func writer(writersChannel <-chan WritableObjectBatch, storagePool *StoragePool,
 
 		}
 
-		// Clear the cache for this object
+		// Close the cache for this object
 		DataPointsCache.Del(CreateCacheKey(dataBatch.StorageKey, dataBatch.ObjectId))
 
 		// reslice the dataBytesContainer

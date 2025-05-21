@@ -38,7 +38,7 @@ func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel cha
 
 	for request := range readerRequestChannel {
 
-		storageEngine, err := storagePool.GetStorage(request.StorageKey, false)
+		storageEngine, err := storagePool.Get(request.StorageKey, false)
 
 		if err != nil {
 

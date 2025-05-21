@@ -23,6 +23,8 @@ type StoragePool struct {
 	cleanupTicker *time.Ticker
 
 	lock sync.Mutex
+
+	shutdownChannel chan struct{}
 }
 
 func InitStoragePool() *StoragePool {
@@ -33,15 +35,17 @@ func InitStoragePool() *StoragePool {
 		accessCount: make(map[StoragePoolKey]int),
 
 		cleanupTicker: time.NewTicker(time.Second * time.Duration(StorageCleanupInterval)),
+
+		shutdownChannel: make(chan struct{}, 1),
 	}
 
-	go storagePoolCleanup(storagePool)
+	go storagePoolCleanup(storagePool, storagePool.shutdownChannel)
 
 	return storagePool
 
 }
 
-func (storagePool *StoragePool) GetStorage(key StoragePoolKey, createIfNotExist bool) (*Storage, error) {
+func (storagePool *StoragePool) Get(key StoragePoolKey, createIfNotExist bool) (*Storage, error) {
 
 	storagePool.lock.Lock()
 
@@ -79,7 +83,7 @@ func (storagePool *StoragePool) GetStorage(key StoragePoolKey, createIfNotExist 
 
 }
 
-func (storagePool *StoragePool) CleanPool() {
+func (storagePool *StoragePool) Clean() {
 
 	storagePool.lock.Lock()
 
@@ -89,8 +93,9 @@ func (storagePool *StoragePool) CleanPool() {
 
 		if storagePool.accessCount[key] < 10 {
 
-			storage.ClearStorage()
+			storage.Close()
 
+			// Remove the storage from the pool
 			delete(storagePool.accessCount, key)
 
 			delete(storagePool.pool, key)
@@ -107,11 +112,13 @@ func (storagePool *StoragePool) CleanPool() {
 
 }
 
-func (storagePool *StoragePool) ClosePool() {
+func (storagePool *StoragePool) Close() {
+
+	storagePool.shutdownChannel <- struct{}{}
 
 	for _, storage := range storagePool.pool {
 
-		storage.ClearStorage()
+		storage.Close()
 
 	}
 
@@ -119,20 +126,20 @@ func (storagePool *StoragePool) ClosePool() {
 
 }
 
-func storagePoolCleanup(storagePool *StoragePool) {
+func storagePoolCleanup(storagePool *StoragePool, shutdownChannel <-chan struct{}) {
 
 	for {
 
 		select {
 
-		//case <-shutdownChannel:
-		//
-		//	storagePool.ClosePool()
-		//
-		//	return
+		case <-shutdownChannel:
+
+			return
 
 		case <-storagePool.cleanupTicker.C:
-			storagePool.CleanPool()
+
+			storagePool.Clean()
+
 		}
 	}
 

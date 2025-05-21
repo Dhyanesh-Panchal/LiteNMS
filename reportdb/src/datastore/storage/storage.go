@@ -4,9 +4,11 @@ import (
 	. "datastore/storage/containers"
 	. "datastore/utils"
 	"errors"
+	"github.com/vmihailenco/msgpack/v5"
 	"go.uber.org/zap"
 	"os"
 	"strconv"
+	"time"
 )
 
 var ErrObjectDoesNotExist = errors.New("object does not exist")
@@ -23,6 +25,10 @@ type Storage struct {
 	openFilesPool *OpenFilesPool
 
 	indexPool *IndexPool
+
+	indexSyncTicker *time.Ticker
+
+	syncRoutineShutdown chan struct{}
 }
 
 func NewStorage(storagePath string, partitionCount uint32, blockSize uint32, createIfNotExist bool) (*Storage, error) {
@@ -35,17 +41,47 @@ func NewStorage(storagePath string, partitionCount uint32, blockSize uint32, cre
 
 	}
 
-	openFilesPool := NewOpenFilesPool()
+	storage := &Storage{
 
-	indexPool := NewIndexPool()
+		storagePath: storagePath,
 
-	return &Storage{
-		storagePath,
-		partitionCount,
-		blockSize,
-		openFilesPool,
-		indexPool,
-	}, nil
+		partitionCount: partitionCount,
+
+		blockSize: blockSize,
+
+		openFilesPool: NewOpenFilesPool(),
+
+		indexPool: NewIndexPool(),
+
+		indexSyncTicker: time.NewTicker(time.Second * 7),
+
+		syncRoutineShutdown: make(chan struct{}, 1),
+	}
+
+	go indexSyncRoutine(storage, storage.syncRoutineShutdown)
+
+	return storage, nil
+}
+
+func indexSyncRoutine(storage *Storage, syncRoutineShutdown chan struct{}) {
+
+	for {
+
+		select {
+
+		case <-syncRoutineShutdown:
+
+			storage.indexSyncTicker.Stop()
+
+			return
+
+		case <-storage.indexSyncTicker.C:
+
+			storage.indexPool.Sync(storage.storagePath)
+
+		}
+	}
+
 }
 
 func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize uint32, createIfNotExist bool) error {
@@ -69,9 +105,9 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 		}
 
 		// Make partition files and respective index
-		for partitionIndex := range partitionCount {
+		for partitionId := range partitionCount {
 
-			file, err := os.Create(storagePath + "/data_" + strconv.Itoa(int(partitionIndex)) + ".bin")
+			file, err := os.Create(storagePath + "/data_" + strconv.Itoa(int(partitionId)) + ".bin")
 
 			if err != nil {
 
@@ -103,13 +139,20 @@ func ensureStorageDirectory(storagePath string, partitionCount uint32, blockSize
 
 			index := NewIndex(blockSize)
 
-			if err = index.SyncFile(storagePath, partitionIndex); err != nil {
+			indexBytes, err := msgpack.Marshal(index)
 
-				Logger.Error("error marshalling index ", zap.Error(err))
+			indexFilePath := storagePath + "/index_" + strconv.Itoa(int(partitionId)) + ".bin"
+
+			err = os.WriteFile(indexFilePath, indexBytes, 0644)
+
+			if err != nil {
+
+				Logger.Error("error creating index file", zap.Error(err))
 
 				return err
 
 			}
+
 		}
 
 	} else if err != nil {
@@ -148,11 +191,11 @@ func (storage *Storage) Put(key uint32, value []byte) error {
 
 	}
 
-	if err = index.SyncFile(storage.storagePath, key%storage.partitionCount); err != nil {
-
-		return err
-
-	}
+	//if err = index.syncFile(storage.storagePath, key%storage.partitionCount); err != nil {
+	//
+	//	return err
+	//
+	//}
 
 	return nil
 
@@ -217,7 +260,9 @@ func (storage *Storage) GetAllKeys() ([]uint32, error) {
 
 }
 
-func (storage *Storage) ClearStorage() {
+func (storage *Storage) Close() {
+
+	storage.syncRoutineShutdown <- struct{}{}
 
 	storage.openFilesPool.Close()
 

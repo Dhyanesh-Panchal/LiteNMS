@@ -56,6 +56,6 @@ func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-cha
 	dbShutdownWaitGroup.Wait()
 
 	// Close the storagePool
-	storagePool.ClosePool()
+	storagePool.Close()
 
 }

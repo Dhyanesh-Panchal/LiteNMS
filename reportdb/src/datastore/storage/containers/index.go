@@ -25,6 +25,8 @@ type Index struct {
 	ObjectIndex map[uint32][]ObjectBlock `msgpack:"object_index"  json:"object_index"`
 
 	mu sync.RWMutex
+
+	syncRequired bool
 }
 
 func NewIndex(blockSize uint32) *Index {
@@ -92,6 +94,8 @@ func (index *Index) AppendNewObjectBlock(objectId uint32, objectBlock ObjectBloc
 
 	index.ObjectIndex[objectId] = append(index.ObjectIndex[objectId], objectBlock)
 
+	index.syncRequired = true
+
 	return index.ObjectIndex[objectId]
 
 }
@@ -118,13 +122,22 @@ func (index *Index) UpdateObjectBlockCapacity(objectId uint32, newBlockCapacity 
 
 	index.ObjectIndex[objectId][lastIndex].RemainingCapacity = newBlockCapacity
 
+	index.syncRequired = true
+
 }
 
-func (index *Index) SyncFile(storagePath string, partitionId uint32) error {
+func (index *Index) syncFile(storagePath string, partitionId uint32) error {
 
 	index.mu.Lock()
 
 	defer index.mu.Unlock()
+
+	// Skip if index is not modified
+	if !index.syncRequired {
+
+		return nil
+
+	}
 
 	indexBytes, err := msgpack.Marshal(index)
 
@@ -138,6 +151,8 @@ func (index *Index) SyncFile(storagePath string, partitionId uint32) error {
 
 	}
 
+	index.syncRequired = false
+	
 	return nil
 }
 
@@ -197,7 +212,7 @@ func (indexPool *IndexPool) Get(partitionId uint32, storagePath string) (*Index,
 
 }
 
-func (indexPool *IndexPool) Close(storagePath string) {
+func (indexPool *IndexPool) Sync(storagePath string) {
 
 	indexPool.lock.Lock()
 	defer indexPool.lock.Unlock()
@@ -205,12 +220,24 @@ func (indexPool *IndexPool) Close(storagePath string) {
 	// Sync changes if any
 	for partitionId, index := range indexPool.pool {
 
-		if err := index.SyncFile(storagePath, partitionId); err != nil {
+		if err := index.syncFile(storagePath, partitionId); err != nil {
 
-			Logger.Error("error closing index for: ", zap.String("storagePath", storagePath), zap.Uint32("partitionId", partitionId), zap.Error(err))
+			Logger.Error("error syncing index for: ", zap.String("storagePath", storagePath), zap.Uint32("partitionId", partitionId), zap.Error(err))
 
 		}
+
 	}
+
+}
+
+func (indexPool *IndexPool) Close(storagePath string) {
+
+	// Sync changes before closing
+	indexPool.Sync(storagePath)
+
+	// Clear the map and return
+	indexPool.lock.Lock()
+	defer indexPool.lock.Unlock()
 
 	clear(indexPool.pool)
 

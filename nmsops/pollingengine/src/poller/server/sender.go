@@ -86,7 +86,7 @@ func InitSender(pollResultChannel chan PolledDataPoint, globalShutdownWaitGroup 
 
 			}
 
-			Logger.Info("Sent dataPoints", zap.Any("dataPoint", dataPointsGroup))
+			Logger.Debug("Sent dataPoints", zap.Any("dataPoint", dataPointsGroup))
 
 			dataPointsGroup = dataPointsGroup[:0]
 

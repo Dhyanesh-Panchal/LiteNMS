@@ -71,7 +71,7 @@ func (deviceController *DeviceController) UpdateProvisionStatus(ctx *gin.Context
 	// Validate IP addresses
 	for _, ip := range req.ProvisionUpdateIps {
 
-		if valid := ValidateIpAddress(ip); !valid {
+		if !ValidateIpAddress(ip) {
 
 			ctx.JSON(400, gin.H{"error": "Invalid IP address"})
 

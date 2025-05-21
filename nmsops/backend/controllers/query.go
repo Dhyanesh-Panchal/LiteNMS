@@ -58,6 +58,19 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 		return
 	}
 
+	// Validate ObjectIds
+	for _, ip := range req.ObjectIds {
+
+		if !ValidateIpAddress(ip) {
+
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid IP address in object_ids"})
+
+			return
+
+		}
+
+	}
+
 	// Validate Aggregators
 
 	switch req.ObjectWiseAggregation {
