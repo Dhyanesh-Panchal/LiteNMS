@@ -35,14 +35,14 @@ func DiskWrite(key uint32, data []byte, file *FileMapping, index *Index) error {
 
 	for len(data) > 0 {
 
-		writableDataBytes := intMin(len(data), int(remainingBlockCapacity))
+		writableDataBytes := min(len(data), int(remainingBlockCapacity))
 
 		writeOffset := objectBlocks[len(objectBlocks)-1].Offset + uint64(index.BlockSize-remainingBlockCapacity)
 
 		if err := file.WriteAt(data[:writableDataBytes], writeOffset); err != nil {
 
 			return err
-			
+
 		}
 
 		// Update the Index Metadata
@@ -92,11 +92,4 @@ func DiskWrite(key uint32, data []byte, file *FileMapping, index *Index) error {
 	}
 
 	return nil
-}
-
-func intMin(a, b int) int {
-	if a <= b {
-		return a
-	}
-	return b
 }

@@ -86,7 +86,7 @@ func InitLogger() error {
 
 			zapcore.NewConsoleEncoder(encoderConfig),
 
-			zapcore.AddSync(os.Stderr),
+			zapcore.AddSync(os.Stdout),
 
 			levelEnabler,
 		)

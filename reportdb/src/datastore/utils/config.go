@@ -21,7 +21,7 @@ var (
 	ReaderResponseChannelSize int
 	QueryParsers              int
 	QueryChannelSize          int
-	QueryTimeoutTime          int
+	QueryTimeoutDuration      int
 	Partitions                uint32
 	BlockSize                 uint32
 	FileSizeGrowthDelta       int64
@@ -53,7 +53,15 @@ func LoadConfig() (err error) {
 
 	}()
 
-	currentWorkingDirectory, _ := os.Getwd()
+	currentWorkingDirectory, err := os.Getwd()
+
+	if err != nil {
+
+		log.Println("Unable to get current working directory: ", zap.Error(err))
+
+		return err
+
+	}
 
 	StorageDirectory = currentWorkingDirectory + "/data"
 
@@ -112,7 +120,7 @@ func LoadConfig() (err error) {
 
 	QueryChannelSize = int(generalConfig["QueryChannelSize"].(float64))
 
-	QueryTimeoutTime = int(generalConfig["QueryTimeoutTime"].(float64))
+	QueryTimeoutDuration = int(generalConfig["QueryTimeoutDuration"].(float64))
 
 	Partitions = uint32(generalConfig["Partitions"].(float64))
 
@@ -143,7 +151,7 @@ func LoadConfig() (err error) {
 	MaxLogFileSizeInMB = int(generalConfig["MaxLogFileSizeInMB"].(float64))
 
 	LogFileRetentionInDays = int(generalConfig["LogFileRetentionInDays"].(float64))
-	
+
 	//Get system memory and set GC tuning
 	memoryThreshold := (sysTotalMemory() * uint64(generalConfig["MemoryFraction"].(float64))) / 100
 

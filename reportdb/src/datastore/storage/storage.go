@@ -191,12 +191,6 @@ func (storage *Storage) Put(key uint32, value []byte) error {
 
 	}
 
-	//if err = index.syncFile(storage.storagePath, key%storage.partitionCount); err != nil {
-	//
-	//	return err
-	//
-	//}
-
 	return nil
 
 }

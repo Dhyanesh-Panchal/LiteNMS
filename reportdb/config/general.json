@@ -6,7 +6,7 @@
   "ReaderResponseChannelSize": 20,
   "QueryParsers": 10,
   "QueryChannelSize": 100,
-  "QueryTimeoutTime": 30,
+  "QueryTimeoutDuration": 30,
   "Partitions": 5,
   "BlockSize": 1024,
   "FileSizeGrowthDelta": 10,

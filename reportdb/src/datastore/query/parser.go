@@ -37,7 +37,7 @@ func Parser(queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, 
 
 		benchmarkTime := time.Now()
 
-		queryTimeoutContext, queryTimeoutContextCancel := context.WithTimeout(context.Background(), time.Duration(QueryTimeoutTime)*time.Second)
+		queryTimeoutContext, queryTimeoutContextCancel := context.WithTimeout(context.Background(), time.Duration(QueryTimeoutDuration)*time.Second)
 
 		startDate := query.From - (query.From % 86400)
 
