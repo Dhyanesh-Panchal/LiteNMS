@@ -33,7 +33,7 @@ func LoadConfig() (err error) {
 
 		if r := recover(); r != nil {
 
-			log.Println("Panic while Loading Config: ", r)
+			log.Println("Invalid Config: ", r)
 
 			err = r.(error)
 

@@ -33,7 +33,7 @@ func LoadConfig() (err error) {
 
 		if r := recover(); r != nil {
 
-			log.Println("Panic while Loading Config: ", r)
+			log.Println("Invalid Config: ", r)
 
 			err = r.(error)
 
@@ -95,7 +95,7 @@ func LoadConfig() (err error) {
 	PollChannelSize = int(generalConfig["PollChannelSize"].(float64))
 
 	PollDataBatchSize = int(generalConfig["PollDataBatchSize"].(float64))
-	
+
 	ConfigDBUser = generalConfig["ConfigDBUser"].(string)
 
 	ConfigDBPassword = generalConfig["ConfigDBPassword"].(string)

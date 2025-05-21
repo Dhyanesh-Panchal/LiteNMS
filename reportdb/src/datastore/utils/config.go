@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/bytedance/gopkg/util/gctuner"
 	"go.uber.org/zap"
 	"log"
@@ -144,109 +143,11 @@ func LoadConfig() (err error) {
 	MaxLogFileSizeInMB = int(generalConfig["MaxLogFileSizeInMB"].(float64))
 
 	LogFileRetentionInDays = int(generalConfig["LogFileRetentionInDays"].(float64))
-
-	// Validate the config variables
-
-	if err = validateConfigParameters(); err != nil {
-
-		return err
-
-	}
-
+	
 	//Get system memory and set GC tuning
 	memoryThreshold := (sysTotalMemory() * uint64(generalConfig["MemoryFraction"].(float64))) / 100
 
 	gctuner.Tuning(memoryThreshold)
-
-	return nil
-
-}
-
-func validateConfigParameters() error {
-
-	if Writers <= 0 {
-		return errors.New("Writers should be greater than 0")
-	}
-
-	if DataWriteChannelSize <= 0 {
-		return errors.New("DataWriteChannelSize should be greater than 0")
-	}
-
-	if Readers <= 0 {
-		return errors.New("Readers should be greater than 0")
-	}
-
-	if ReaderRequestChannelSize <= 0 {
-		return errors.New("ReaderRequestChannelSize should be greater than 0")
-	}
-
-	if ReaderResponseChannelSize <= 0 {
-		return errors.New("ReaderResponseChannelSize should be greater than 0")
-	}
-
-	if QueryParsers <= 0 {
-		return errors.New("QueryParsers should be greater than 0")
-	}
-
-	if QueryChannelSize <= 0 {
-		return errors.New("QueryChannelSize should be greater than 0")
-	}
-
-	if QueryTimeoutTime <= 0 {
-		return errors.New("QueryTimeoutTime should be greater than 0")
-	}
-
-	if Partitions <= 0 {
-		return errors.New("Partitions should be greater than 0")
-	}
-
-	if BlockSize <= 0 {
-		return errors.New("BlockSize should be greater than 0")
-	}
-
-	if FileSizeGrowthDelta <= 0 {
-		return errors.New("FileSizeGrowthDelta should be greater than 0")
-	}
-
-	if InitialFileSize <= 0 {
-		return errors.New("InitialFileSize should be greater than 0")
-	}
-
-	if StorageCleanupInterval <= 0 {
-		return errors.New("StorageCleanupInterval should be greater than 0")
-	}
-
-	if MaxCacheKeys <= 0 {
-		return errors.New("MaxCacheKeys should be greater than 0")
-	}
-
-	if MaxCacheSizeInMB <= 0 {
-		return errors.New("MaxCacheSizeInMB should be greater than 0")
-	}
-
-	if MaxLogFileSizeInMB <= 0 {
-		return errors.New("MaxLogFileSizeInMB should be greater than 0")
-	}
-
-	if LogFileRetentionInDays <= 0 {
-		return errors.New("LogFileRetentionInDays should be greater than 0")
-	}
-
-	if PollListenerBindPort == "" {
-		return errors.New("PollListenerBindPort should not be empty")
-	}
-
-	if QueryListenerBindPort == "" {
-		return errors.New("QueryListenerBindPort should not be empty")
-	}
-
-	if QueryResultBindPort == "" {
-		return errors.New("QueryResultBindPort should not be empty")
-	}
-
-	if ProfilingPort == "" {
-		return errors.New("ProfilingPort should not be empty")
-	}
 
 	return nil
 
