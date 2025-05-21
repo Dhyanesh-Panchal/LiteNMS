@@ -7,6 +7,7 @@ import (
 	"net/http"
 	. "nms-backend/db"
 	. "nms-backend/utils"
+	"time"
 )
 
 type userQueryRequest struct {
@@ -33,6 +34,9 @@ func NewQueryController(report *ReportDBClient) *QueryController {
 }
 
 func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
+
+	startTime := time.Now()
+
 	var req userQueryRequest
 
 	// Bind JSON from request body
@@ -112,4 +116,6 @@ func (queryController *QueryController) HandleQuery(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, response)
+
+	Logger.Debug("Query executed", zap.Duration("duration", time.Since(startTime)))
 }

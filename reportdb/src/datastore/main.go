@@ -48,11 +48,7 @@ func main() {
 
 	<-globalShutdown
 
-	Logger.Info("closing dataWrite and queryReceive channel")
-
 	close(dataWriteChannel)
-
-	Logger.Info("main waiting for globalShutdownWaitGroup to finish")
 
 	globalShutdownWaitGroup.Wait()
 

@@ -44,7 +44,7 @@ func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel cha
 
 			if errors.Is(err, ErrStorageDoesNotExist) {
 
-				Logger.Info("Storage not present for", zap.Any("storageKey", request.StorageKey))
+				Logger.Debug("Storage not present for", zap.Any("storageKey", request.StorageKey))
 
 			}
 
