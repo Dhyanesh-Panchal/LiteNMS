@@ -96,7 +96,7 @@ func Reader(readerRequestChannel <-chan ReaderRequest, readerResponseChannel cha
 
 }
 
-func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds []uint32, from uint32, to uint32) (map[uint32][]DataPoint, error) {
+func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds []uint32, from, to uint32) (map[uint32][]DataPoint, error) {
 
 	if len(objectIds) == 0 {
 
@@ -148,7 +148,7 @@ func readSingleDay(storageEngine *Storage, storageKey StoragePoolKey, objectIds 
 
 			if success := DataPointsCache.Set(CreateCacheKey(storageKey, objectId), dataPoints, 0); !success {
 
-				Logger.Warn("Fail to set cache for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
+				Logger.Info("Fail to set cache for:", zap.Uint32("ObjectId", objectId), zap.String("Date", storageKey.Date.Format()))
 
 			}
 

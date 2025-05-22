@@ -91,7 +91,7 @@ func (buffer *BatchBuffer) Flush(dataChannel chan<- WritableObjectBatch) {
 
 }
 
-func batchBufferFlushRoutine(batchBuffer *BatchBuffer, writersChannel chan<- WritableObjectBatch, flushRoutineShutdown chan bool) {
+func batchBufferFlushRoutine(batchBuffer *BatchBuffer, writersChannel chan<- WritableObjectBatch, flushRoutineShutdown chan struct{}) {
 
 	for {
 
@@ -109,7 +109,7 @@ func batchBufferFlushRoutine(batchBuffer *BatchBuffer, writersChannel chan<- Wri
 
 			batchBuffer.flushTicker.Stop()
 
-			flushRoutineShutdown <- true
+			flushRoutineShutdown <- struct{}{}
 
 			return
 

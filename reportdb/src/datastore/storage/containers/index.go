@@ -112,7 +112,7 @@ func (index *Index) GetLastObjectBlockCapacity(objectId uint32) uint32 {
 
 }
 
-func (index *Index) UpdateObjectBlockCapacity(objectId uint32, newBlockCapacity uint32) {
+func (index *Index) UpdateObjectBlockCapacity(objectId, newBlockCapacity uint32) {
 
 	index.mu.Lock()
 
@@ -152,7 +152,7 @@ func (index *Index) syncFile(storagePath string, partitionId uint32) error {
 	}
 
 	index.syncRequired = false
-	
+
 	return nil
 }
 

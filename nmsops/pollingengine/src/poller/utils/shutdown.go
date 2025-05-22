@@ -8,7 +8,7 @@ import (
 
 func InitShutdownHandler(signalCount int) <-chan struct{} {
 
-	GlobalShutdown := make(chan struct{}, signalCount)
+	globalShutdown := make(chan struct{}, signalCount)
 
 	osSignal := make(chan os.Signal, 1)
 
@@ -22,7 +22,7 @@ func InitShutdownHandler(signalCount int) <-chan struct{} {
 		// signal received, broadcast shutdown
 		for range signalCount {
 
-			GlobalShutdown <- struct{}{}
+			globalShutdown <- struct{}{}
 
 		}
 
@@ -30,6 +30,6 @@ func InitShutdownHandler(signalCount int) <-chan struct{} {
 
 	}(signalCount)
 
-	return GlobalShutdown
+	return globalShutdown
 
 }

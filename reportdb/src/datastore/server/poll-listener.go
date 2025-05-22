@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
+func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-chan struct{}, globalShutdownWaitGroup *sync.WaitGroup) {
 
 	defer globalShutdownWaitGroup.Done()
 
@@ -27,7 +27,7 @@ func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-cha
 
 	}
 
-	shutDown := make(chan bool, 1)
+	shutDown := make(chan struct{}, 1)
 
 	go pollListener(context, dataChannel, shutDown)
 
@@ -35,7 +35,7 @@ func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-cha
 	<-globalShutdown
 
 	// Send shutdown to socket
-	shutDown <- true
+	shutDown <- struct{}{}
 
 	err = context.Term()
 
@@ -50,7 +50,7 @@ func InitPollListener(dataChannel chan<- []PolledDataPoint, globalShutdown <-cha
 
 }
 
-func pollListener(context *zmq.Context, dataWriteChannel chan<- []PolledDataPoint, shutDown chan bool) {
+func pollListener(context *zmq.Context, dataWriteChannel chan<- []PolledDataPoint, shutDown chan struct{}) {
 
 	socket, err := context.NewSocket(zmq.PULL)
 
@@ -81,7 +81,7 @@ func pollListener(context *zmq.Context, dataWriteChannel chan<- []PolledDataPoin
 			}
 
 			// Acknowledge shutDown
-			shutDown <- true
+			shutDown <- struct{}{}
 
 			return
 

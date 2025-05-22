@@ -6,9 +6,9 @@ import (
 	"syscall"
 )
 
-func InitShutdownHandler(signalCount int) <-chan bool {
+func InitShutdownHandler(signalCount int) <-chan struct{} {
 
-	GlobalShutdown := make(chan bool, signalCount)
+	globalShutdown := make(chan struct{}, signalCount)
 
 	osSignal := make(chan os.Signal, 1)
 
@@ -22,7 +22,7 @@ func InitShutdownHandler(signalCount int) <-chan bool {
 		// signal received, broadcast shutdown
 		for range signalCount {
 
-			GlobalShutdown <- true
+			globalShutdown <- struct{}{}
 
 		}
 
@@ -30,6 +30,6 @@ func InitShutdownHandler(signalCount int) <-chan bool {
 
 	}(signalCount)
 
-	return GlobalShutdown
+	return globalShutdown
 
 }

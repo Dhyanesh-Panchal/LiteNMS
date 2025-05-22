@@ -20,7 +20,7 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 
 	writersChannel := make(chan WritableObjectBatch, Writers)
 
-	flushRoutineShutdown := make(chan bool)
+	flushRoutineShutdown := make(chan struct{})
 
 	var writersWaitGroup sync.WaitGroup
 
@@ -77,7 +77,7 @@ func InitWriteHandler(dataWriteChannel <-chan []PolledDataPoint, storagePool *St
 
 	// Channel Closed, Shutting down writer
 
-	flushRoutineShutdown <- true
+	flushRoutineShutdown <- struct{}{}
 
 	// Wait for final flush
 	<-flushRoutineShutdown

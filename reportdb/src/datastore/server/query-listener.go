@@ -10,7 +10,7 @@ import (
 	"sync"
 )
 
-func InitQueryListener(queryReceiveChannel chan<- Query, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
+func InitQueryListener(queryReceiveChannel chan<- Query, globalShutdown <-chan struct{}, globalShutdownWaitGroup *sync.WaitGroup) {
 
 	defer globalShutdownWaitGroup.Done()
 

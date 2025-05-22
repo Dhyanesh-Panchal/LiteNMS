@@ -16,7 +16,7 @@ type ReportDB struct {
 	dataWriteChannel chan []PolledDataPoint
 }
 
-func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, globalShutdown <-chan bool, globalShutdownWaitGroup *sync.WaitGroup) {
+func InitDB(dataWriteChannel <-chan []PolledDataPoint, queryReceiveChannel <-chan Query, queryResultChannel chan<- Result, globalShutdown <-chan struct{}, globalShutdownWaitGroup *sync.WaitGroup) {
 
 	defer globalShutdownWaitGroup.Done()
 
